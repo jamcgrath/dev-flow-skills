@@ -93,3 +93,7 @@ done
 - **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix` use the `gh` CLI and (for Jira) an
   Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP. Each skill stops and says so in
   one line if its tool isn't available — it won't work around a missing tool.
+
+## License
+
+[MIT](LICENSE) © James McGrath
