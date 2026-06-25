@@ -1,0 +1,28 @@
+{
+  "name": "dev-loop-skills",
+  "owner": {
+    "name": "James McGrath"
+  },
+  "metadata": {
+    "description": "A project-agnostic, AI-assisted dev loop for Claude Code, packaged as one installable plugin.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "dev-loop",
+      "description": "Project-agnostic AI-assisted dev loop: route feature vs bug, gather grounded context, gate on a human-approved plan, build minimally, commit with intent, review, and open a PR. Bundles the orchestrator (dev-loop) plus verify-ticket, plan-brief, investigate-bug, implement-brief, commit, pr, and pr-fix.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dev-loop",
+        "./skills/verify-ticket",
+        "./skills/plan-brief",
+        "./skills/investigate-bug",
+        "./skills/implement-brief",
+        "./skills/commit",
+        "./skills/pr",
+        "./skills/pr-fix"
+      ]
+    }
+  ]
+}

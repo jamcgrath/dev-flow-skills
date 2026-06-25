@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Loop scratch — the skills write context files under .dev-loop/<task>/; never commit them
+.dev-loop/
