@@ -2,10 +2,12 @@
 
 A project-agnostic, AI-assisted **dev loop** for [Claude Code](https://claude.com/claude-code),
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
-structured loop with two human gates — fire it off, approve the plan, review before the PR.
+structured loop with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
+additive changes), review before the PR.
 
-The loop **adds no behaviour of its own**: `/dev-loop <task>` is a thin orchestrator that routes
-feature vs bug and runs the chain below. Outside it, work stays conversational — nothing fires
+The loop adds **almost no behaviour of its own** — beyond the proportional-approval classifier around
+the PLAN gate, `/dev-loop <task>` is a thin orchestrator that routes feature vs bug and runs the chain
+below. Outside it, work stays conversational — nothing fires
 unless you invoke it.
 
 ## Who it's for
@@ -18,13 +20,15 @@ skills **derive conventions from the codebase they're in — they never assume t
 
 ```
 /dev-loop <task>
-  → route: feature or bug? · ticket or none? · readiness scan (tools · dirty tree · prereqs)
+  → route: feature or bug? · ticket or none? · approval mode (human vs auto) · readiness scan
   → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
-  → plan-brief (feature)  |  investigate-bug (bug)
-  → ⏸ PLAN gate — decisive forks surfaced as questions, then plan, WAIT FOR APPROVAL
-  → build + /commit each logical change (early & often) → verify
+  → plan-brief (feature)  |  investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
+  → plan the approach (ALWAYS) — then:
+       · human path → ⏸ PLAN gate: forks surfaced, plan, WAIT FOR APPROVAL
+       · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
+  → build + /commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
   → /code-review        (Claude Code built-in)
-  → ⏸ REVIEW gate — human sanity-check before the PR
+  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here)
   → /pr                 (bots/CI after → /pr-fix)
 ```
 
@@ -79,6 +83,16 @@ done
 - **`commit` and `pr` embed a "Decision Log" commit convention** (Intent / Approach / Alternatives
   ruled out / Assumptions / Trade-offs). Installing them means adopting that commit style — the
   skills carry the format themselves, so it works standalone, but it's opinionated by design.
+- **The PLAN gate is proportional (approval only).** Recon and planning always run; what's conditional
+  is the *human approval* of the plan. Only **trivial, additive, no-risk** changes — a font-size, a
+  copy string, a self-contained new block — auto-approve and build (plus anything you explicitly tell
+  it to skip). A classifier re-validates after recon, after the plan (via an independent verifier
+  subagent), and before every commit. It leans on mechanical tripwires for the dangerous stuff (more
+  than one file, new/deleted files, new deps, interface / schema / auth / config changes, **and any
+  edit to *existing* behaviour — deleting a guard, changing a limit or default**) plus a small judgment
+  slice (decisive fork? ambiguous ask?); any breach reverts to the human gate. The pre-PR **review gate
+  is always human — even an unattended run stops there before pushing** — and commits are reversible,
+  so a misclassification is at worst a cheap commit caught at review.
 - **`pr` pushes.** When a remote exists it runs `git push -u origin HEAD` and opens the PR; on a
   local-only repo it writes a `PR_PREVIEW.md` instead of pushing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
