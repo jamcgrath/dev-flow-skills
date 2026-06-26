@@ -1,6 +1,6 @@
 ---
 name: plan-brief
-description: First-pass info-gathering for a feature — read .dev-loop/<task>/TICKET_CONTEXT.md if it exists, otherwise work straight from the task description the user gives (ticket or no ticket), reconnoitre the codebase (files likely to change, similar implementations, related tests, constraints), and write .dev-loop/<task>/PLAN_BRIEF.md as grounded input for /plan mode. The portable entry to the feature path — works with or without a tracker; no Jira required. Reconnaissance, not a plan — it gathers context and stops; it does not design the approach or edit code. Use when the user says "plan brief" or "gather context for the plan".
+description: First-pass info-gathering for a feature — read .dev-flow/<task>/TICKET_CONTEXT.md if it exists, otherwise work straight from the task description the user gives (ticket or no ticket), reconnoitre the codebase (files likely to change, similar implementations, related tests, constraints), and write .dev-flow/<task>/PLAN_BRIEF.md as grounded input for /plan mode. The portable entry to the feature path — works with or without a tracker; no Jira required. Reconnaissance, not a plan — it gathers context and stops; it does not design the approach or edit code. Use when the user says "plan brief" or "gather context for the plan".
 ---
 
 # plan-brief
@@ -16,7 +16,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
 
 ## Steps
 
-1. **Get the starting context.** Read `.dev-loop/<task>/TICKET_CONTEXT.md` if it exists (from
+1. **Get the starting context.** Read `.dev-flow/<task>/TICKET_CONTEXT.md` if it exists (from
    `/verify-ticket`). If it doesn't, that's fine — **no ticket is a normal entry, not a fallback**:
    work from whatever the user gives (a typed task description, a GitHub issue, an AI brief). If
    even that is thin, ask one question to pin the goal before reconnoitring.
@@ -41,7 +41,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
 3. **Bound it.** Note what's explicitly **out of scope**, and list **open questions** that need
    a human decision before building.
 
-4. **Write `.dev-loop/<task>/PLAN_BRIEF.md`** (create the dir if missing) — `<task>` is the ticket
+4. **Write `.dev-flow/<task>/PLAN_BRIEF.md`** (create the dir if missing) — `<task>` is the ticket
    key when there is one (reuse the subdirectory `/verify-ticket` made), else a short kebab-case slug
    of the task, so each task keeps its own context:
 
@@ -69,7 +69,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
    ```
 
 5. **Hand off.** Confirm it's written, then: enter `/plan` mode referencing
-   `.dev-loop/<task>/PLAN_BRIEF.md`.
+   `.dev-flow/<task>/PLAN_BRIEF.md`.
 
 ## Guards
 - **Gather, don't design.** No approach decisions, no edits — if you're tempted to pick a

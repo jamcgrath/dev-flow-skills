@@ -1,6 +1,6 @@
 ---
 name: investigate-bug
-description: Turn a raw browser observation into a systematic bug investigation using the Chrome DevTools MCP — structure the symptom and repro, inspect console, network, DOM and component lifecycle, trace it back to the likely source in the code, and write .dev-loop/<task>/BUG_CONTEXT.md as context for the fix. Use at the start of the bug path, when the user says "investigate this bug", "something's wrong in the browser", or hands over a UI/runtime glitch they just spotted.
+description: Turn a raw browser observation into a systematic bug investigation using the Chrome DevTools MCP — structure the symptom and repro, inspect console, network, DOM and component lifecycle, trace it back to the likely source in the code, and write .dev-flow/<task>/BUG_CONTEXT.md as context for the fix. Use at the start of the bug path, when the user says "investigate this bug", "something's wrong in the browser", or hands over a UI/runtime glitch they just spotted.
 ---
 
 # investigate-bug
@@ -28,7 +28,7 @@ on. Start of the bug path; the output feeds `/plan` mode (or a direct fix for so
    most likely originates. **Read the repo's conventions from the code — don't assume the
    stack.** Hand broad searching to an `Explore` subagent.
 
-5. **Write `.dev-loop/<task>/BUG_CONTEXT.md`** (create the dir if missing) — `<task>` is the bug's
+5. **Write `.dev-flow/<task>/BUG_CONTEXT.md`** (create the dir if missing) — `<task>` is the bug's
    ticket key if it has one, else a short kebab-case slug of the symptom, so each investigation keeps
    its own context and a new run never overwrites the last:
 
@@ -53,7 +53,7 @@ on. Start of the bug path; the output feeds `/plan` mode (or a direct fix for so
    [How to fix it — what to change and why]
    ```
 
-6. **Hand off.** Summarise the likely cause, then: feed `.dev-loop/<task>/BUG_CONTEXT.md` into `/plan`
+6. **Hand off.** Summarise the likely cause, then: feed `.dev-flow/<task>/BUG_CONTEXT.md` into `/plan`
    mode, or go straight to the fix if it's small.
 
 ## Guards

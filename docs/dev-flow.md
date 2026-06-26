@@ -1,13 +1,13 @@
-# The dev-loop flow
+# The dev-flow flowchart
 
-A rendered flowchart of `/dev-loop`, showing the proportional **PLAN-gate fast-path** — the
+A rendered flowchart of `/dev-flow`, showing the proportional **PLAN-gate fast-path** — the
 human vs auto branching, the three classifier checkpoints, and the fail-closed escalations.
-For the quick-scan version, see the ASCII loop in the [README](../README.md#the-loop); for the
-full spec, see [`skills/dev-loop/SKILL.md`](../skills/dev-loop/SKILL.md).
+For the quick-scan version, see the ASCII flow in the [README](../README.md#the-flow); for the
+full spec, see [`skills/dev-flow/SKILL.md`](../skills/dev-flow/SKILL.md).
 
 ```mermaid
 flowchart TD
-    A([/dev-loop · task]):::start --> B
+    A([/dev-flow · task]):::start --> B
 
     B["Route<br/>feature vs bug · ticket?<br/>approval mode: human or auto<br/>readiness scan"]:::always --> C
 

@@ -1,6 +1,6 @@
 ---
 name: verify-ticket
-description: Validate an externally-authored ticket, issue, or brief against the actual codebase before planning — fetch it (Jira via the Atlassian Rovo MCP, a GitHub issue via `gh`, or pasted text), cross-reference every file/component/function/term it mentions against the current repo, and write a corrected .dev-loop/<task>/TICKET_CONTEXT.md. OPTIONAL and tracker-agnostic — use it only when a description written elsewhere needs reality-checking; for an ad-hoc task you defined yourself, skip straight to /plan-brief. Use when the user says "verify ticket", "validate this ticket/issue against the code", or "check the ticket before planning". Catches the stale file refs and renamed components that AI-written tickets are full of.
+description: Validate an externally-authored ticket, issue, or brief against the actual codebase before planning — fetch it (Jira via the Atlassian Rovo MCP, a GitHub issue via `gh`, or pasted text), cross-reference every file/component/function/term it mentions against the current repo, and write a corrected .dev-flow/<task>/TICKET_CONTEXT.md. OPTIONAL and tracker-agnostic — use it only when a description written elsewhere needs reality-checking; for an ad-hoc task you defined yourself, skip straight to /plan-brief. Use when the user says "verify ticket", "validate this ticket/issue against the code", or "check the ticket before planning". Catches the stale file refs and renamed components that AI-written tickets are full of.
 ---
 
 # verify-ticket
@@ -44,7 +44,7 @@ nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
    the code actually works, and any terminology that doesn't match the repo's conventions.
    **Derive conventions from the codebase you're in — never assume the stack.**
 
-6. **Write `.dev-loop/<task>/TICKET_CONTEXT.md`** (create the dir if missing) — `<task>` is the
+6. **Write `.dev-flow/<task>/TICKET_CONTEXT.md`** (create the dir if missing) — `<task>` is the
    verified ticket key, so each task's context sits in its own subdirectory and a new run never
    overwrites the last:
 
@@ -69,7 +69,7 @@ nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
    ```
 
 7. **Hand off.** Confirm it's written, summarise the Flags out loud, then point to the next
-   step: `/plan-brief`, or straight into `/plan` mode referencing `.dev-loop/<task>/TICKET_CONTEXT.md`.
+   step: `/plan-brief`, or straight into `/plan` mode referencing `.dev-flow/<task>/TICKET_CONTEXT.md`.
 
 ## Guards
 - **Don't invent.** If a reference is ambiguous, record it under Flags as an open question —
@@ -77,5 +77,5 @@ nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
 - Used only when there's an **externally-authored** item to reconcile (Jira / GitHub / brief).
   No such item — or a task you defined yourself against current code — → skip this skill and
   start at `/plan-brief`.
-- `.dev-loop/` is meant to be git-ignored globally (one-time loop setup); this skill writes only
-  inside `.dev-loop/<task>/` and never touches `.git/` or a shared `.gitignore` itself.
+- `.dev-flow/` is meant to be git-ignored globally (one-time flow setup); this skill writes only
+  inside `.dev-flow/<task>/` and never touches `.git/` or a shared `.gitignore` itself.

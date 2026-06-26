@@ -16,5 +16,5 @@
 .env
 .env.local
 
-# Loop scratch — the skills write context files under .dev-loop/<task>/; never commit them
-.dev-loop/
+# Flow scratch — the skills write context files under .dev-flow/<task>/; never commit them
+.dev-flow/

@@ -1,12 +1,12 @@
-# dev-loop-skills
+# dev-flow-skills
 
-A project-agnostic, AI-assisted **dev loop** for [Claude Code](https://claude.com/claude-code),
+A project-agnostic, AI-assisted **dev flow** for [Claude Code](https://claude.com/claude-code),
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
-structured loop with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
+structured flow with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
 presentational changes), review before the PR.
 
-The loop adds **almost no behaviour of its own** — beyond the proportional-approval classifier around
-the PLAN gate, `/dev-loop <task>` is a thin orchestrator that routes feature vs bug and runs the chain
+The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier around
+the PLAN gate, `/dev-flow <task>` is a thin orchestrator that routes feature vs bug and runs the chain
 below. Outside it, work stays conversational — nothing fires
 unless you invoke it.
 
@@ -16,10 +16,10 @@ Anyone using Claude Code who wants a repeatable, opt-in structure around feature
 on any repo and any (or no) tracker. It's deliberately tool-agnostic: the context-gathering
 skills **derive conventions from the codebase they're in — they never assume the stack**.
 
-## The loop
+## The flow
 
 ```
-/dev-loop <task>
+/dev-flow <task>
   → route: feature or bug? · ticket or none? · approval mode (human vs auto) · readiness scan
   → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
   → plan-brief (feature)  |  investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
@@ -33,13 +33,13 @@ skills **derive conventions from the codebase they're in — they never assume t
 ```
 
 > 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
-> [docs/dev-loop-flow.md](docs/dev-loop-flow.md).
+> [docs/dev-flow.md](docs/dev-flow.md).
 
 ## What's in it
 
 | Skill | Role |
 |---|---|
-| `dev-loop` | Orchestrator — the single explicit entry; routes feature/bug and sequences the rest |
+| `dev-flow` | Orchestrator — the single explicit entry; routes feature/bug and sequences the rest |
 | `verify-ticket` | *(optional)* reconcile an externally-authored ticket/issue/brief against the actual code |
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
 | `investigate-bug` | bug recon — systematic investigation via the Chrome DevTools MCP |
@@ -48,12 +48,12 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
 
-`/code-review` is a Claude Code built-in and is used by the loop but isn't bundled here.
+`/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
 
 ## Layout
 
 ```
-dev-loop-skills/
+dev-flow-skills/
   .claude-plugin/marketplace.json   # makes the set installable as a plugin
   skills/<name>/SKILL.md            # one folder per skill
 ```
@@ -63,11 +63,11 @@ dev-loop-skills/
 ### As a plugin (recommended)
 
 ```sh
-/plugin marketplace add jamcgrath/dev-loop-skills
-/plugin install dev-loop@dev-loop-skills
+/plugin marketplace add jamcgrath/dev-flow-skills
+/plugin install dev-flow@dev-flow-skills
 ```
 
-Then `/dev-loop <task>`, or any individual skill (`/plan-brief`, `/commit`, …).
+Then `/dev-flow <task>`, or any individual skill (`/plan-brief`, `/commit`, …).
 While the repo is private, you need read access to it; `/plugin marketplace add` uses your
 existing GitHub auth.
 
@@ -76,7 +76,7 @@ existing GitHub auth.
 Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
 
 ```sh
-for d in dev-loop verify-ticket plan-brief investigate-bug implement-brief commit pr pr-fix; do
+for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief commit pr pr-fix; do
   ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
 done
 ```
@@ -102,10 +102,10 @@ done
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
   contributor — and applies the "actionable" ones as code changes, then pushes. It mitigates this
   by triaging every comment and showing the triage before big batches (it does **not** blindly
-  apply), but be aware that's the one place the loop ingests external content and takes write
+  apply), but be aware that's the one place the flow ingests external content and takes write
   actions. Review its triage table.
-- **`.dev-loop/` scratch dir.** The recon skills write context files under `.dev-loop/<task>/` in
-  whatever repo you run them in. Add `.dev-loop/` to that repo's `.gitignore` (or your global
+- **`.dev-flow/` scratch dir.** The recon skills write context files under `.dev-flow/<task>/` in
+  whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
   themselves.
 - **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix` use the `gh` CLI and (for Jira) an

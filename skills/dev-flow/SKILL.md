@@ -1,16 +1,16 @@
 ---
-name: dev-loop
-description: Kick off the full AI-assisted dev loop for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → build → verify → commit → code-review → human review → pr), pausing at the human gates. Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running. Beyond that proportional-approval classifier it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev loop", "/dev-loop <task>", "run the loop", or "kick off the loop". This is the single explicit entry to the structured loop — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
+name: dev-flow
+description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → build → verify → commit → code-review → human review → pr), pausing at the human gates. Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running. Beyond that proportional-approval classifier it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
 ---
 
-# dev-loop
+# dev-flow
 
-The one explicit way to **kick off the structured loop**. Beyond the proportional-approval classifier
+The one explicit way to **kick off the structured flow**. Beyond the proportional-approval classifier
 around the PLAN gate (steps 2–5), it **adds no behaviour of its own** — it sequences the skills you
-already have and pauses at the same human gates as running them by hand. Running `/dev-loop` ≡ running
+already have and pauses at the same human gates as running them by hand. Running `/dev-flow` ≡ running
 the steps yourself, just from one command.
 
-It's also the entry an automation/agent would call to run the loop unattended, so it takes the task as
+It's also the entry an automation/agent would call to run the flow unattended, so it takes the task as
 args and treats the PLAN gate as an **explicit gate** swappable for an auto-approver (without changing
 any delegated step). The **auto path** below is the first concrete instance of that swap: for trivial,
 additive work the PLAN gate's approver becomes the classifier — re-validated at three checkpoints. The
@@ -18,7 +18,7 @@ additive work the PLAN gate's approver becomes the classifier — re-validated a
 pushes unreviewed.
 
 ```
-/dev-loop <task>
+/dev-flow <task>
   → route: feature or bug? · ticket or none? · approval mode (human vs auto) · readiness scan
   → [verify-ticket]   only if there's an external ticket/issue/brief
   → plan-brief (feature) | investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
@@ -95,13 +95,13 @@ pushes unreviewed.
      and source cleanup (e.g. duplicate components). Hand this list to the human **early** so they can
      prepare in parallel — not discover it at the PLAN gate.
 
-3. **Run the front.** Each task's context files live in **their own subdirectory** `.dev-loop/<task>/`,
+3. **Run the front.** Each task's context files live in **their own subdirectory** `.dev-flow/<task>/`,
    so a new run never overwrites a previous task's files. `<task>` is the **ticket key** when there is
    one (e.g. `NSS2-2327`), else a short kebab-case slug of the task (e.g. `add-commit-history`) —
    mirroring the repo's `Notes/<KEY>/` layout. Fix `<task>` once here and use it for every sub-step:
-   - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-loop/<task>/TICKET_CONTEXT.md`.
-   - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-loop/<task>/PLAN_BRIEF.md`.
-   - Bug → `/investigate-bug` → `.dev-loop/<task>/BUG_CONTEXT.md`.
+   - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
+   - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-flow/<task>/PLAN_BRIEF.md`.
+   - Bug → `/investigate-bug` → `.dev-flow/<task>/BUG_CONTEXT.md`.
 
    **Checkpoint 1 — post-recon (auto path only).** Recon now shows the real blast radius. Run the
    tripwires the file list can already answer (file count; a shared interface / token / config now in
@@ -177,12 +177,12 @@ pushes unreviewed.
    (Bots/CI comments after → `/pr-fix`.)
 
 ## Guards
-- **Thin orchestration.** Every step delegates to the existing skill, unchanged. The loop's own logic
-  is deliberately confined to two things: the front-of-loop scaffolding (the readiness scan) and the
+- **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
+  is deliberately confined to two things: the front-of-flow scaffolding (the readiness scan) and the
   proportional-approval classifier around the PLAN gate (the tripwire checks + the independent verifier
   subagent). Everything else parameterises the skills it calls (e.g. code-review effort) — it never
   reimplements their behaviour.
-- **Opt-in.** The loop runs *only* when `/dev-loop` is invoked (or the steps are run by hand).
+- **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
 - **Scope discipline.** Never expand past the plan. Anything extra you notice → surface it as a
   follow-up at the end, don't silently do it. On the human path the PLAN gate is the contract; on the
@@ -193,7 +193,7 @@ pushes unreviewed.
   leaves the repo, the mechanical tripwires keep obviously-dangerous changes off the auto path (they
   exclude danger, they don't certify safety), and any doubt or breach reverts to the human gate.
 - **The guarantee binds to the sequence.** "Nothing reaches a remote unreviewed" holds only when the
-  loop runs as a whole; invoking `/pr` directly (or any caller that skips step 8) bypasses the REVIEW
+  flow runs as a whole; invoking `/pr` directly (or any caller that skips step 8) bypasses the REVIEW
   gate. The auto path's local checks are best-effort — step 8 is the backstop that makes a
   misclassification at worst a reversible local commit, so never route around it.
 - **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), the
