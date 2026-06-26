@@ -33,7 +33,8 @@ skills **derive conventions from the codebase they're in — they never assume t
 ```
 
 > 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
-> [docs/dev-flow.md](docs/dev-flow.md).
+> [docs/dev-flow.md](docs/dev-flow.md). For a log of how the auto-path classifier actually decided on
+> real and adversarial tasks (and any misclassifications), see [docs/classifier-log.md](docs/classifier-log.md).
 
 ## What's in it
 
