@@ -32,6 +32,9 @@ skills **derive conventions from the codebase they're in — they never assume t
   → /pr                 (bots/CI after → /pr-fix)
 ```
 
+> 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
+> [docs/dev-loop-flow.md](docs/dev-loop-flow.md).
+
 ## What's in it
 
 | Skill | Role |
