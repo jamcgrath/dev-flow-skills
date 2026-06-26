@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "dev-loop",
-      "description": "Project-agnostic AI-assisted dev loop: route feature vs bug, gather grounded context, gate on a plan (human-approved, or auto-approved for trivial additive changes), build minimally, commit with intent, always-human review, and open a PR. Bundles the orchestrator (dev-loop) plus verify-ticket, plan-brief, investigate-bug, implement-brief, commit, pr, and pr-fix.",
+      "description": "Project-agnostic AI-assisted dev loop: route feature vs bug, gather grounded context, gate on a plan (human-approved, or auto-approved for trivial presentational changes), build minimally, commit with intent, always-human review, and open a PR. Bundles the orchestrator (dev-loop) plus verify-ticket, plan-brief, investigate-bug, implement-brief, commit, pr, and pr-fix.",
       "source": "./",
       "strict": false,
       "skills": [

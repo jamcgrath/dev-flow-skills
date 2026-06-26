@@ -3,7 +3,7 @@
 A project-agnostic, AI-assisted **dev loop** for [Claude Code](https://claude.com/claude-code),
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
 structured loop with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
-additive changes), review before the PR.
+presentational changes), review before the PR.
 
 The loop adds **almost no behaviour of its own** — beyond the proportional-approval classifier around
 the PLAN gate, `/dev-loop <task>` is a thin orchestrator that routes feature vs bug and runs the chain
@@ -87,15 +87,16 @@ done
   ruled out / Assumptions / Trade-offs). Installing them means adopting that commit style — the
   skills carry the format themselves, so it works standalone, but it's opinionated by design.
 - **The PLAN gate is proportional (approval only).** Recon and planning always run; what's conditional
-  is the *human approval* of the plan. Only **trivial, additive, no-risk** changes — a font-size, a
-  copy string, a self-contained new block — auto-approve and build (plus anything you explicitly tell
-  it to skip). A classifier re-validates after recon, after the plan (via an independent verifier
-  subagent), and before every commit. It leans on mechanical tripwires for the dangerous stuff (more
-  than one file, new/deleted files, new deps, interface / schema / auth / config changes, **and any
-  edit to *existing* behaviour — deleting a guard, changing a limit or default**) plus a small judgment
-  slice (decisive fork? ambiguous ask?); any breach reverts to the human gate. The pre-PR **review gate
-  is always human — even an unattended run stops there before pushing** — and commits are reversible,
-  so a misclassification is at worst a cheap commit caught at review.
+  is the *human approval* of the plan. Only **trivial, presentational** changes — a font-size, a layout
+  tweak, a *non-load-bearing* copy string — auto-approve and build (plus anything you explicitly tell it
+  to skip). A classifier re-validates after recon, after the plan (via an independent verifier
+  subagent), and before every commit. Its mechanical tripwires *exclude* the dangerous stuff (more than
+  one file, new/deleted files, new deps, and any edit to existing **functional/logic** behaviour —
+  control flow, a guard, a limit, a default, auth/secret/endpoint tokens) but they don't *certify* what's
+  left safe: for the cosmetic edits that remain, the real net is a small judgment call (decisive fork? a
+  load-bearing string?) **plus the always-human REVIEW gate**. Any breach or doubt reverts to the human
+  gate. The pre-PR **review gate is always human — even an unattended run stops there before pushing** —
+  and commits are reversible, so a misclassification is at worst a cheap commit caught at review.
 - **`pr` pushes.** When a remote exists it runs `git push -u origin HEAD` and opens the PR; on a
   local-only repo it writes a `PR_PREVIEW.md` instead of pushing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
