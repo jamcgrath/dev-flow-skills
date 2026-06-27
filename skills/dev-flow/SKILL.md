@@ -97,7 +97,7 @@ pushes unreviewed.
 
 3. **Run the front.** Each task's context files live in **their own subdirectory** `.dev-flow/<task>/`,
    so a new run never overwrites a previous task's files. `<task>` is the **ticket key** when there is
-   one (e.g. `NSS2-2327`), else a short kebab-case slug of the task (e.g. `add-commit-history`) —
+   one (e.g. `PROJ-1234`), else a short kebab-case slug of the task (e.g. `add-commit-history`) —
    mirroring the repo's `Notes/<KEY>/` layout. Fix `<task>` once here and use it for every sub-step:
    - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
    - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-flow/<task>/PLAN_BRIEF.md`.

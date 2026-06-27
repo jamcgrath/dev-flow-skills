@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira NSS2-1234) from the branch name and includes it only when present.
+description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
 ---
 
 # pr
@@ -17,7 +17,7 @@ rolls them up (see global CLAUDE.md).
    No commits → stop and say so.
 
 2. **Detect a task key from the branch name.** Extract the first `[A-Z][A-Z0-9]+-[0-9]+` match
-   from the current branch (e.g. `feature/NSS2-2283-paywalls` → `NSS2-2283`). **Only use it if
+   from the current branch (e.g. `feature/PROJ-1234-paywalls` → `PROJ-1234`). **Only use it if
    present** — many tasks have no key. Never invent one.
 
 3. **Synthesise — don't concatenate.** From the commits' Decision Logs, write one PR body:
