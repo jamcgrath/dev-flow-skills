@@ -116,8 +116,24 @@ pushes unreviewed.
    - **Human path (full gate). ⏸** **First surface the decisive fork(s) as explicit questions** — the
      one or two choices that most change the build (approach, library, in-scope vs deferred) — via
      AskUserQuestion *before* finalising the plan. Don't bury a contested approach as a recommendation
-     the human has to reject to redirect. Present the plan and **wait for approval** — revise until
-     approved. This is where alignment is confirmed and over-reach is caught.
+     the human has to reject to redirect. **Present the plan summary-first** so it can be read at a
+     glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
+     gated on a concrete test — **default to omitting both; add one only when it clearly clears its
+     bar.** A mermaid **flowchart** when the approach is *non-linear* — it branches (conditional paths),
+     has steps that depend on each other out of order, fans out across several files/components, or
+     loops; a purely sequential plan needs none, the numbered steps already are the flow. A **table of
+     contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen), so
+     the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're independent: a long linear
+     plan gets a TOC but no diagram; a short branchy one gets a diagram but no TOC.) Then the detail
+     below. **Always write the plan to
+     `.dev-flow/<task>/PLAN.md`** (mermaid fences) — the recon gets persisted but the plan didn't, so
+     this is the missing durable record of what was approved; keep it in sync through revisions so the
+     file reflects the approved plan. **On request**, also emit a self-contained `.dev-flow/<task>/PLAN.html`
+     (mermaid loaded from a CDN) for reviewing in a browser without a markdown viewer. Diagrams are
+     best-effort — the prose plan stays the source of truth and approval never stalls on a diagram that
+     won't render. (Human path only: the auto path presents no plan, so trivial fast-tracked tasks get
+     none of this.) Then **wait for approval** — revise until approved. This is where alignment is
+     confirmed and over-reach is caught.
 
    - **Auto path. Checkpoint 2 — post-plan (binding).** Validate the written plan instead of asking a
      human: run the tripwires against the plan's **stated file scope** *and the recon file list* (not
