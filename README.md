@@ -16,6 +16,14 @@ Anyone using Claude Code who wants a repeatable, opt-in structure around feature
 on any repo and any (or no) tracker. It's deliberately tool-agnostic: the context-gathering
 skills **derive conventions from the codebase they're in — they never assume the stack**.
 
+> **This is one developer's workflow — it may not be yours, and that's fine.** It encodes my
+> preferences: where the human gates sit, the Decision Log commit style, what counts as "trivial"
+> enough to auto-approve. Treat it as a starting point, not a prescription. The skills are plain
+> markdown, so **adapt them to how *you* work** — fork the gates you don't want, change the commit
+> format, retune the classifier, drop skills you won't use. If you only keep one invariant, keep the
+> **always-human REVIEW gate before the PR** — that's the load-bearing safety property the rest leans
+> on. Issues and forks welcome, but you never have to ask permission to make it fit you.
+
 ## The flow
 
 ```
