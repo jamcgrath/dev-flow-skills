@@ -107,7 +107,10 @@ pushes unreviewed.
    tripwires the file list can already answer (file count; a shared interface / token / config now in
    scope) plus the judgment slice. There's no diff yet, so this is an early exit on what recon can
    show — not the full per-commit check: if it's bigger than it looked (the "one file" is imported in
-   20 places), drop to the human gate now, before planning.
+   20 places), drop to the human gate now, before planning. **When the project exposes an
+   import/dependency graph** (an MCP server, usage indexer, or LSP), use it to *measure* a file's
+   actual fan-in rather than eyeballing it — a high parent count means the blast radius is larger than
+   the file count suggests → human gate. No such tool → fall back to the estimate as before.
 
 4. **Plan the approach (always) — then approve.** Enter `/plan` mode referencing the context file and
    design the approach **strictly within the task's scope**. Planning is **not** skipped on the auto
