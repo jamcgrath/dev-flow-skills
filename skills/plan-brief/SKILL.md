@@ -30,13 +30,21 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
    - constraints **specific to this change** that aren't already in `TICKET_CONTEXT` — read them
      out of the existing code; never assume the stack.
 
-   When hunting the closest existing implementation in a **large or unfamiliar** module, the
-   `Explore` agent may run `repomix --compress --include '<subtree>' --stdout` to get a complete
-   signature map in one pass (catches a reusable thing iterative grep would miss). Always inside
-   the subagent so the pack stays off the main thread; always `--compress` and always `--include`
-   scoped to the relevant subtree — never unscoped or full-content (it floods context and adds
-   nothing over reading the few files that matter). For a bounded module, skip it — Explore
-   reading the real files is simpler and just as good.
+   **Use the best tool available — don't default to grep.** Before text-searching, take stock of
+   what this project exposes, including any **project-specific MCP servers** (a component/dependency
+   graph, a usage indexer, an LSP). When one directly answers a recon question — what imports X, what's
+   unused, a component's props/API — **prefer it**: it's faster and more accurate than grepping source.
+   Fall back to grep / repomix / reading files when nothing fits. This stays tool-agnostic — it uses
+   whatever happens to be installed and is a no-op in a project that exposes nothing extra.
+
+   When hunting the closest existing implementation in a **large or unfamiliar** module, aim to get a
+   complete **signature map in one pass** rather than grepping piecemeal (it catches a reusable thing
+   iterative grep would miss) — via whatever the project offers: an LSP/symbol search, or a repomix-style
+   packer **if one is installed**. If you use `repomix`, run it inside the subagent so the pack stays off
+   the main thread, and always `--compress` with `--include` scoped to the relevant subtree — never
+   unscoped or full-content (it floods context and adds nothing over reading the few files that matter).
+   For a bounded module, skip the whole approach — Explore reading the real files is simpler and just as
+   good.
 
 3. **Bound it.** Note what's explicitly **out of scope**, and list **open questions** that need
    a human decision before building.
