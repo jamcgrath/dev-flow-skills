@@ -77,7 +77,7 @@ dev-flow-skills/
 ```
 
 Then `/dev-flow <task>`, or any individual skill (`/plan-brief`, `/commit`, …).
-While the repo is private, you need read access to it; `/plugin marketplace add` uses your
+The repo is public, so `/plugin marketplace add` works with no special access — it uses your
 existing GitHub auth.
 
 ### For development (live edits)
