@@ -34,7 +34,7 @@ skills **derive conventions from the codebase they're in — they never assume t
   → plan the approach (ALWAYS) — then:
        · human path → ⏸ PLAN gate: forks surfaced, plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
-  → build + /commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → branch off default (if needed) → build + /commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
   → /code-review        (Claude Code built-in)
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here)
   → /pr                 (bots/CI after → /pr-fix)

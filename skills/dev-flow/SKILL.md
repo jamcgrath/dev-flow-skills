@@ -25,7 +25,7 @@ pushes unreviewed.
   → plan the approach (ALWAYS) — then:
        · human path → ⏸ PLAN gate: surface decisive fork(s), present plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
-  → build + commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → branch off default (if needed) → build + commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
   → code-review
   → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here)
   → pr
@@ -88,8 +88,10 @@ pushes unreviewed.
    block or derail the build later:
    - **Tools:** confirm the path's tools are reachable (Rovo / `gh` / browser / MCP). A missing one
      is a blocker to report *now*, not mid-step.
-   - **Working tree:** run `git status`. Pre-existing uncommitted changes will entangle the commit —
-     note them now so the plan accounts for what to stage vs leave.
+   - **Working tree + branch:** run `git status`. Pre-existing uncommitted changes will entangle the
+     commit — note them now so the plan accounts for what to stage vs leave. Note the **current branch**
+     too: if it's the repo's default (`main` / `master`), the build will branch first (step 5) before
+     committing.
    - **Human-only prerequisites:** list what the task needs that **the agent cannot do** —
      credentials and their *scope* (e.g. a write- vs read-scoped token), external access/permissions,
      and source cleanup (e.g. duplicate components). Hand this list to the human **early** so they can
@@ -157,8 +159,13 @@ pushes unreviewed.
    swappable for. The REVIEW gate (step 8) is **not** swappable for now — even an unattended run stops
    there for a human before the PR, so nothing reaches a remote unreviewed.)
 
-5. **Build — commit as you go.** On approval (or once auto-approved): **first, if a human approved the
-   plan at the PLAN gate, persist it** — write the approved plan (and `PLAN.html` if requested) to
+5. **Build — commit as you go.** On approval (or once auto-approved): **first, get on a task branch.**
+   If you're on the repo's default branch (`main` / `master`), create one before any commit —
+   `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one (e.g.
+   `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is what lets
+   `/pr` (step 9) detect it and open the PR off a feature branch; already on a non-default branch →
+   use it, don't nest. **Next, if a human approved the plan at the PLAN gate, persist it** — write the
+   approved plan (and `PLAN.html` if requested) to
    `.dev-flow/<task>/PLAN.md` before any code change. Plan mode blocked this until now; you still have
    the approved plan in context, so write that. Skip on the auto path — no plan doc there.
    Then build per the plan (`implement-brief` carries the reuse-survey + minimal-build discipline) in
