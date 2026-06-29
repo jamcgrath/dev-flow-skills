@@ -16,6 +16,16 @@ defined the task yourself against the current code, there's nothing to verify �
 to `/plan-brief`.** It answers one question — **is this description true against the code?** — and
 nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
 
+**It is not a gate — it flags and flows.** Drift is the normal finding: a renamed file, a deleted
+component, an already-built criterion, an under-specified detail (a header value the ticket never
+pins down). All of it gets **recorded as Flags** and the flow continues to `plan-brief`; the decisive
+ones resurface as questions at the **PLAN gate**, where forks belong — never here. The **one** thing
+that stops the flow is a **confabulation**: a ticket premised on something false about the repo *as it
+is* — it assumes a framework, service, or architecture already exists that doesn't, so the work as
+framed can't even start. *A few wrong file names is drift; a false premise is a wrong ticket.* (Asking
+to *introduce* something new — a dependency, caching where there's none — is a feature, not a
+confabulation: flag the unknowns and flow.)
+
 ## Steps
 
 1. **Get the work item.** Take whatever the user has: a Jira key (`[A-Z][A-Z0-9]+-[0-9]+`), a
@@ -40,9 +50,19 @@ nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
    - **deleted** — gone, nothing equivalent (flag)
    - **not found** — never existed / ambiguous (flag)
 
-5. **Check behaviour + terms.** Note any behaviour the ticket describes that conflicts with how
-   the code actually works, and any terminology that doesn't match the repo's conventions.
-   **Derive conventions from the codebase you're in — never assume the stack.**
+5. **Check behaviour + terms — and the premise.** Note any behaviour the ticket describes that
+   conflicts with how the code actually works, and any terminology that doesn't match the repo's
+   conventions. **Derive conventions from the codebase you're in — never assume the stack.** Then step
+   back from the individual references to the ticket's *premise* and apply one test: **"does this only
+   make sense if the repo already had X — and it doesn't?"** If yes — it's built on a
+   framework / service / architecture it assumes *already exists* but that isn't here (a React
+   component in an app that isn't React; nginx or Redis behaviour where neither is in the stack) —
+   that's a **confabulation**, not a flag → **stop and escalate** (see step 7 and Guards). Contrast: a
+   ticket that asks to **add** that thing is a normal feature → flag any unknowns and flow. And
+   **within-stack misattribution** — right stack, wrong layer or file (a Workers feature the ticket
+   pins on the Worker when it actually lives in the Pages layer; a thing already built elsewhere) — is
+   drift, not confabulation → flag and flow. Only a **missing-stack** premise stops the flow: a wrong
+   reference or wrong layer is drift; a premise that assumes an absent stack is a wrong ticket.
 
 6. **Write `.dev-flow/<task>/TICKET_CONTEXT.md`** (create the dir if missing) — `<task>` is the
    verified ticket key, so each task's context sits in its own subdirectory and a new run never
@@ -68,12 +88,26 @@ nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
    | <reference> | current / renamed → <new> / deleted / not found / contradicted | <what to do instead> |
    ```
 
-7. **Hand off.** Confirm it's written, summarise the Flags out loud, then point to the next
-   step: `/plan-brief`, or straight into `/plan` mode referencing `.dev-flow/<task>/TICKET_CONTEXT.md`.
+7. **Hand off — don't wait.** Confirm `TICKET_CONTEXT.md` is written and summarise the Flags out loud,
+   then **continue to the next step without pausing for answers**: `/plan-brief`, or straight into
+   `/plan` mode referencing `.dev-flow/<task>/TICKET_CONTEXT.md`. **Do not turn a Flag into a question
+   and stop** — open forks travel forward to the **PLAN gate** (carried in `plan-brief`'s Open
+   Questions), which is where a human decides them. (Run standalone, outside the flow, there is no PLAN
+   gate — the forks simply wait in `TICKET_CONTEXT.md` for you.) The single exception is a **confabulation** (step
+   5): there, the doc you just wrote *is* the evidence — surface it, say plainly why the ticket reads
+   as premised on something the repo isn't, and **let the human override-and-proceed or kill it**.
+   That's a fail-closed escalation (it holds on the auto path too), not a silent abort.
 
 ## Guards
-- **Don't invent.** If a reference is ambiguous, record it under Flags as an open question —
-  never guess a resolution just to make the ticket look clean.
+- **Don't invent.** If a reference is ambiguous, record it under Flags as an **open fork to raise at
+  the PLAN gate** — never guess a resolution just to make the ticket look clean, and never read
+  "open" as "ask the user now."
+- **Don't stop the flow — one exception.** verify-ticket is not a gate. Every mismatch — stale ref,
+  renamed / deleted component, already-built criterion, under-specified detail — is a **Flag**, and the
+  flow continues; decisive forks are raised at the PLAN gate, not here. **Stop only on a confabulation**
+  — a ticket premised on something false about the repo as it is (step 5) — and even then **write the
+  evidence, present it, and let the human override or kill**, rather than aborting silently. Fail-closed:
+  this escalation holds on the auto path too.
 - Used only when there's an **externally-authored** item to reconcile (Jira / GitHub / brief).
   No such item — or a task you defined yourself against current code — → skip this skill and
   start at `/plan-brief`.

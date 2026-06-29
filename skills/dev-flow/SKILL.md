@@ -100,6 +100,9 @@ pushes unreviewed.
    one (e.g. `PROJ-1234`), else a short kebab-case slug of the task (e.g. `add-commit-history`) —
    mirroring the repo's `Notes/<KEY>/` layout. Fix `<task>` once here and use it for every sub-step:
    - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
+     verify-ticket **flags drift and flows on** (it is not a gate — open forks ride forward to the PLAN
+     gate); it escalates to the human only when the ticket is a **confabulation** — premised on
+     something the repo isn't — fail-closed on either path.
    - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-flow/<task>/PLAN_BRIEF.md`.
    - Bug → `/investigate-bug` → `.dev-flow/<task>/BUG_CONTEXT.md`.
 

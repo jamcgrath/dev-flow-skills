@@ -47,7 +47,9 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
    good.
 
 3. **Bound it.** Note what's explicitly **out of scope**, and list **open questions** that need
-   a human decision before building.
+   a human decision before building — **including any unresolved open forks flagged in
+   `TICKET_CONTEXT.md`** (a contradicted criterion, an under-specified value). Carry these forward:
+   this is the channel that gets them to the PLAN gate, so a fork dropped here is lost.
 
 4. **Write `.dev-flow/<task>/PLAN_BRIEF.md`** (create the dir if missing) — `<task>` is the ticket
    key when there is one (reuse the subdirectory `/verify-ticket` made), else a short kebab-case slug
@@ -73,7 +75,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
    [What this change should not touch]
 
    ## Open Questions
-   [Anything needing a human decision before building]
+   [Anything needing a human decision before building — including unresolved open forks carried from TICKET_CONTEXT.md]
    ```
 
 5. **Hand off.** Confirm it's written, then: enter `/plan` mode referencing
@@ -84,5 +86,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
   solution, that belongs in `/plan` mode. Surface the choice as an Open Question instead.
 - **Don't duplicate `TICKET_CONTEXT`.** It already captured the intent, conventions, and flags —
   build on them. If `plan-brief` would mostly restate it, the ticket was simple enough to skip
-  straight to `/plan` mode.
+  straight to `/plan` mode. **One deliberate exception:** carry its **unresolved open forks** into
+  Open Questions (step 3) — those must reach the PLAN gate, and this is the only channel that takes
+  them there.
 - Keep it a first pass: enough to ground plan mode, not an exhaustive audit.
