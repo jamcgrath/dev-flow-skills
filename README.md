@@ -5,9 +5,9 @@ packaged as one installable plugin. It sequences skills you'd otherwise run by h
 structured flow with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
 presentational changes), review before the PR.
 
-The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier around
-the PLAN gate, `/dev-flow <task>` is a thin orchestrator that routes feature vs bug and runs the chain
-below. Outside it, work stays conversational — nothing fires
+The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier and the
+persisted plan (`PLAN.md`) at the PLAN gate, `/dev-flow <task>` is a thin orchestrator that routes
+feature vs bug and runs the chain below. Outside it, work stays conversational — nothing fires
 unless you invoke it.
 
 ## Who it's for
@@ -58,6 +58,13 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
 
 `/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
+
+**You don't have to run the whole flow.** The recon skills — `verify-ticket`, `plan-brief`,
+`investigate-bug` — also work as standalone one-offs: reality-check a ticket, gather plan context, or
+investigate a bug without committing to the pipeline. Run alone, each writes its context file
+(`TICKET_CONTEXT.md` / `PLAN_BRIEF.md` / `BUG_CONTEXT.md`) and stops there; the orchestration the full
+flow layers on — the proportional PLAN gate and the persisted, visualised `.dev-flow/<task>/PLAN.md` —
+only happens under `/dev-flow`.
 
 ## Layout
 
