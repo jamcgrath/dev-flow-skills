@@ -133,13 +133,12 @@ pushes unreviewed.
      contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen), so
      the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're independent: a long linear
      plan gets a TOC but no diagram; a short branchy one gets a diagram but no TOC.) Then the detail
-     below. **Always write the plan to
-     `.dev-flow/<task>/PLAN.md`** (mermaid fences) — the recon gets persisted but the plan didn't, so
-     this is the missing durable record of what was approved; keep it in sync through revisions so the
-     file reflects the approved plan. **On request**, also emit a self-contained `.dev-flow/<task>/PLAN.html`
-     (mermaid loaded from a CDN) for reviewing in a browser without a markdown viewer. Diagrams are
-     best-effort — the prose plan stays the source of truth and approval never stalls on a diagram that
-     won't render. (Human path only: the auto path presents no plan, so trivial fast-tracked tasks get
+     below. The approved plan also gets a durable record at **`.dev-flow/<task>/PLAN.md`** (mermaid
+     fences) — the recon was persisted but the plan wasn't. **Plan mode blocks file writes, so it
+     isn't written here**: persisting it is the first build action (step 5), only once the human
+     approves. **On request**, a `.dev-flow/<task>/PLAN.html` (mermaid from a CDN) is emitted the same
+     way. Diagrams are best-effort — the prose plan stays the source of truth and approval never stalls
+     on a diagram that won't render. (Human path only: the auto path presents no plan, so trivial fast-tracked tasks get
      none of this.) Then **wait for approval** — revise until approved. This is where alignment is
      confirmed and over-reach is caught.
 
@@ -158,8 +157,12 @@ pushes unreviewed.
    swappable for. The REVIEW gate (step 8) is **not** swappable for now — even an unattended run stops
    there for a human before the PR, so nothing reaches a remote unreviewed.)
 
-5. **Build — commit as you go.** On approval (or once auto-approved), build per the plan
-   (`implement-brief` carries the reuse-survey + minimal-build discipline) in **logical increments**:
+5. **Build — commit as you go.** On approval (or once auto-approved): **first, if a human approved the
+   plan at the PLAN gate, persist it** — write the approved plan (and `PLAN.html` if requested) to
+   `.dev-flow/<task>/PLAN.md` before any code change. Plan mode blocked this until now; you still have
+   the approved plan in context, so write that. Skip on the auto path — no plan doc there.
+   Then build per the plan (`implement-brief` carries the reuse-survey + minimal-build discipline) in
+   **logical increments**:
    as each self-contained change is done and sanity-checks clean, `/commit` it **right away** — one
    logical change per commit, Decision Log proportional (per convention). Commit **early and often**
    while the reasoning is fresh; don't defer everything to one big commit at the end. **Stay in
