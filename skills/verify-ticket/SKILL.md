@@ -1,6 +1,6 @@
 ---
 name: verify-ticket
-description: Validate an externally-authored ticket, issue, or brief against the actual codebase before planning — fetch it (Jira via the Atlassian Rovo MCP, a GitHub issue via `gh`, or pasted text), cross-reference every file/component/function/term it mentions against the current repo, and write a corrected .dev-flow/<task>/TICKET_CONTEXT.md. OPTIONAL and tracker-agnostic — use it only when a description written elsewhere needs reality-checking; for an ad-hoc task you defined yourself, skip straight to /plan-brief. Use when the user says "verify ticket", "validate this ticket/issue against the code", or "check the ticket before planning". Catches the stale file refs and renamed components that AI-written tickets are full of.
+description: Validate an externally-authored ticket, issue, or brief against the actual codebase before planning — fetch it (Jira via the Atlassian Rovo MCP, a GitHub issue via `gh`, or pasted text) plus any supplementary context files passed alongside it (handoff discovery notes, prior research), cross-reference every file/component/function/term they mention against the current repo, and write a corrected .dev-flow/<task>/TICKET_CONTEXT.md. OPTIONAL and tracker-agnostic — use it only when a description written elsewhere needs reality-checking; for an ad-hoc task you defined yourself, skip straight to /plan-brief. Use when the user says "verify ticket", "validate this ticket/issue against the code", or "check the ticket before planning". Catches the stale file refs and renamed components that AI-written tickets are full of.
 ---
 
 # verify-ticket
@@ -26,22 +26,33 @@ framed can't even start. *A few wrong file names is drift; a false premise is a 
 to *introduce* something new — a dependency, caching where there's none — is a feature, not a
 confabulation: flag the unknowns and flow.)
 
+**It can reconcile more than the ticket.** Hand it **supplementary context files** alongside the
+ticket — handoff discovery notes, or prior research you've already done (explicit paths in the args,
+zero or more). They're more externally-authored material about the same task, so they get the same
+reality-check, and you **build on** them rather than redoing them. One authority rule keeps it honest:
+**the code is the arbiter.** A note may *resolve* one of the ticket's open questions only when its
+claim checks out against the code (then it's no longer an open fork); where a note and the ticket
+disagree, that's a **flag for the human**, never a silent override.
+
 ## Steps
 
 1. **Get the work item.** Take whatever the user has: a Jira key (`[A-Z][A-Z0-9]+-[0-9]+`), a
    GitHub issue number/URL, or pasted ticket/brief text. If they have none — or they defined the
-   task themselves — this skill doesn't apply; point them to `/plan-brief`.
+   task themselves — this skill doesn't apply; point them to `/plan-brief`. Also take any
+   **supplementary context files** passed alongside it (paths to handoff notes or prior research) —
+   optional, zero or more.
 
 2. **Fetch it** from whichever source it is:
    - **Jira** → the **Atlassian Rovo MCP** (`getJiraIssue` for title/description/acceptance/labels;
      `lookupJiraAccountId` / `searchJiraIssuesUsingJql` only to resolve the key or related issues).
    - **GitHub issue** → `gh issue view <n> --json title,body,labels` (accepts a number or URL).
    - **Pasted text** → use it directly.
+   - **Supplementary files** (if any) → read each path directly.
    If the fetch tool you need (Rovo / `gh`) isn't available, say so in one line and either take the
    text pasted instead or stop — don't work around it.
 
-3. **Extract every concrete reference** the ticket makes: file names, component names, function
-   names, routes, env vars, and domain terminology.
+3. **Extract every concrete reference** the ticket — and any supplementary files — make: file names,
+   component names, function names, routes, env vars, and domain terminology.
 
 4. **Cross-reference each against the current repo** with file search + grep. Hand the broad
    searching to an `Explore` subagent so it stays off the main thread. Classify each reference:
@@ -49,6 +60,10 @@ confabulation: flag the unknowns and flow.)
    - **renamed** — exists under a different name (find and record the new one)
    - **deleted** — gone, nothing equivalent (flag)
    - **not found** — never existed / ambiguous (flag)
+
+   This includes a supplementary file's own code citations — **confirm a note's `file:line` claim
+   against the repo before you lean on it** (build on the review, don't trust it blind). A claim that
+   doesn't check out is a flag, not a resolution.
 
 5. **Check behaviour + terms — and the premise.** Note any behaviour the ticket describes that
    conflicts with how the code actually works, and any terminology that doesn't match the repo's
@@ -64,11 +79,18 @@ confabulation: flag the unknowns and flow.)
    drift, not confabulation → flag and flow. Only a **missing-stack** premise stops the flow: a wrong
    reference or wrong layer is drift; a premise that assumes an absent stack is a wrong ticket.
 
+   A supplementary file may also **resolve** one of the ticket's open questions — record it resolved
+   **only if its claim checked out in step 4** — or **contradict** the ticket, which is a flag, never
+   a silent pick between the two.
+
 6. **Write `.dev-flow/<task>/TICKET_CONTEXT.md`** (create the dir if missing) — `<task>` is the
    verified ticket key, so each task's context sits in its own subdirectory and a new run never
    overwrites the last:
 
    ```
+   ## Sources
+   [The ticket, plus any supplementary files reconciled — so the reader knows what fed this]
+
    ## Intent
    [What the ticket is actually asking for, in plain language]
 
@@ -87,6 +109,12 @@ confabulation: flag the unknowns and flow.)
    |---|---|---|
    | <reference> | current / renamed → <new> / deleted / not found / contradicted | <what to do instead> |
    ```
+
+   When a supplementary file is involved, **cite the source inline** in the existing cells (no extra
+   column): a note that **resolves** a ticket open question and checked out in step 4 gets Action
+   *"resolved by <source>, confirmed <citation> — not carried"*, so `plan-brief` leaves it alone; a
+   note that **conflicts** with the ticket is flagged for the human (Reality reads *"ticket says … /
+   note says …"*), never silently resolved.
 
 7. **Hand off — don't wait.** Confirm `TICKET_CONTEXT.md` is written and summarise the Flags out loud,
    then **continue to the next step without pausing for answers**: `/plan-brief`, or straight into
@@ -108,6 +136,11 @@ confabulation: flag the unknowns and flow.)
   — a ticket premised on something false about the repo as it is (step 5) — and even then **write the
   evidence, present it, and let the human override or kill**, rather than aborting silently. Fail-closed:
   this escalation holds on the auto path too.
+- **Supplementary context is evidence, not truth.** Files handed alongside the ticket (handoff notes,
+  prior research) are reconciled like the ticket, not trusted over it: the **code is the arbiter**, a
+  note closes a fork only when its claim checks out, and a note-vs-ticket conflict is a flag — never a
+  silent override. A design suggestion a note makes is a fork for the PLAN gate, not licence to design
+  here.
 - Used only when there's an **externally-authored** item to reconcile (Jira / GitHub / brief).
   No such item — or a task you defined yourself against current code — → skip this skill and
   start at `/plan-brief`.

@@ -102,7 +102,9 @@ pushes unreviewed.
    - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
      verify-ticket **flags drift and flows on** (it is not a gate — open forks ride forward to the PLAN
      gate); it escalates to the human only when the ticket is a **confabulation** — premised on
-     something the repo isn't — fail-closed on either path.
+     something the repo isn't — fail-closed on either path. If there are handoff/discovery notes or
+     prior research files, pass their paths to `/verify-ticket` too — it reconciles them alongside the
+     ticket (the code stays the arbiter).
    - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-flow/<task>/PLAN_BRIEF.md`.
    - Bug → `/investigate-bug` → `.dev-flow/<task>/BUG_CONTEXT.md`.
 
