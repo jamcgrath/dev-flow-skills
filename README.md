@@ -87,6 +87,26 @@ Then `/dev-flow <task>`, or any individual skill (`/plan-brief`, `/commit`, …)
 The repo is public, so `/plugin marketplace add` works with no special access — it uses your
 existing GitHub auth.
 
+### Updating
+
+This is a third-party marketplace, so it **doesn't auto-update by default** — pull new versions
+manually:
+
+```sh
+/plugin marketplace update dev-flow-skills   # fetch the latest catalog from GitHub
+/reload-plugins                              # activate it in the current session
+```
+
+`/reload-plugins` is the easy-to-miss step — without it the refreshed version doesn't take effect
+until you restart Claude Code. To see what's installed (and toggle things), open `/plugin` → the
+**Marketplaces** / **Installed** tabs. Updates track whatever's on `main`, so "update" means
+"latest commit", not a tagged release.
+
+Prefer it hands-off? Turn on auto-update for this marketplace — `/plugin` → **Marketplaces** →
+enable auto-update on `dev-flow-skills` (or set `"autoUpdate": true` for it in
+`.claude/settings.json`) — and new pushes flow in at startup (you'll just get a `/reload-plugins`
+nudge).
+
 ### For development (live edits)
 
 Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
