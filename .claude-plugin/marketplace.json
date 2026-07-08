@@ -21,6 +21,7 @@
         "./skills/implement-brief",
         "./skills/author-acceptance-tests",
         "./skills/audit-tests",
+        "./skills/verify-build",
         "./skills/commit",
         "./skills/pr",
         "./skills/pr-fix"
