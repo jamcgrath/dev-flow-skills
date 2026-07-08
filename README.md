@@ -5,10 +5,10 @@ packaged as one installable plugin. It sequences skills you'd otherwise run by h
 structured flow with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
 presentational changes), review before the PR.
 
-The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier and the
-persisted plan (`PLAN.md`) at the PLAN gate, `/dev-flow <task>` is a thin orchestrator that routes
-feature vs bug and runs the chain below. Outside it, work stays conversational — nothing fires
-unless you invoke it.
+The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier, the
+persisted plan (`PLAN.md`) at the PLAN gate, and (human path only) two test-integrity checkpoints
+before and after the build, `/dev-flow <task>` is a thin orchestrator that routes feature vs bug and
+runs the chain below. Outside it, work stays conversational — nothing fires unless you invoke it.
 
 ## Who it's for
 
@@ -34,9 +34,15 @@ skills **derive conventions from the codebase they're in — they never assume t
   → plan the approach (ALWAYS) — then:
        · human path → ⏸ PLAN gate: forks surfaced, plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
-  → branch off default (if needed) → build + /commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → branch off default (if needed)
+       · human path only → /author-acceptance-tests → /commit (= base) → /audit-tests
+            → ⏸ audit-gap checkpoint: proceed anyway / strengthen tests first
+  → build + /commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → verify   · human path → /verify-build (fresh subagent, strong model, tries to falsify the change)
+            → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
+       · auto path → read-only checks only
   → /code-review        (Claude Code built-in)
-  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here)
+  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → /pr                 (bots/CI after → /pr-fix)
 ```
 
@@ -53,6 +59,9 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
 | `investigate-bug` | bug recon — systematic investigation via the Chrome DevTools MCP |
 | `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + browser verify |
+| `author-acceptance-tests` | *(human path)* turn acceptance criteria into committed tests, independent of the build, before it starts |
+| `audit-tests` | *(human path)* fresh-subagent adequacy audit of those tests via red-before-green |
+| `verify-build` | *(human path)* fresh-subagent independent falsifier — replaces builder self-checking at verify |
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
@@ -112,7 +121,7 @@ nudge).
 Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
 
 ```sh
-for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief commit pr pr-fix; do
+for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix; do
   ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
 done
 ```
@@ -133,6 +142,16 @@ done
   load-bearing string?) **plus the always-human REVIEW gate**. Any breach or doubt reverts to the human
   gate. The pre-PR **review gate is always human — even an unattended run stops there before pushing** —
   and commits are reversible, so a misclassification is at worst a cheap commit caught at review.
+- **Three test-integrity skills run on the human path only.** `author-acceptance-tests`,
+  `audit-tests`, and `verify-build` turn acceptance criteria into committed tests, audit their
+  red-before-green adequacy, and independently try to falsify the finished build — see
+  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 5–6. They're skipped on the auto
+  (trivial-change) path: it has no acceptance criteria worth pinning down this way, and committing a
+  new test file would itself trip the auto path's own new-file tripwire.
+- **The acceptance-test commit keeps hooks on.** It's intentionally red (the tests reference
+  behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
+  bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill
+  pauses and asks rather than silently retrying with `--no-verify`.
 - **`pr` pushes.** When a remote exists it runs `git push -u origin HEAD` and opens the PR; on a
   local-only repo it writes a `PR_PREVIEW.md` instead of pushing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
