@@ -1,14 +1,15 @@
 ---
 name: dev-flow
-description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → build → verify → commit → code-review → human review → pr), pausing at the human gates. Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running. Beyond that proportional-approval classifier it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
+description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → on the human path, author-acceptance-tests → audit-tests → build → verify-build → commit → code-review → human review → pr), pausing at the human gates and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running — the trivial path skips the acceptance-test machinery too, since it has no acceptance criteria worth pinning down. Beyond that classifier and the two test-integrity escalations it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
 ---
 
 # dev-flow
 
 The one explicit way to **kick off the structured flow**. Beyond the proportional-approval classifier
-around the PLAN gate (steps 2–5), it **adds no behaviour of its own** — it sequences the skills you
-already have and pauses at the same human gates as running them by hand. Running `/dev-flow` ≡ running
-the steps yourself, just from one command.
+around the PLAN gate (steps 2–5) and, on the human path, two test-integrity checkpoints (steps 5–6), it
+**adds no behaviour of its own** — it sequences the skills you already have and pauses at the same
+human gates as running them by hand. Running `/dev-flow` ≡ running the steps yourself, just from one
+command.
 
 It's also the entry an automation/agent would call to run the flow unattended, so it takes the task as
 args and treats the PLAN gate as an **explicit gate** swappable for an auto-approver (without changing
@@ -25,9 +26,15 @@ pushes unreviewed.
   → plan the approach (ALWAYS) — then:
        · human path → ⏸ PLAN gate: surface decisive fork(s), present plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
-  → branch off default (if needed) → build + commit each change → verify   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → branch off default (if needed)
+       · human path only → author-acceptance-tests → commit (= base) → audit-tests
+            → ⏸ audit-gap checkpoint (any criterion with no adequate test?): proceed anyway / strengthen tests first
+  → build + commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
+  → verify   · human path → verify-build (fresh subagent, strong model, tries to falsify the change)
+            → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build / proceed with gap noted / abandon
+       · auto path → read-only checks only
   → code-review
-  → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here)
+  → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → pr
 ```
 
@@ -168,8 +175,33 @@ pushes unreviewed.
    approved plan (and `PLAN.html` if requested) to
    `.dev-flow/<task>/PLAN.md` before any code change. Plan mode blocked this until now; you still have
    the approved plan in context, so write that. Skip on the auto path — no plan doc there.
+
+   **Human path only — author and audit the acceptance tests before writing code.** Skip this whole
+   block on the auto path: a trivial, presentational change has no acceptance criteria worth pinning
+   down this way, and committing new test files would itself trip the auto path's own new-file spread
+   tripwire at Checkpoint 3. On the human path, before any implementation code:
+   - `/author-acceptance-tests` — writes executable acceptance tests from the criteria
+     (`TICKET_CONTEXT.md` if there is one, else the approved plan / task description), independent of
+     the implementation, and commits them. `.dev-flow/<task>/ACCEPTANCE_TESTS.md` records the resulting
+     `base` commit, the protected test paths, and the contracts (data-testids, signatures, endpoints)
+     the build must expose.
+   - `/audit-tests` — spawn as a **fresh subagent** (it must not grade the tests it just wrote) to judge
+     each test's red-at-base adequacy → `.dev-flow/<task>/TEST_AUDIT.md`.
+
+   **⏸ Checkpoint — audit gap.** If `TEST_AUDIT.md`'s summary lists any criterion with no adequate
+   test, stop and ask via `AskUserQuestion`:
+   > "The test audit found `<N>` criteria with no adequate test before the build starts: `<list>`. How
+   > do you want to proceed?"
+   > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
+   >   at verify.
+   > - **Strengthen the tests first** — pause here; revise or add acceptance tests for the flagged
+   >   criteria, then re-run `/audit-tests`.
+   No gap → proceed without asking.
+
    Then build per the plan (`implement-brief` carries the reuse-survey + minimal-build discipline) in
-   **logical increments**:
+   **logical increments** — on the human path, the build must **satisfy**
+   `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must **never edit** a protected
+   acceptance-test file (an edit is what `/verify-build` flags as a tamper breach):
    as each self-contained change is done and sanity-checks clean, `/commit` it **right away** — one
    logical change per commit, Decision Log proportional (per convention). Commit **early and often**
    while the reasoning is fresh; don't defer everything to one big commit at the end. **Stay in
@@ -191,19 +223,38 @@ pushes unreviewed.
    so on the auto path treat such a command as a tripwire and gate *before* running it; and "costs
    nothing irreversible" holds for the tracked-file edits caught here, not for actions already taken.
 
-6. **Verify.** Run the project's checks for the whole change; for UI/behavioural work, verify in the
-   browser and report what was actually observed. `/commit` any fixes this surfaces (still one logical
-   change per commit). **On the auto path, run only read-only checks unattended** (lint / typecheck /
-   static analysis): any **side-effecting** verify/build command (migration, install, deploy, codegen
+6. **Verify.** **Human path — replace self-checking with an independent falsifier.** Spawn
+   `/verify-build` as a **fresh subagent with zero context from the build**, passing it `base` (from
+   `ACCEPTANCE_TESTS.md`), the acceptance criteria, the protected test paths, and `TEST_AUDIT.md`'s
+   adequacy verdicts. Run it at a **strong model regardless of diff size** — never downsized, this is
+   the safety gate. It falsifies against the criteria via each criterion's layer harness + the full
+   suite, adversarially reviews `git diff <base>` for tamper, and writes
+   `.dev-flow/<task>/VERIFICATION.md`.
+
+   **⏸ Checkpoint — verify-build failure.** `verified` → proceed to code review. `falsified` or
+   `couldn't-verify` → stop and ask via `AskUserQuestion`:
+   > "verify-build could not confirm the change: `<one-line reason>`. How do you want to proceed?"
+   > - **Retry the build** — hand the named failing/unverifiable criteria back to the builder as a fix
+   >   task (same `base`, not re-captured), then re-run `/verify-build` as a **new** fresh subagent.
+   > - **Proceed to review with the gap noted** — continue to code review and the REVIEW gate, carrying
+   >   the verdict forward.
+   > - **Abandon** — stop here and report why. No code review, no PR.
+   No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
+
+   **Auto path (unchanged).** Run only read-only checks unattended (lint / typecheck / static
+   analysis): any **side-effecting** verify/build command (migration, install, deploy, codegen
    that pushes, a dev server making network calls) is a tripwire — **drop to the human gate before
-   running it**, since its effects aren't undone by reverting a commit.
+   running it**, since its effects aren't undone by reverting a commit. `/commit` any fixes this
+   surfaces (still one logical change per commit).
 
 7. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
    diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a
    tiny change.
 
 8. **⏸ REVIEW gate — always human (hard stop).** Surface the diff + review for a human sanity-check
-   before the PR. This gate is **not** auto-approved by the classifier, never skipped on the auto path,
+   before the PR — and, when `.dev-flow/<task>/VERIFICATION.md` exists, its verdict and any unresolved
+   criteria, so a "proceed with the gap noted" choice from step 6 is actually seen here, not silently
+   dropped. This gate is **not** auto-approved by the classifier, never skipped on the auto path,
    and (for now) not swappable for an auto-approver: an unattended run **stops here and does not push**
    until a human approves. This is what keeps "every diff is seen before it leaves the repo" true.
 
@@ -212,10 +263,11 @@ pushes unreviewed.
 
 ## Guards
 - **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
-  is deliberately confined to two things: the front-of-flow scaffolding (the readiness scan) and the
-  proportional-approval classifier around the PLAN gate (the tripwire checks + the independent verifier
-  subagent). Everything else parameterises the skills it calls (e.g. code-review effort) — it never
-  reimplements their behaviour.
+  is deliberately confined to a small set of things: the front-of-flow scaffolding (the readiness
+  scan), the proportional-approval classifier around the PLAN gate (the tripwire checks + the
+  independent verifier subagent), and — human path only — two test-integrity checkpoints (the
+  audit-gap pause before the build, the verify-build-failure pause after it). Everything else
+  parameterises the skills it calls (e.g. code-review effort) — it never reimplements their behaviour.
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
 - **Scope discipline.** Never expand past the plan. Anything extra you notice → surface it as a
