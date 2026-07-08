@@ -19,6 +19,7 @@
         "./skills/plan-brief",
         "./skills/investigate-bug",
         "./skills/implement-brief",
+        "./skills/author-acceptance-tests",
         "./skills/commit",
         "./skills/pr",
         "./skills/pr-fix"
