@@ -33,9 +33,9 @@ flowchart TD
     AT["author-acceptance-tests · human path<br/>write + commit tests (= base)"]:::humanpath --> AUD
     AUD["audit-tests · human path · FRESH subagent<br/>red-before-green adequacy"]:::humanpath --> AGCHK
 
-    AGCHK{"any criterion with<br/>no adequate test?"}:::humanpath
-    AGCHK -->|"gap found"| AESC
-    AGCHK -->|clean| BUILD
+    AGCHK{"any <i>inadequate</i><br/>(vacuous-at-base) test?"}:::humanpath
+    AGCHK -->|"inadequate found"| AESC
+    AGCHK -->|"clean or weak-only<br/>(weak rides forward)"| BUILD
 
     AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen tests first"]:::human
     AESC -->|strengthen| AT
@@ -97,5 +97,7 @@ flowchart TD
   the auto path began), and it also catches side-effecting build commands *before* they run.
 - **The two amber checkpoints (audit gap, verify-build failure) are conditional escalations, not new
   structural gates** — the same category as Checkpoint 3's tripwire breach. They only exist on the
-  human path, and only fire when their check finds something (a criterion with no adequate test; a
-  falsified or unverifiable build); a clean run never sees them.
+  human path, and only fire when their check finds something (a criterion with an *inadequate* /
+  vacuous-at-base test; a falsified or unverifiable build); a clean run never sees them. A `weak`
+  (red-by-absence) audit verdict — unavoidable for a net-new pure symbol — does **not** fire the
+  audit-gap pause: it rides forward as a softer verified (surfaced later at verify + the REVIEW gate).

@@ -28,7 +28,7 @@ pushes unreviewed.
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
   → branch off default (if needed)
        · human path only → author-acceptance-tests → commit (= base) → audit-tests
-            → ⏸ audit-gap checkpoint (any criterion with no adequate test?): proceed anyway / strengthen tests first
+            → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides forward as a softer verified): proceed / strengthen
   → build + commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
   → verify   · human path → verify-build (fresh subagent, strong model, tries to falsify the change)
             → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build / proceed with gap noted / abandon
@@ -188,15 +188,28 @@ pushes unreviewed.
    - `/audit-tests` — spawn as a **fresh subagent** (it must not grade the tests it just wrote) to judge
      each test's red-at-base adequacy → `.dev-flow/<task>/TEST_AUDIT.md`.
 
-   **⏸ Checkpoint — audit gap.** If `TEST_AUDIT.md`'s summary lists any criterion with no adequate
-   test, stop and ask via `AskUserQuestion`:
-   > "The test audit found `<N>` criteria with no adequate test before the build starts: `<list>`. How
-   > do you want to proceed?"
-   > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
-   >   at verify.
-   > - **Strengthen the tests first** — pause here; revise or add acceptance tests for the flagged
-   >   criteria, then re-run `/audit-tests`.
-   No gap → proceed without asking.
+   **⏸ Checkpoint — audit gap.** Key the pause off the failure *kind* the audit records, **not** a
+   blanket "no adequate test" — the three verdicts mean different things and only one is an actionable
+   gap a human can fix here:
+   - **`inadequate`** (a test that *passes vacuously at `base`* — it doesn't exercise the new behaviour
+     at all) → **stop and ask** via `AskUserQuestion`; a vacuous pass is genuinely misleading and
+     strengthening is a real remedy:
+     > "The test audit found `<N>` criteria whose tests pass vacuously at base (inadequate — the pass
+     > proves nothing): `<list>`. How do you want to proceed?"
+     > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
+     >   at verify.
+     > - **Strengthen the tests first** — pause here; revise the flagged tests to assert real
+     >   behaviour, then re-run `/audit-tests`.
+   - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
+     bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
+     assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
+     fixable action and "strengthen" is a dead end; a weak test is a *softer verified*, not a gap.
+     Record it and **ride it forward**: `/verify-build` softens its verdict for weak-backed criteria
+     and the REVIEW gate surfaces that softening. Announce in one line ("`<N>` criteria are
+     weak/red-by-absence — verified post-build by the suite, not assertion-proven at base") and
+     proceed. (Manufactured-weak is a fixable author slip, but the softened verify + REVIEW gate still
+     catch it — escalate it to a pause only if the surface-only treatment proves to miss them.)
+   - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
    Then build per the plan (`implement-brief` carries the reuse-survey + minimal-build discipline) in
    **logical increments** — on the human path, the build must **satisfy**

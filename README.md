@@ -36,7 +36,7 @@ skills **derive conventions from the codebase they're in — they never assume t
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
   → branch off default (if needed)
        · human path only → /author-acceptance-tests → /commit (= base) → /audit-tests
-            → ⏸ audit-gap checkpoint: proceed anyway / strengthen tests first
+            → ⏸ audit-gap checkpoint (only an *inadequate*/vacuous-at-base test; weak/red-by-absence rides forward): proceed anyway / strengthen tests first
   → build + /commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
   → verify   · human path → /verify-build (fresh subagent, strong model, tries to falsify the change)
             → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
