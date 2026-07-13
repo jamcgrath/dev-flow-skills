@@ -1,6 +1,6 @@
 ---
 name: implement-brief
-description: Implement a feature brief or MVP spec the lean way — survey existing code first, propose a reuse plan, then build minimally and verify in the browser before committing. Use when the user hands over a structured brief, planning doc, or MVP spec ("implement this brief", "build the features in this spec", "here's the MVP 2.x brief", "implement these features"). Front-loads a reuse survey to prevent over-engineering (the wrapper-instead-of-an-existing-prop class of mistake).
+description: Implement a feature brief or MVP spec the lean way — survey existing code first, propose a reuse plan, then build minimally and verify at the change's layer (browser for UI, tests/DB otherwise) before committing. Use when the user hands over a structured brief, planning doc, or MVP spec ("implement this brief", "build the features in this spec", "here's the MVP 2.x brief", "implement these features"). Front-loads a reuse survey to prevent over-engineering (the wrapper-instead-of-an-existing-prop class of mistake).
 ---
 
 # implement-brief
@@ -28,9 +28,11 @@ Don't skip straight to coding.
 4. **Implement minimally, item by item.** Smallest change that satisfies each item; reuse what
    the plan committed to. No drive-by refactors, extra flags, or redundant deriveds. Stay in scope.
 
-5. **Verify behaviour, not just compilation.** Run the project's lint + typecheck. For
-   UI/behavioural items, verify in a real browser (Playwright/Chrome) and report what you
-   actually observed against the acceptance items.
+5. **Verify behaviour, not just compilation.** Run the project's lint + typecheck, then verify each
+   item **at the layer it lives in** — a real browser (Playwright/Chrome) for UI/behavioural items,
+   the unit/integration runner for logic and API/service items, a seeded DB for data items — and
+   report what you actually observed against the acceptance items. Don't force a backend item through
+   a browser check just because the browser is the default reflex.
 
 6. **Report, then commit.** Summarise each brief item → done / blocked, noting what was reused
    vs newly added. Confirm git state (`git status`), then commit (grouped logically) and push if asked.
