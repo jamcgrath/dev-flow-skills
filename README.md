@@ -58,7 +58,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `verify-ticket` | *(optional)* reconcile an externally-authored ticket/issue/brief against the actual code |
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
 | `investigate-bug` | bug recon — systematic investigation via the Chrome DevTools MCP |
-| `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + browser verify |
+| `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + verify at the change's layer (browser for UI, tests/DB otherwise) |
 | `author-acceptance-tests` | *(human path)* turn acceptance criteria into committed tests, independent of the build, before it starts |
 | `audit-tests` | *(human path)* fresh-subagent adequacy audit of those tests via red-before-green |
 | `verify-build` | *(human path)* fresh-subagent independent falsifier — replaces builder self-checking at verify |
