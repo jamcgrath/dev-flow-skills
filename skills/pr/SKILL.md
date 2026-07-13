@@ -20,13 +20,22 @@ rolls them up (see global CLAUDE.md).
    from the current branch (e.g. `feature/PROJ-1234-paywalls` → `PROJ-1234`). **Only use it if
    present** — many tasks have no key. Never invent one.
 
-3. **Synthesise — don't concatenate.** From the commits' Decision Logs, write one PR body:
+3. **Synthesise — don't concatenate.** If this branch came through `/dev-flow`, first read the flow's
+   evidence — `.dev-flow/<task>/VERIFICATION.md` (verify-build's verdict) and
+   `.dev-flow/<task>/TEST_AUDIT.md` (test adequacy), where `<task>` is the key from step 2 or the sole
+   `.dev-flow/*` dir for this branch — so the body can **lead with the verification** a downstream
+   reviewer needs. Then, from the commits' Decision Logs, write one PR body:
 
    ```markdown
    ## Summary
    <1–2 lines: what this PR does, in plain terms>
 
    Refs: <KEY>            ← include this line ONLY if a key was found
+
+   ### Verification       ← include this whole block ONLY if .dev-flow/<task>/VERIFICATION.md exists
+   **Verdict:** verified | couldn't-verify | falsified — <one-line reason>  (LLM judgment in fresh context, not ground truth)
+   **Test integrity:** <tests added / changed / removed; surface any tamper breach loudly>
+   **Test adequacy:** <from TEST_AUDIT.md — N adequate / N weak / N inadequate; inadequate criteria are unverifiable, weak = red-by-absence only>
 
    ### Decision Log
    **Intent:** <combined goal across the commits>
@@ -39,7 +48,8 @@ rolls them up (see global CLAUDE.md).
    ### Commits
    - <short-sha> <subject>
    ```
-   Omit any Decision Log section that's empty. Merge duplicates; drop decisions reversed later in the branch.
+   Omit any Decision Log section that's empty, and the whole **Verification** block on a standalone PR
+   with no `VERIFICATION.md`. Merge duplicates; drop decisions reversed later in the branch.
 
 4. **Title:** concise imperative covering the branch's theme. Prefix with the key when found:
    `<KEY>: <title>` if a key was detected, otherwise just `<title>`.
