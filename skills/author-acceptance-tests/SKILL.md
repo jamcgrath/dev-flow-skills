@@ -90,6 +90,12 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    `/verify-build` and the builder both read. Record your honest *expectation* per criterion, never
    an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
    replace; leave the verdict to it.
+
+   `Criterion → test` is criterion-keyed; the **`Test catalog` is test-keyed** — **one line per test
+   function**, so a criterion decomposed across surfaces (mobile *and* desktop, several renderers, each
+   variant) gets a line for *each* of its tests instead of collapsing back to one. It exists so a human
+   can skim what is actually being checked without opening every spec file. Say what each test asserts
+   and nothing more — adequacy is `/audit-tests`' verdict, not a column here.
    ```
    ## Base commit
    <sha of the "Add acceptance tests" commit — /verify-build diffs against this>
@@ -101,6 +107,9 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    ## Criterion → test
    - <criterion> → <test name / file>  ·  expected red-at-base: adequate | weak (<why>)  ·  or: unverifiable — <why>
      (expected-* is a *hypothesis* for /audit-tests to confirm — never a verdict)
+
+   ## Test catalog (one line per test function — what each actually asserts)
+   - `<test name>` (<file>) — asserts <the single behaviour it checks>
 
    ## Residual gaps (what a passing test still does NOT prove)
    - <e.g. helper output asserted; its wiring into the rendered DOM is not — no jsdom harness>
