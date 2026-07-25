@@ -128,7 +128,10 @@ pushes unreviewed.
    - **Human path (full gate). ⏸** **First surface the decisive fork(s) as explicit questions** — the
      one or two choices that most change the build (approach, library, in-scope vs deferred) — via
      AskUserQuestion *before* finalising the plan. Don't bury a contested approach as a recommendation
-     the human has to reject to redirect. **Present the plan summary-first** so it can be read at a
+     the human has to reject to redirect. **Put decisions to them, and only decisions.** Anything you
+     could settle by reading the code, running a command, or checking a tool is a **fact** — go and
+     get it. A gate that spends the human's attention on answerable questions buys nothing and trains
+     them to skim the ones that matter. **Present the plan summary-first** so it can be read at a
      glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
      gated on a concrete test — **default to omitting both; add one only when it clearly clears its
      bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),

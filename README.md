@@ -58,7 +58,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `dev-flow` | Orchestrator — the single explicit entry; routes feature/bug and sequences the rest |
 | `verify-ticket` | *(optional)* reconcile an externally-authored ticket/issue/brief against the actual code |
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
-| `investigate-bug` | bug recon — systematic investigation via the Chrome DevTools MCP |
+| `investigate-bug` | bug recon — get it reproducing red at the bug's own layer before any theory, then trace it |
 | `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + verify at the change's layer (browser for UI, tests/DB otherwise) |
 | `author-acceptance-tests` | *(human path)* turn acceptance criteria into committed tests, independent of the build, before it starts |
 | `audit-tests` | *(human path)* fresh-subagent adequacy audit of those tests via red-before-green |
@@ -166,7 +166,8 @@ done
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
   themselves.
 - **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix` use the `gh` CLI and (for Jira) an
-  Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP. Each skill stops and says so in
+  Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP *for UI bugs* (other layers use their
+  own harness — a unit test, `curl`, a seeded query). Each skill stops and says so in
   one line if its tool isn't available — it won't work around a missing tool.
 
 ## License
