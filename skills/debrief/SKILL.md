@@ -80,11 +80,11 @@ starts.
    - **Phases** — Ask · Plan · Build · Verification, two or three lines each, linking to the artifact
      that holds the detail. Absent phases say so.
    - **Views** — the ones that fired in step 3.
-   - **Commits** — a table of **every** commit since `base`, oldest first: sha (linked), subject, the
-     Intent line from its Decision Log, and the files it touched. This is the one section with no
-     artifact behind it — the commit bodies *are* the record of why, and nothing else on the page
-     carries them. The timeline *view* is its visual form when the build is long enough to have a shape;
-     the table is always there regardless.
+   - **Commits** — **every** commit since `base`, oldest first: sha (linked), subject, the Intent line
+     from its Decision Log, and the files it touched. This is the one section with no artifact behind
+     it — the commit bodies *are* the record of why, and nothing else on the page carries them. When
+     the **commit timeline** view fires, it *is* this section, rendered with the shape it earned —
+     never a second copy of the same rows further up the page.
    - **Files changed** — every path with its status and churn.
    - **Artifacts** — a link to every `.dev-flow/<task>/` file present, and to the PR.
 
@@ -109,10 +109,13 @@ starts.
    - **Readable with JS off.** Script may enrich — hover, highlight, redraw — but the content has to be
      there without it.
 
-5. **Open it and hand off.** Open the file with the platform opener (`open` on macOS, `xdg-open` on
-   Linux, `start` on Windows); if none is available, print the path instead. Then confirm in **three
-   lines at most**: the path, which views fired, and anything the evidence couldn't answer. Don't
-   summarise the page in chat — the page *is* the summary.
+5. **Look at it, then hand off.** Open the file with the platform opener (`open` on macOS, `xdg-open`
+   on Linux, `start` on Windows); if none is available, print the path instead. **Actually check it
+   rendered** — every round of building this skill found a defect that only appeared on screen (a
+   proportion silently wrong, a connector implying a relationship that wasn't in the diff, a claim
+   surviving the layout that stopped being true). A page you never looked at is not a debrief. Then
+   confirm in **three lines at most**: the path, which views fired, and anything the evidence couldn't
+   answer. Don't summarise the page in chat — the page *is* the summary.
 
 ## Guards
 - **Grounded, never narrated.** Every claim on the page traces to a commit, a diff stat, or an
