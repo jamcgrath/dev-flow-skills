@@ -42,7 +42,8 @@ starts.
      from `VERIFICATION.md`, the counts from `TEST_AUDIT.md`, the goal from `PLAN_BRIEF.md`) and link
      the rest. An artifact that isn't there is **stated as absent** ("no acceptance tests — auto
      path"), never reconstructed.
-   - `gh pr view --json number,url,title,state` when there's a remote; skip silently when there isn't.
+   - `gh pr view --json number,url,title,state` and `gh repo view --json url` when there's a remote —
+     the PR itself, and the base URL that makes each commit sha a link. No remote → skip both silently.
 
 3. **Pick the views from the shape of the diff.** Render **every** view whose trigger fires, stacked
    as collapsible sections with the first one open, each labelled with why it fired ("5 files across
@@ -57,10 +58,10 @@ starts.
    | **Commit timeline** | ≥3 commits since `base` | how it got built up |
    | **Move map** | any `R` (rename/move) entry in `--name-status` | what went where |
 
-   **Layer by dependency depth, never by directory and never by a guessed stack.** Columns are depth —
-   what references nothing else in the change on the left, what everything points at on the right — so
-   edges run one way and never cross a node. (Column-per-directory looks reasonable and is a trap: an
-   edge passing behind an opaque box reads as a chain that doesn't exist.) Direction comes from imports
+   **Layer by dependency depth, never by directory and never by a guessed stack.** The layers *are*
+   depth — what references nothing else in the change at one end, what everything points at at the
+   other — so edges run one way and never cross a node. (Grouping by directory looks reasonable and is
+   a trap: it forces edges through unrelated boxes.) Direction comes from imports
    where the language exposes them and from **textual references** otherwise, which is what makes the
    view work on a config- or docs-only change. If no edge can be observed at all it **doesn't fire** —
    boxes grouped with no connectors are just the file table again. A hardcoded UI → hook → service →
@@ -69,42 +70,35 @@ starts.
    back to grep only when nothing fits, and cap it, since pairwise grepping a 20-file change is
    quadratic and the diagram isn't worth that.
 
-4. **Write `.dev-flow/<task>/DEBRIEF.html`.** One page, in this order:
-   - **Header** — task, branch, `N commits · N files · +X −Y`, PR link, verification verdict badge.
-   - **Phases** — Ask · Plan · Build · Verification, two or three lines each, each linking to the
-     artifact that holds the detail. Absent phases say so. Build also lists the commits (sha, subject,
-     Intent line) — that data has no artifact to link to, and the timeline *view* is its visual form
-     for when there are enough commits to have a shape.
-   - **Views** — the sections from step 3.
+4. **Write `.dev-flow/<task>/DEBRIEF.html`.** *What's* on the page is fixed; **how it looks is yours** —
+   layout, type, colour, and how each view is drawn are open, and there is no template to match. Build
+   the clearest page for *this* change rather than reproducing the last one. It must carry:
+   - **Header** — task, branch, `N commits · N files · +X −Y`, the PR, the verification verdict.
+   - **Phases** — Ask · Plan · Build · Verification, two or three lines each, linking to the artifact
+     that holds the detail. Absent phases say so. Build also lists the commits (sha, subject, Intent
+     line) — that data has no artifact to link to, and the timeline *view* is its visual form for when
+     there are enough commits to have a shape.
+   - **Views** — the ones that fired in step 3.
    - **Files changed** — every path with its status and churn.
-   - **Artifacts** — a link to every `.dev-flow/<task>/` file present, and the PR.
+   - **Artifacts** — a link to every `.dev-flow/<task>/` file present, and to the PR.
 
-   Build it as **one self-contained file** — inline `<style>` and `<script>`, **no network at all**: no
-   CDN, no mermaid, nothing that stops the page rendering from `file://` offline. Use **DOM + SVG, not
-   canvas**: at this scale divs give you CSS hover, real click targets, crisp text and selectable
-   paths for free, where canvas would mean hand-written hit-testing. Collapse with
-   `<details>`/`<summary>` so the page still works with JS off. Two techniques worth following exactly,
-   because they're the parts that otherwise go wrong:
-   - **Churn map** — nested flex with `flex: <lines changed>` on each box, so the *browser* computes
-     the proportions and nothing can overlap or need hand-computed coordinates. Use the bare-number
-     shorthand: it sets `flex-basis: 0`, where `flex: <n> 1 auto` distributes only the *free* space and
-     silently renders a 34:1 ratio as 2:1. Give boxes a `min-width` and a `title`, keep the name and
-     its counts on one wrapping row so the label survives at that floor, and below ~640px fall back to
-     a plain stacked list — proportional area needs width to read, and the legend must then stop
-     claiming a proportionality the layout isn't showing.
-   - **Layer map** — CSS grid columns plus a single absolutely-positioned `<svg>` overlay, its
-     endpoints read from `getBoundingClientRect()` after layout and recomputed on resize **and on
-     `<details>` toggle** (a collapsed section measures zero). The browser lays out; JS only draws
-     lines between elements it can already measure.
-   - **Commit timeline** — an ordered list, oldest first: sha, subject, the Intent line from the
-     Decision Log, and the files that commit touched. No drawing at all, so nothing here can render
-     wrong; hovering a commit may highlight its files in the table, but the list must stand without JS.
-   - **Move map** — paired `before → after` rows, old path struck through, grouped by the directory
-     things moved *out of*. Connect the pairs with the same measured-endpoint SVG rule as the layer
-     map, or omit the connectors entirely — adjacency already reads as pairing.
+   **Anything nameable is a link wherever a link exists.** A commit sha → `<repo-url>/commit/<sha>`;
+   the PR number → its URL; an artifact → its relative path (`href="PLAN.md"` resolves from `file://`,
+   since the page sits beside it); a changed file → its blob at that sha when there's a remote. Naming
+   a commit and leaving it unclickable is the main way this page wastes the reader's time.
+   **Never fabricate a URL**, and note that having a remote isn't enough: a commit that hasn't been
+   pushed has no page yet (`git branch -r --contains <sha>` comes back empty), so it stays plain text
+   until it does — as does everything else with no destination.
 
-   Link siblings relatively (`href="PLAN.md"`) — they resolve from `file://` because the page sits in
-   the same directory. Support light and dark via `prefers-color-scheme`.
+   Three constraints — all about the page not misleading you, none about how it looks:
+   - **Self-contained and offline.** Inline everything; no CDN, no mermaid, nothing that leaves the
+     page blank when it's opened from `file://` with no network.
+   - **A diagram must never claim more than the data.** If a view encodes magnitude, that encoding has
+     to be true at every width — and where the layout can't carry it (a narrow screen, a legibility
+     floor), drop the claim rather than render a distorted one. Likewise for edges: a connector routed
+     behind an opaque box reads as a relationship that isn't in the diff.
+   - **Readable with JS off.** Script may enrich — hover, highlight, redraw — but the content has to be
+     there without it.
 
 5. **Open it and hand off.** Open the file with the platform opener (`open` on macOS, `xdg-open` on
    Linux, `start` on Windows); if none is available, print the path instead. Then confirm in **three
