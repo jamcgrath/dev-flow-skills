@@ -44,6 +44,7 @@ skills **derive conventions from the codebase they're in — they never assume t
   → /code-review        (Claude Code built-in)
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → /pr                 (bots/CI after → /pr-fix)
+  → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
 
 > 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
@@ -65,6 +66,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
+| `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 
 `/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
 
@@ -121,7 +123,7 @@ nudge).
 Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
 
 ```sh
-for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix; do
+for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix debrief; do
   ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
 done
 ```

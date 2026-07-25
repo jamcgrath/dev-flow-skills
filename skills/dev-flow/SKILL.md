@@ -272,7 +272,8 @@ pushes unreviewed.
    until a human approves. This is what keeps "every diff is seen before it leaves the repo" true.
 
 9. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
-   (Bots/CI comments after → `/pr-fix`.)
+   (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
+   change, linking the artifacts → `/debrief`; opt-in, adds no step and no pause.)
 
 ## Guards
 - **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
