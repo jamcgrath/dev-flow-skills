@@ -8,8 +8,7 @@ description: Kick off the full AI-assisted dev flow for a task in one command �
 The one explicit way to **kick off the structured flow**. Beyond the proportional-approval classifier
 around the PLAN gate (steps 2–5) and, on the human path, two test-integrity checkpoints (steps 5–6), it
 **adds no behaviour of its own** — it sequences the skills you already have and pauses at the same
-human gates as running them by hand. Running `/dev-flow` ≡ running the steps yourself, just from one
-command.
+human gates as running them by hand.
 
 It's also the entry an automation/agent would call to run the flow unattended, so it takes the task as
 args and treats the PLAN gate as an **explicit gate** swappable for an auto-approver (without changing
@@ -65,11 +64,7 @@ pushes unreviewed.
    until there's a file list or a diff, so they bite hardest at the three checkpoints. It is
    re-validated at those checkpoints and reverts to the human gate on any breach (on the
    **you-said-skip** path too: a declared "trivial" can be wrong the same way, and if the work trips a
-   tripwire the premise no longer holds). The classifier is three kinds of check — and be honest about
-   what each does: the **spread** and **impact** tripwires mechanically *exclude* the dangerous cases;
-   they don't *certify* what's left as safe. For the cosmetic edits the auto path is actually for, every
-   spread tripwire passes trivially — so what really protects you is the judgment call **plus the
-   always-human REVIEW gate**; the tripwires just keep the obviously-dangerous off the auto path:
+   tripwire the premise no longer holds). The classifier is three kinds of check:
    - **Spread tripwires** (mechanical) — more than one changed file (count `git status --porcelain`
      lines; a `renamed:` / moved file counts — it breaks imports repo-wide); a new or deleted file; a
      new dependency (manifest diff); an exported-symbol or signature change (grep the diff —
@@ -106,8 +101,8 @@ pushes unreviewed.
 
 3. **Run the front.** Each task's context files live in **their own subdirectory** `.dev-flow/<task>/`,
    so a new run never overwrites a previous task's files. `<task>` is the **ticket key** when there is
-   one (e.g. `PROJ-1234`), else a short kebab-case slug of the task (e.g. `add-commit-history`) —
-   mirroring the repo's `Notes/<KEY>/` layout. Fix `<task>` once here and use it for every sub-step:
+   one (e.g. `PROJ-1234`), else a short kebab-case slug of the task (e.g. `add-commit-history`).
+   Fix `<task>` once here and use it for every sub-step:
    - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
      verify-ticket **flags drift and flows on** (it is not a gate — open forks ride forward to the PLAN
      gate); it escalates to the human only when the ticket is a **confabulation** — premised on
@@ -172,10 +167,6 @@ pushes unreviewed.
      costless veto when a human is watching) and proceed without waiting. Any fail or any doubt → fall
      back to the human path above.
 
-   (Automation: the auto path *is* the auto-approver this PLAN-gate checkpoint was always meant to be
-   swappable for. The REVIEW gate (step 8) is **not** swappable for now — even an unattended run stops
-   there for a human before the PR, so nothing reaches a remote unreviewed.)
-
 5. **Build — commit as you go.** On approval (or once auto-approved): **first, get on a task branch.**
    If you're on the repo's default branch (`main` / `master`), create one before any commit —
    `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one (e.g.
@@ -226,9 +217,8 @@ pushes unreviewed.
    `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must **never edit** a protected
    acceptance-test file (an edit is what `/verify-build` flags as a tamper breach):
    as each self-contained change is done and sanity-checks clean, `/commit` it **right away** — one
-   logical change per commit, Decision Log proportional (per convention). Commit **early and often**
-   while the reasoning is fresh; don't defer everything to one big commit at the end. **Stay in
-   scope** — no changes beyond the plan.
+   logical change per commit, Decision Log proportional (per convention), while the reasoning is
+   fresh. **Stay in scope** — the plan is the contract.
 
    **Checkpoint 3 — before each commit (auto path; the real gate).** Capture `base = git rev-parse HEAD`
    when the auto path's build starts (if that fails — e.g. an unborn branch with no commits — fail
@@ -291,12 +281,12 @@ pushes unreviewed.
   scan), the proportional-approval classifier around the PLAN gate (the tripwire checks + the
   independent verifier subagent), and — human path only — two test-integrity checkpoints (the
   audit-gap pause before the build, the verify-build-failure pause after it). Everything else
-  parameterises the skills it calls (e.g. code-review effort) — it never reimplements their behaviour.
+  parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them.
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
-- **Scope discipline.** Never expand past the plan. Anything extra you notice → surface it as a
-  follow-up at the end, don't silently do it. On the human path the PLAN gate is the contract; on the
-  auto path the classifier's eligibility criteria + the per-commit tripwire are.
+- **Scope discipline.** Build exactly what was agreed. Anything extra you notice → surface it as a
+  follow-up at the end. On the human path the PLAN gate is the contract; on the auto path the
+  classifier's eligibility criteria + the per-commit tripwire are.
 - **Proportional approval, never proportional review.** The auto path skips only the *human approval*
   of the plan, and only while the classifier holds — it **never** skips recon, planning, the
   per-commit tripwire, code-review, or the REVIEW gate (step 8). Every diff is still seen before it
@@ -308,4 +298,4 @@ pushes unreviewed.
   misclassification at worst a reversible local commit, so never route around it.
 - **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), the
   Checkpoint-2 verifier can't be reached or answers ambiguously, or a gate is rejected — stop and
-  report, or drop to the human gate. Never work around it or fail open to "proceed".
+  report, or drop to the human gate. Those two are the whole set of moves available here.
