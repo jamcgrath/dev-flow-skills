@@ -22,10 +22,14 @@ starts.
 
 ## Steps
 
-1. **Locate the run.** Resolve `<task>` the way `/pr` does: the first `[A-Z][A-Z0-9]+-[0-9]+` match in
-   the branch name, else the sole `.dev-flow/*` dir for this branch. **No `.dev-flow/<task>/` → stop
-   and say so** — this is a dev-flow epilogue, and recon always runs on both paths, so the directory
-   exists after any real run. Then resolve `base`: the base commit recorded in
+1. **Locate the run.** Resolve `<task>` in this order — `.dev-flow/` is git-ignored and never cleaned,
+   so a real repo has **many** run directories by the time anyone runs this: the first
+   `[A-Z][A-Z0-9]+-[0-9]+` match in the branch name (as `/pr` does); else the `.dev-flow/*` dir whose
+   name matches the branch slug — `/dev-flow` names the branch *from* `<task>`, so on a keyless task
+   they are the same string; else the sole `.dev-flow/*` dir; else **ask which run to debrief** rather
+   than guessing, since debriefing the wrong task is worse than a question. **No `.dev-flow/<task>/`
+   at all → stop and say so** — this is a dev-flow epilogue, and recon always runs on both paths, so
+   the directory exists after any real run. Then resolve `base`: the base commit recorded in
    `.dev-flow/<task>/ACCEPTANCE_TESTS.md` (human path only — the auto path never writes that file),
    else `git merge-base` against the default branch.
 
@@ -42,8 +46,9 @@ starts.
 
 3. **Pick the views from the shape of the diff.** Render **every** view whose trigger fires, stacked
    as collapsible sections with the first one open, each labelled with why it fired ("5 files across
-   3 directories"). No trigger fires → the files table alone, plus a line saying the change was too
-   small to need a diagram. Never draw a view whose trigger didn't fire just to fill the page.
+   3 directories"). A view whose trigger didn't fire is **left off the page entirely** — not stubbed
+   with an empty section explaining its own absence, which is noise wearing the costume of rigour. No
+   trigger fires → the files table alone, plus one line saying the change was too small to diagram.
 
    | View | Fires when | Answers |
    |---|---|---|
@@ -59,7 +64,10 @@ starts.
    where the language exposes them and from **textual references** otherwise, which is what makes the
    view work on a config- or docs-only change. If no edge can be observed at all it **doesn't fire** —
    boxes grouped with no connectors are just the file table again. A hardcoded UI → hook → service →
-   data taxonomy is wrong in most repos.
+   data taxonomy is wrong in most repos. **Use the best tool available to find the edges** — an
+   import/dependency-graph MCP, a usage indexer, or an LSP answers "what references X" directly; fall
+   back to grep only when nothing fits, and cap it, since pairwise grepping a 20-file change is
+   quadratic and the diagram isn't worth that.
 
 4. **Write `.dev-flow/<task>/DEBRIEF.html`.** One page, in this order:
    - **Header** — task, branch, `N commits · N files · +X −Y`, PR link, verification verdict badge.
@@ -88,6 +96,12 @@ starts.
      endpoints read from `getBoundingClientRect()` after layout and recomputed on resize **and on
      `<details>` toggle** (a collapsed section measures zero). The browser lays out; JS only draws
      lines between elements it can already measure.
+   - **Commit timeline** — an ordered list, oldest first: sha, subject, the Intent line from the
+     Decision Log, and the files that commit touched. No drawing at all, so nothing here can render
+     wrong; hovering a commit may highlight its files in the table, but the list must stand without JS.
+   - **Move map** — paired `before → after` rows, old path struck through, grouped by the directory
+     things moved *out of*. Connect the pairs with the same measured-endpoint SVG rule as the layer
+     map, or omit the connectors entirely — adjacency already reads as pairing.
 
    Link siblings relatively (`href="PLAN.md"`) — they resolve from `file://` because the page sits in
    the same directory. Support light and dark via `prefers-color-scheme`.
