@@ -139,8 +139,12 @@ pushes unreviewed.
      bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),
      has steps that depend on each other out of order, fans out across several files/components, or
      loops; a purely sequential plan needs none, the numbered steps already are the flow. **Draw it in
-     whatever form renders on the surface it's read on** — here that's the terminal, where a plain-text
-     sketch is legible and a mermaid fence is just source the human has to parse in their head. A
+     whatever form renders on the surface it's read on.** Here that's the terminal, so **never emit a
+     mermaid fence at this gate** — Claude Code shows it as its own source, which is strictly worse
+     than no diagram: it costs the reader a wall of syntax and gives back nothing. Draw a plain-text
+     one instead, in a fenced block so it stays monospaced and its alignment holds. The ASCII flow at
+     the top of this file, and the one in the README, are the bar — legible at a glance, no renderer
+     required. A
      **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen),
      so the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're
      independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a diagram but
