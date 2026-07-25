@@ -70,15 +70,21 @@ starts.
    back to grep only when nothing fits, and cap it, since pairwise grepping a 20-file change is
    quadratic and the diagram isn't worth that.
 
-4. **Write `.dev-flow/<task>/DEBRIEF.html`.** *What's* on the page is fixed; **how it looks is yours** —
-   layout, type, colour, and how each view is drawn are open, and there is no template to match. Build
-   the clearest page for *this* change rather than reproducing the last one. It must carry:
+4. **Write `.dev-flow/<task>/DEBRIEF.html`.** *What's* on the page is fixed; **how it looks is entirely
+   yours** — layout, type, colour, structure, and how each view is drawn are all open, there is no
+   template to match, and matching the last debrief you made is not a goal. Build the clearest page for
+   *this* change. **If a visual-design skill is installed** (`frontend-design` or similar), read it
+   first and follow it — this page is UI and that is what such a skill is for; with none available,
+   use your own judgement. It must carry:
    - **Header** — task, branch, `N commits · N files · +X −Y`, the PR, the verification verdict.
    - **Phases** — Ask · Plan · Build · Verification, two or three lines each, linking to the artifact
-     that holds the detail. Absent phases say so. Build also lists the commits (sha, subject, Intent
-     line) — that data has no artifact to link to, and the timeline *view* is its visual form for when
-     there are enough commits to have a shape.
+     that holds the detail. Absent phases say so.
    - **Views** — the ones that fired in step 3.
+   - **Commits** — a table of **every** commit since `base`, oldest first: sha (linked), subject, the
+     Intent line from its Decision Log, and the files it touched. This is the one section with no
+     artifact behind it — the commit bodies *are* the record of why, and nothing else on the page
+     carries them. The timeline *view* is its visual form when the build is long enough to have a shape;
+     the table is always there regardless.
    - **Files changed** — every path with its status and churn.
    - **Artifacts** — a link to every `.dev-flow/<task>/` file present, and to the PR.
 
@@ -90,9 +96,12 @@ starts.
    pushed has no page yet (`git branch -r --contains <sha>` comes back empty), so it stays plain text
    until it does — as does everything else with no destination.
 
-   Three constraints — all about the page not misleading you, none about how it looks:
+   Four constraints — the rest of the design is open, but these hold:
    - **Self-contained and offline.** Inline everything; no CDN, no mermaid, nothing that leaves the
      page blank when it's opened from `file://` with no network.
+   - **Light and dark both.** Honour `prefers-color-scheme` at minimum; a manual toggle on top is
+     welcome, since it's the only way to see the other mode without changing an OS setting. Neither
+     mode is the afterthought — check the contrast of *both*, especially on anything colour-coded.
    - **A diagram must never claim more than the data.** If a view encodes magnitude, that encoding has
      to be true at every width — and where the layout can't carry it (a narrow screen, a legibility
      floor), drop the claim rather than render a distorted one. Likewise for edges: a connector routed
