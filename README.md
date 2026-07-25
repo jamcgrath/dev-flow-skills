@@ -44,6 +44,7 @@ skills **derive conventions from the codebase they're in — they never assume t
   → /code-review        (Claude Code built-in)
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → /pr                 (bots/CI after → /pr-fix)
+  → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
 
 > 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
@@ -57,7 +58,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `dev-flow` | Orchestrator — the single explicit entry; routes feature/bug and sequences the rest |
 | `verify-ticket` | *(optional)* reconcile an externally-authored ticket/issue/brief against the actual code |
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
-| `investigate-bug` | bug recon — systematic investigation via the Chrome DevTools MCP |
+| `investigate-bug` | bug recon — get it reproducing red at the bug's own layer before any theory, then trace it |
 | `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + verify at the change's layer (browser for UI, tests/DB otherwise) |
 | `author-acceptance-tests` | *(human path)* turn acceptance criteria into committed tests, independent of the build, before it starts |
 | `audit-tests` | *(human path)* fresh-subagent adequacy audit of those tests via red-before-green |
@@ -65,6 +66,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
+| `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 
 `/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
 
@@ -121,7 +123,7 @@ nudge).
 Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
 
 ```sh
-for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix; do
+for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix debrief; do
   ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
 done
 ```
@@ -164,7 +166,8 @@ done
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
   themselves.
 - **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix` use the `gh` CLI and (for Jira) an
-  Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP. Each skill stops and says so in
+  Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP *for UI bugs* (other layers use their
+  own harness — a unit test, `curl`, a seeded query). Each skill stops and says so in
   one line if its tool isn't available — it won't work around a missing tool.
 
 ## License

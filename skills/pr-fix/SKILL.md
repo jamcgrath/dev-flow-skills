@@ -28,7 +28,7 @@ Clears a PR's review feedback end-to-end: fetch every comment, fix what's real, 
 
 4. **Apply actionable fixes, one at a time.** Keep each change minimal and in-scope — reuse existing patterns, no drive-by refactors (see global "Solve it the lean way").
 
-5. **Verify.** Run the project's lint + typecheck (this repo: `pnpm lint` / `pnpm check`, or the package's own scripts). For UI/behavioural fixes, verify in the browser. Report what you observed.
+5. **Verify.** Run the project's lint + typecheck, using the commands the repo actually declares (its manifest scripts, task runner, or CI config) — read them, don't guess a package manager. For UI/behavioural fixes, verify in the browser. Report what you observed.
 
 6. **Reply to every thread.** Reply to each inline comment in its own thread so it threads correctly:
    `gh api repos/{owner}/{repo}/pulls/{N}/comments -f body='<reply>' -F in_reply_to=<comment_id>`
