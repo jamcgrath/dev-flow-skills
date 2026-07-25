@@ -48,19 +48,25 @@ starts.
    | View | Fires when | Answers |
    |---|---|---|
    | **Churn map** | ≥4 changed files across ≥2 directories | where the weight landed |
-   | **Layer map** | the changed files fall into ≥3 distinguishable groups | how the pieces connect |
+   | **Layer map** | references or imports observable *between* the changed files | how the pieces connect |
    | **Commit timeline** | ≥3 commits since `base` | how it got built up |
    | **Move map** | any `R` (rename/move) entry in `--name-status` | what went where |
 
-   **Derive the layers, never assume a stack.** Group by directory under the source root and order the
-   columns by the import direction you can actually observe among the changed files. Where imports
-   can't be read — a language you can't parse, non-code files — group by directory and draw no
-   connectors. A hardcoded UI → hook → service → data taxonomy is wrong in most repos.
+   **Layer by dependency depth, never by directory and never by a guessed stack.** Columns are depth —
+   what references nothing else in the change on the left, what everything points at on the right — so
+   edges run one way and never cross a node. (Column-per-directory looks reasonable and is a trap: an
+   edge passing behind an opaque box reads as a chain that doesn't exist.) Direction comes from imports
+   where the language exposes them and from **textual references** otherwise, which is what makes the
+   view work on a config- or docs-only change. If no edge can be observed at all it **doesn't fire** —
+   boxes grouped with no connectors are just the file table again. A hardcoded UI → hook → service →
+   data taxonomy is wrong in most repos.
 
 4. **Write `.dev-flow/<task>/DEBRIEF.html`.** One page, in this order:
    - **Header** — task, branch, `N commits · N files · +X −Y`, PR link, verification verdict badge.
    - **Phases** — Ask · Plan · Build · Verification, two or three lines each, each linking to the
-     artifact that holds the detail. Absent phases say so.
+     artifact that holds the detail. Absent phases say so. Build also lists the commits (sha, subject,
+     Intent line) — that data has no artifact to link to, and the timeline *view* is its visual form
+     for when there are enough commits to have a shape.
    - **Views** — the sections from step 3.
    - **Files changed** — every path with its status and churn.
    - **Artifacts** — a link to every `.dev-flow/<task>/` file present, and the PR.
@@ -72,11 +78,16 @@ starts.
    `<details>`/`<summary>` so the page still works with JS off. Two techniques worth following exactly,
    because they're the parts that otherwise go wrong:
    - **Churn map** — nested flex with `flex: <lines changed>` on each box, so the *browser* computes
-     the proportions and nothing can overlap or need hand-computed coordinates. Give boxes a
-     `min-width` and a `title` so a 2-line change stays hoverable.
-   - **Layer map** — CSS grid columns for the groups plus a single absolutely-positioned `<svg>`
-     overlay, its endpoints read from `getBoundingClientRect()` after layout and recomputed on resize.
-     The browser lays out; JS only draws lines between elements it can already measure.
+     the proportions and nothing can overlap or need hand-computed coordinates. Use the bare-number
+     shorthand: it sets `flex-basis: 0`, where `flex: <n> 1 auto` distributes only the *free* space and
+     silently renders a 34:1 ratio as 2:1. Give boxes a `min-width` and a `title`, keep the name and
+     its counts on one wrapping row so the label survives at that floor, and below ~640px fall back to
+     a plain stacked list — proportional area needs width to read, and the legend must then stop
+     claiming a proportionality the layout isn't showing.
+   - **Layer map** — CSS grid columns plus a single absolutely-positioned `<svg>` overlay, its
+     endpoints read from `getBoundingClientRect()` after layout and recomputed on resize **and on
+     `<details>` toggle** (a collapsed section measures zero). The browser lays out; JS only draws
+     lines between elements it can already measure.
 
    Link siblings relatively (`href="PLAN.md"`) — they resolve from `file://` because the page sits in
    the same directory. Support light and dark via `prefers-color-scheme`.
