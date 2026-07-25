@@ -47,6 +47,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
 
 4. **Write the structured verdict** to `.dev-flow/<task>/VERIFICATION.md`:
    ```
+   ## Scope
+   - repo: <path or name of the repository this verdict covers>  · branch: <branch> · base..HEAD: <sha>..<sha>
+   - directed: <none | what you were pointed at, and by whom>
+
    ## Verdict
    verified | couldn't-verify | falsified   — <one-line reason>
 
@@ -57,6 +61,13 @@ accumulates the builder's state is just the self-grading this skill exists to re
    - tests added / changed / removed: <counts>
    - tamper breaches: <none | the specific weakened/vacuous/edited-acceptance findings>
    ```
+   **Name what the verdict covers.** A verdict that doesn't state its target can't be audited later — a
+   change spanning two repositories, verified in one, reads exactly like a change verified in full.
+   **`directed:`** records anything you were *pointed at* rather than reached from the diff and the
+   criteria alone. Being told where to look is legitimate and often efficient, but this skill's claim is
+   a verdict reached **independently**, so a directed finding has to be legible as one — otherwise the
+   property erodes silently and nobody can tell afterwards. `none` is the normal answer.
+
    **Factor adequacy first** (from `TEST_AUDIT.md`): a criterion whose test is `inadequate` does **not**
    count as verified even if it now passes — a vacuous pass is not a pass → `unverifiable` for that
    criterion. A `weak` test counts as a pass but is **flagged** (red-by-absence only). Only `adequate`
