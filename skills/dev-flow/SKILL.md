@@ -136,17 +136,23 @@ pushes unreviewed.
      the human has to reject to redirect. **Present the plan summary-first** so it can be read at a
      glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
      gated on a concrete test — **default to omitting both; add one only when it clearly clears its
-     bar.** A mermaid **flowchart** when the approach is *non-linear* — it branches (conditional paths),
+     bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),
      has steps that depend on each other out of order, fans out across several files/components, or
-     loops; a purely sequential plan needs none, the numbered steps already are the flow. A **table of
-     contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen), so
-     the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're independent: a long linear
-     plan gets a TOC but no diagram; a short branchy one gets a diagram but no TOC.) Then the detail
-     below. The approved plan also gets a durable record at **`.dev-flow/<task>/PLAN.md`** (mermaid
-     fences) — the recon was persisted but the plan wasn't. **Plan mode blocks file writes, so it
-     isn't written here**: persisting it is the first build action (step 5), only once the human
-     approves. **On request**, a `.dev-flow/<task>/PLAN.html` (mermaid from a CDN) is emitted the same
-     way. Diagrams are best-effort — the prose plan stays the source of truth and approval never stalls
+     loops; a purely sequential plan needs none, the numbered steps already are the flow. **Draw it in
+     whatever form renders on the surface it's read on** — here that's the terminal, where a plain-text
+     sketch is legible and a mermaid fence is just source the human has to parse in their head. A
+     **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen),
+     so the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're
+     independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a diagram but
+     no TOC.) Then the detail below. The approved plan also gets a durable record at
+     **`.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. Same rule there, and
+     note `.dev-flow/` is **git-ignored**, so nothing ever renders that file's markdown: keep any
+     diagram readable as plain text. **Plan mode blocks file writes, so it isn't written here**:
+     persisting it is the first build action (step 5), only once the human approves. **On request**, a
+     `.dev-flow/<task>/PLAN.html` is emitted the same way — self-contained, drawing its own diagram
+     with **no CDN**, so it still opens with no network. (A **committed** doc read on GitHub is the one
+     surface where a mermaid fence genuinely renders — that's why `docs/dev-flow.md` uses one.)
+     Diagrams are best-effort — the prose plan stays the source of truth and approval never stalls
      on a diagram that won't render. (Human path only: the auto path presents no plan, so trivial fast-tracked tasks get
      none of this.) Then **wait for approval** — revise until approved. This is where alignment is
      confirmed and over-reach is caught.
