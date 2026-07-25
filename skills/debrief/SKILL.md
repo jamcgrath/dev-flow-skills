@@ -10,15 +10,11 @@ synthesises the branch for whoever decides whether to merge it; nothing else is 
 who ran the flow and wants to see what actually happened. This renders that — one self-contained HTML
 page you open in a browser, so the change can be *seen* instead of read.
 
-**It links, it doesn't restate.** `PLAN.md`, `TEST_AUDIT.md`, `VERIFICATION.md` and the rest already
-hold the detail and sit in the same directory. The page is a hub over them: a few lines per phase and
-a link out. Copying their contents onto it would just rebuild the wall of markdown this exists to
-replace.
-
-**Opt-in and terminal.** It runs only when invoked. It writes one file, touches nothing else,
-introduces no gate and no pause, and nothing downstream reads its output. It doesn't verify, fix,
-commit, or act on anything it notices — a follow-up it surfaces is a note on the page, not a task it
-starts.
+**It links rather than restates, and it stays out of the way.** `PLAN.md`, `TEST_AUDIT.md`,
+`VERIFICATION.md` and the rest already hold the detail and sit in the same directory, so the page is a
+hub over them — copying their contents onto it would just rebuild the wall of markdown this exists to
+replace. It runs only when invoked, and acts on nothing it notices: a follow-up it surfaces is a note
+on the page, not a task it starts.
 
 ## Steps
 
@@ -122,24 +118,21 @@ starts.
 
 5. **Look at it, then hand off.** Open the file with the platform opener (`open` on macOS, `xdg-open`
    on Linux, `start` on Windows); if none is available, print the path instead. **Actually check it
-   rendered** — every round of building this skill found a defect that only appeared on screen (a
-   proportion silently wrong, a connector implying a relationship that wasn't in the diff, a claim
-   surviving the layout that stopped being true). A page you never looked at is not a debrief. Then
+   rendered.** This page's characteristic failures are invisible in the source and obvious on screen:
+   a proportion silently wrong, a connector implying a relationship absent from the diff, a claim
+   outliving the layout that made it true. A page you never looked at is not a debrief. Then
    confirm in **three lines at most**: the path, which views fired, and anything the evidence couldn't
    answer. Don't summarise the page in chat — the page *is* the summary.
 
 ## Guards
 - **Grounded, never narrated.** Every claim on the page traces to a commit, a diff stat, or an
-  artifact file. Writing it from what you remember of the session is exactly the drift the rest of
-  this flow exists to catch — `verify-ticket` reality-checks tickets and `audit-tests`/`verify-build`
-  run fresh precisely so nothing grades its own account of itself.
+  artifact file — writing it from session memory is the drift the rest of this flow exists to catch.
 - **Absent means absent.** A missing artifact is reported as missing. Never infer what the plan
   "would have said" or what verification "probably found".
 - **Link, don't copy.** If a section is turning into a transcript of an artifact, cut it to its
   headline and link out.
 - **Proportional diagrams.** A view is drawn only when its trigger fires; a two-file change gets a
   files table and no diagram at all. Same bar the PLAN gate applies to its flowcharts.
-- **Read-only except the one file.** It writes `.dev-flow/<task>/DEBRIEF.html` and nothing else — no
-  commits, no fixes, no `.git/`, no `.gitignore`.
-- **Terminal, not a gate.** It never pauses, never blocks, and adds no step to `/dev-flow`. Nothing
-  reads its output but you.
+- **Read-only, and terminal.** It writes `.dev-flow/<task>/DEBRIEF.html` and nothing else — no
+  commits, no fixes, no `.git/`, no `.gitignore` — and adds no step, gate or pause to `/dev-flow`.
+  Nothing reads its output but you.
