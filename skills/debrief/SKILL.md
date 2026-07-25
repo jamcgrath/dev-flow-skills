@@ -77,6 +77,15 @@ starts.
    first and follow it — this page is UI and that is what such a skill is for; with none available,
    use your own judgement. It must carry:
    - **Header** — task, branch, `N commits · N files · +X −Y`, the PR, the verification verdict.
+   - **The short version** — a plain-prose summary, at the very top, **written to be read aloud**:
+     what the task was, what actually got done, where it now stands, and what's still open. It is the
+     one part of the page a person could take to stand-up and say verbatim, so keep it in the register
+     you'd speak in — **no shas, no file paths, no counts** (everything below carries those), and no
+     jargon a teammate outside the task wouldn't follow. As long as it needs to be to land, and not a
+     line longer; a couple of sentences for a small fix, a few short paragraphs when the work turned.
+     Say the awkward parts out loud too — what isn't finished, what wasn't verified, what's blocked —
+     since a summary that only reports success is the one nobody trusts twice. Every claim still comes
+     from the commits and the artifacts, never from memory of the session.
    - **Phases** — Ask · Plan · Build · Verification, two or three lines each, linking to the artifact
      that holds the detail. Absent phases say so.
    - **Views** — the ones that fired in step 3.
