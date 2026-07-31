@@ -67,6 +67,7 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
+| `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
 `/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
 
@@ -77,12 +78,18 @@ investigate a bug without committing to the pipeline. Run alone, each writes its
 flow layers on — the proportional PLAN gate and the persisted, visualised `.dev-flow/<task>/PLAN.md` —
 only happens under `/dev-flow`.
 
+`discuss` goes further: it isn't part of the flow at all. `/dev-flow` never invokes it and never reads
+what it writes. Its natural slot is upstream of `plan-brief` — settle *what* you're doing and why
+before gathering context on how — but it's equally for work that never reaches a codebase, like
+standing up infrastructure or choosing a tool. Invoke it deliberately or not at all; it's marked
+`disable-model-invocation`, so it will never start an interrogation on its own.
+
 ## Layout
 
 ```
 dev-flow-skills/
   .claude-plugin/marketplace.json   # makes the set installable as a plugin
-  skills/<name>/SKILL.md            # one folder per skill
+  skills/<name>/SKILL.md            # one folder per skill — auto-discovered
 ```
 
 ## Install
