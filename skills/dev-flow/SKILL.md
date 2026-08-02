@@ -215,8 +215,10 @@ pushes unreviewed.
      catch it — escalate it to a pause only if the surface-only treatment proves to miss them.)
    - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
-   Then build per the plan (`implement-brief` carries the reuse-survey + minimal-build discipline) in
-   **logical increments** — on the human path, the build must **satisfy**
+   Then build per the plan in **logical increments**, applying `implement-brief`'s reuse-survey +
+   minimal-build discipline — but **not** its own approval pause or its layer-verification step: the
+   PLAN gate already approved the approach, and step 6's `/verify-build` owns verification here.
+   On the human path, the build must **satisfy**
    `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must **never edit** a protected
    acceptance-test file (an edit is what `/verify-build` flags as a tamper breach):
    as each self-contained change is done and sanity-checks clean, `/commit` it **right away** — one

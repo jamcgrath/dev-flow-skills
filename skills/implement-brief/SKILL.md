@@ -25,6 +25,11 @@ Don't skip straight to coding.
 
    Flag anywhere you're adding a new abstraction, with the reason in one line. Wait for my OK.
 
+   **Inside `/dev-flow`, don't pause here** — the PLAN gate approved the approach already, and a
+   second approval spends the human's attention on a decision they just made. Fold the reuse table
+   into the build and carry on. A reuse call that genuinely contradicts the approved plan is a
+   *scope breach*, so raise that — don't re-open the gate for the ones that don't.
+
 4. **Implement minimally, item by item.** Smallest change that satisfies each item; reuse what
    the plan committed to. No drive-by refactors, extra flags, or redundant deriveds. Stay in scope.
 
@@ -34,10 +39,17 @@ Don't skip straight to coding.
    report what you actually observed against the acceptance items. Don't force a backend item through
    a browser check just because the browser is the default reflex.
 
+   **Inside `/dev-flow`, stop at lint + typecheck plus a cheap smoke check.** There, `/verify-build`
+   runs this same layer matrix straight afterwards from a fresh context that never saw the build —
+   so running it here costs a second full harness pass and proves nothing the independent one won't,
+   and the builder's own green is exactly the self-certification that flow exists to replace.
+   Standalone, this step is the **only** verification the work gets, so do it in full.
+
 6. **Report, then commit.** Summarise each brief item → done / blocked, noting what was reused
    vs newly added. Confirm git state (`git status`), then commit (grouped logically) and push if asked.
 
 ## Notes
 - The reuse survey + plan-confirm in steps 2–3 *is* the point of this skill — don't collapse it
-  into "I'll just start coding."
+  into "I'll just start coding." (Inside `/dev-flow` only the *confirm* drops away, per step 3 —
+  the survey and the table still happen; skipping those would collapse exactly what this is for.)
 - For a large brief, build and verify in slices rather than one giant pass.
