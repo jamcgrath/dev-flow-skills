@@ -48,7 +48,8 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    wrong reason): UI → behaviour + `data-testid`s; logic → function signature + return values; API →
    endpoint + request/response shape; data → query results. Be **falsify-minded** — include the edge and
    error cases, not just the happy path. The tests reference contracts that don't exist yet — that's the
-   bar: **the tests define the contract, the builder implements to it.**
+   bar: **the tests define the contract, the builder implements to it** — the *contract*, note, not
+   the fixtures: the builder has to generalize past whatever values these tests happen to assert.
 
    **Write so the red-before-green failure is a real assertion, not mere absence.** A fresh auditor
    (`/audit-tests`) grades each test on *how* it fails at `base`: an **assertion** failure (the code

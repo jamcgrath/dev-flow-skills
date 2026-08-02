@@ -154,7 +154,12 @@ done
 - **Three test-integrity skills run on the human path only.** `author-acceptance-tests`,
   `audit-tests`, and `verify-build` turn acceptance criteria into committed tests, audit their
   red-before-green adequacy, and independently try to falsify the finished build — see
-  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 5–6. They're skipped on the auto
+  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 5–6. What that machinery defends is the
+  tests' integrity against the *build*; what it can't catch is a build that satisfies them
+  **literally** — a hardcoded expected value, a special-cased fixture, a `data-testid` on a stub —
+  because nothing has been tampered with and everything goes green. So the build step also points the
+  work at the criteria rather than the tests. Treat that half as prompt discipline, not an enforced
+  check. They're skipped on the auto
   (trivial-change) path: it has no acceptance criteria worth pinning down this way, and committing a
   new test file would itself trip the auto path's own new-file tripwire.
 - **The acceptance-test commit keeps hooks on.** It's intentionally red (the tests reference

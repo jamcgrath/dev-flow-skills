@@ -35,6 +35,9 @@ Clears a PR's review feedback end-to-end: fetch every comment, fix what's real, 
    - actionable → what you changed (and the commit/file).
    - false-positive → why no change is needed, grounded in the actual code.
    For top-level/summary feedback, reply with `gh pr comment {N} --body '<reply>'`.
+   **A sentence or two each.** These are public threads a reviewer reads in bulk, and a paragraph
+   answering a one-line bot nit reads worse than a short answer — point at the commit or file rather
+   than restating the diff in prose.
 
 7. **Commit & push.** One clear commit (or grouped commits) describing the fixes; push to the PR branch. Confirm the repo with `git status` first; never touch `.git`.
 
