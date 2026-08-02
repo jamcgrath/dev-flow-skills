@@ -149,7 +149,11 @@ pushes unreviewed.
      no TOC.) Then the detail below. The approved plan also gets a durable record at
      **`.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. Same rule there, and
      note `.dev-flow/` is **git-ignored**, so nothing ever renders that file's markdown: keep any
-     diagram readable as plain text. **Plan mode blocks file writes, so it isn't written here**:
+     diagram readable as plain text. **Write the plan that was approved — same scope, same length, no
+     expansion.** When there's no ticket this file *is* the acceptance criteria downstream
+     (`/author-acceptance-tests` and `/verify-build` both read it), so detail the human never saw at
+     the gate silently widens the bar they agreed to. Record what was on screen, not a fuller
+     version of it. **Plan mode blocks file writes, so it isn't written here**:
      persisting it is the first build action (step 5), only once the human approves. **On request**, a
      `.dev-flow/<task>/PLAN.html` is emitted the same way — self-contained, drawing its own diagram
      with **no CDN**, so it still opens with no network. (A **committed** doc read on GitHub is the one

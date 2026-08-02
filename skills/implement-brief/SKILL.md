@@ -47,6 +47,9 @@ Don't skip straight to coding.
 
 6. **Report, then commit.** Summarise each brief item → done / blocked, noting what was reused
    vs newly added. Confirm git state (`git status`), then commit (grouped logically) and push if asked.
+   **Keep the report proportional to the brief** — a line per item plus the reuse-vs-new note. A long
+   brief earns more *lines*, not longer ones; the diff is the detail, and restating it here just
+   buries the two items that actually went sideways.
 
 ## Notes
 - The reuse survey + plan-confirm in steps 2–3 *is* the point of this skill — don't collapse it
