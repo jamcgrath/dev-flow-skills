@@ -225,6 +225,15 @@ pushes unreviewed.
    logical change per commit, Decision Log proportional (per convention), while the reasoning is
    fresh. **Stay in scope** — the plan is the contract.
 
+   **Implement to the criteria, not to the tests.** The acceptance tests are how the bar gets
+   *checked*; the criteria **are** the bar. Write the solution that holds for every valid input, not
+   just the values a test happens to assert — never hardcode an expected value, special-case a
+   fixture, or satisfy a `data-testid` with a stub carrying the selector but not the behaviour. Each
+   of those goes green *and* clears `/verify-build`'s tamper check (nothing was tampered with) while
+   shipping no feature — which is why it lands on you here rather than on a later gate. If a test
+   looks wrong, or a criterion turns out infeasible, **stop and say so**; the one move that isn't
+   available is editing the test to fit.
+
    **Checkpoint 3 — before each commit (auto path; the real gate).** Capture `base = git rev-parse HEAD`
    when the auto path's build starts (if that fails — e.g. an unborn branch with no commits — fail
    closed to the human gate). Before each commit, re-run the tripwires against everything done since
@@ -287,6 +296,14 @@ pushes unreviewed.
   independent verifier subagent), and — human path only — two test-integrity checkpoints (the
   audit-gap pause before the build, the verify-build-failure pause after it). Everything else
   parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them.
+- **A closed set of subagents.** The flow's sanctioned spawns are exactly four: `Explore` for recon
+  (fanned out in proportion to the surface, per `plan-brief`), the Checkpoint-2 trivial-verifier,
+  `/audit-tests`, and `/verify-build`. Each one exists to buy a **fresh context the build can't see** —
+  that independence *is* the product, and it's what separates them from the self-checking a current
+  model already does unprompted and doesn't need to be told to do. So don't add ad-hoc ones: no
+  subagent to re-check your own work, no second reviewer beyond `/code-review`, and one where one will
+  do. (Removing any of the four is a different thing entirely — that's a safety regression, not a
+  saving.)
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
 - **Scope discipline.** Build exactly what was agreed. Anything extra you notice → surface it as a
@@ -301,6 +318,12 @@ pushes unreviewed.
   flow runs as a whole; invoking `/pr` directly (or any caller that skips step 8) bypasses the REVIEW
   gate. The auto path's local checks are best-effort — step 8 is the backstop that makes a
   misclassification at worst a reversible local commit, so never route around it.
+- **Spend the words at the gates.** One line before a step that will take a while, one when a
+  checkpoint fires or the path changes, and nothing much in between. At each gate, **lead with the
+  outcome** — what happened and what it means for the decision now in front of the reader — with the
+  supporting detail underneath for whoever wants it. The pauses are where a human's attention is
+  actually spent; running commentary between them spends it for nothing and trains them to skim the
+  places it matters.
 - **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), the
   Checkpoint-2 verifier can't be reached or answers ambiguously, or a gate is rejected — stop and
   report, or drop to the human gate. Those two are the whole set of moves available here.
