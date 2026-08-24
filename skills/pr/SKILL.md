@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
+description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit, then requests a Copilot review on it. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
 ---
 
 # pr
@@ -58,6 +58,16 @@ rolls them up (see global CLAUDE.md).
    - **Remote exists** (`git remote` non-empty): push the branch if needed (`git push -u origin HEAD`),
      then `gh pr create --title '<title>' --body '<body>'` (`--draft` if the user asked).
    - **No remote** (local-only repo): **preview** — print the title + body and write it to
-     `PR_PREVIEW.md`. Say clearly it's a preview, not a real PR.
+     `PR_PREVIEW.md`. Say clearly it's a preview, not a real PR. Skip step 6 — there's no PR to review.
 
-6. **Report** the PR URL (or the preview path) and the title.
+6. **Request a Copilot review.** `gh pr edit --add-reviewer "@copilot"` — no number needed, it resolves
+   the PR from the current branch. The flow downstream assumes a bot review lands after the PR opens
+   (`/pr-fix` is what clears it); asking for one here is what makes that true on a repo with no
+   continuous review configured. **Best-effort, never fatal:** if it fails — Copilot code review not
+   enabled for the repo or org, the account lacks it, `gh` too old for `@copilot` — **say so in one
+   line and move on.** The PR is open, which was the deliverable; a missing bot review is a thing to
+   report, not to retry or work around. On a `--draft` PR, request it the same way but note in the
+   report that a draft may not get reviewed until it's marked ready — the request can land without a
+   review following.
+
+7. **Report** the PR URL (or the preview path), the title, and whether the review request landed.

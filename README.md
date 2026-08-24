@@ -166,8 +166,12 @@ done
   behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
   bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill
   pauses and asks rather than silently retrying with `--no-verify`.
-- **`pr` pushes.** When a remote exists it runs `git push -u origin HEAD` and opens the PR; on a
-  local-only repo it writes a `PR_PREVIEW.md` instead of pushing.
+- **`pr` pushes, and asks a bot to review.** When a remote exists it runs `git push -u origin HEAD`,
+  opens the PR, then requests a Copilot review on it (`gh pr edit --add-reviewer "@copilot"`) so the
+  flow's "bots comment → `/pr-fix`" step has something to clear on a repo with no continuous review
+  configured; `pr-fix` re-requests one after pushing its fixes. Both are best-effort — if Copilot
+  review isn't enabled, they say so and carry on. On a local-only repo `pr` writes a `PR_PREVIEW.md`
+  instead of pushing, and requests nothing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
   contributor — and applies the "actionable" ones as code changes, then pushes. It mitigates this
   by triaging every comment and showing the triage before big batches (it does **not** blindly
