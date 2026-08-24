@@ -46,6 +46,11 @@ trivial one-liners on purpose; both escalated correctly. 3/3 correct so far — 
   `"basic" → "free"` that some billing check keys on) — every check inspects the changed file / the diff,
   not the use-sites.
 - Only synthetic cases so far — calibration on real tickets is unproven until the trial.
+- **2026-08-24: the judgment slice gained a third question** — *does the task collide with a constraint
+  it can't satisfy?* (from the AI-native SDLC playbook's "flag where you cannot satisfy contradicting
+  policies"). The three seed cases above were graded against the two-question slice, so they don't
+  cover it. Expect the auto path to escalate slightly more often; that's the safe direction, but log
+  any ⚠️ that traces to this question so it can be tuned rather than assumed correct.
 
 ## Candidate follow-ups (do NOT build pre-emptively — only if the trial surfaces the matching miss)
 

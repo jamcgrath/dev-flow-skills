@@ -32,7 +32,7 @@ skills **derive conventions from the codebase they're in — they never assume t
   → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
   → plan-brief (feature)  |  investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
   → plan the approach (ALWAYS) — then:
-       · human path → ⏸ PLAN gate: forks surfaced, plan, WAIT FOR APPROVAL
+       · human path → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
   → branch off default (if needed)
        · human path only → /author-acceptance-tests → /commit (= base) → /audit-tests

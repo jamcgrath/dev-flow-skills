@@ -23,7 +23,8 @@ pushes unreviewed.
   → [verify-ticket]   only if there's an external ticket/issue/brief
   → plan-brief (feature) | investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
   → plan the approach (ALWAYS) — then:
-       · human path → ⏸ PLAN gate: surface decisive fork(s), present plan, WAIT FOR APPROVAL
+       · human path → ⏸ PLAN gate: surface decisive fork(s) + any unsatisfiable constraint,
+                         present plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
   → branch off default (if needed)
        · human path only → author-acceptance-tests → commit (= base) → audit-tests
@@ -58,7 +59,8 @@ pushes unreviewed.
      checkpoints, which still re-validate and can pull the task back to the human gate.
    - **Agent self-classified** — provisionally eligible when there's **no decisive fork**,
      **unambiguous intent** (an ambiguous ask, e.g. "make the heading bigger" with no value, *is* a
-     fork → ask one quick question or stay on the human path), and **no risk surface**.
+     fork → ask one quick question or stay on the human path), **no colliding constraint**, and **no
+     risk surface**.
 
    This is a *provisional* call made on the task description alone — most tripwires below can't fire
    until there's a file list or a diff, so they bite hardest at the three checkpoints. It is
@@ -81,8 +83,10 @@ pushes unreviewed.
      **Unsure whether it's presentational or behaviour-altering, or whether a string is load-bearing →
      human gate.** (A genuine bug fix alters existing behaviour, so it almost always takes the human
      path — the auto path is mostly cosmetic tweaks.)
-   - **Judgment slice** (small, soft): *is there a decisive fork?* and *is the ask ambiguous?* — also
-     exposed to self-assessment, backstopped by the always-human REVIEW gate.
+   - **Judgment slice** (small, soft): *is there a decisive fork?*, *is the ask ambiguous?*, and *does
+     the task collide with a constraint it can't satisfy?* (that last one only really answerable from
+     CP1 on, once recon has surfaced the constraints) — also exposed to self-assessment, backstopped by
+     the always-human REVIEW gate.
    **Any** spread or impact tripwire, or **any** doubt (impact classification or judgment slice) →
    human gate.
 
@@ -131,8 +135,15 @@ pushes unreviewed.
      the human has to reject to redirect. **Put decisions to them, and only decisions.** Anything you
      could settle by reading the code, running a command, or checking a tool is a **fact** — go and
      get it. A gate that spends the human's attention on answerable questions buys nothing and trains
-     them to skim the ones that matter. **Present the plan summary-first** so it can be read at a
-     glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
+     them to skim the ones that matter. **Then name any conflict — separately from the forks.** A fork
+     is a choice you're putting to the human; a **conflict** is a constraint the plan *can't* satisfy —
+     two requirements from the ticket/brief that contradict, or one the codebase's own conventions make
+     impossible without leaving the task's scope. The failure mode is silent: pick a side, and the
+     losing constraint disappears into the plan's prose where the gate can't see it. So state which
+     constraints collide, what the plan does about it, and — when the person at the gate doesn't own
+     that call — who does. Don't dress a conflict up as a fork with a fabricated option, and don't
+     manufacture one: no conflicts, say nothing. **Present the plan summary-first** so it can be read
+     at a glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
      gated on a concrete test — **default to omitting both; add one only when it clearly clears its
      bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),
      has steps that depend on each other out of order, fans out across several files/components, or
@@ -153,7 +164,12 @@ pushes unreviewed.
      expansion.** When there's no ticket this file *is* the acceptance criteria downstream
      (`/author-acceptance-tests` and `/verify-build` both read it), so detail the human never saw at
      the gate silently widens the bar they agreed to. Record what was on screen, not a fuller
-     version of it. **Plan mode blocks file writes, so it isn't written here**:
+     version of it. Record any conflict the human settled here too, but **under its own
+     `## Accepted conflicts — not criteria` heading** — `/author-acceptance-tests` and `/verify-build`
+     read this file as the bar, so a constraint knowingly left unsatisfied written into the prose gets
+     a test authored for it and comes back `falsified`. Under that heading it rides forward as the
+     exemption it is.
+     **Plan mode blocks file writes, so it isn't written here**:
      persisting it is the first build action (step 5), only once the human approves. **On request**, a
      `.dev-flow/<task>/PLAN.html` is emitted the same way — self-contained, drawing its own diagram
      with **no CDN**, so it still opens with no network. (A **committed** doc read on GitHub is the one
