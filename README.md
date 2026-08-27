@@ -127,13 +127,25 @@ nudge).
 
 ### For development (live edits)
 
-Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
+Symlink the skill folders into your user skills dir so edits in this repo are live immediately.
+Run it from the repo root; it discovers whatever is in `skills/`, so re-run it after pulling to
+pick up skills added since:
 
 ```sh
-for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix debrief; do
-  ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
+for d in "$PWD"/skills/*/; do
+  n=$(basename "$d")
+  if [ -e ~/.claude/skills/"$n" ] && [ ! -L ~/.claude/skills/"$n" ]; then
+    echo "skipped $n — a real directory is already there"
+  else
+    ln -sfn "${d%/}" ~/.claude/skills/"$n"
+  fi
 done
 ```
+
+Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that's a real
+directory rather than a link. A skill that sets `disable-model-invocation: true` won't show up in
+Claude's skill list even when correctly installed — it's reachable only as `/<name>`. New symlinks
+register at startup, so restart the session to pick them up.
 
 ## Conventions & things to know before you adopt these
 
