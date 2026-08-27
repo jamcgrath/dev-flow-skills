@@ -28,7 +28,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
 
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
-   inventory in `PLAN_BRIEF.md` — e.g. `pnpm test:unit` / `pnpm test:e2e`, not a guessed `npm test`).
+   inventory in `PLAN_BRIEF.md`, or in `BUG_CONTEXT.md` on the bug path — e.g. `pnpm test:unit` /
+   `pnpm test:e2e`, not a guessed `npm test`).
    Reach each criterion the way its layer demands — **Playwright**
    for UI, the **unit runner** for logic, an **HTTP / contract client** for API/service, a **seeded DB**
    for data — and actively try to make it **fail** (edge/error inputs, not just the happy path).

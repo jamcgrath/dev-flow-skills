@@ -22,9 +22,10 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    from `.dev-flow/<task>/TICKET_CONTEXT.md` if it exists; otherwise from the task description / the
    approved `.dev-flow/<task>/PLAN.md` / `PLAN_BRIEF.md`'s Goal. Read `PLAN.md` for the intended surface
    *and* its build steps — they can diverge, and the build steps name surfaces a suggested test list may
-   under-name. Read the **Test Tooling inventory** from `.dev-flow/<task>/PLAN_BRIEF.md` (the frameworks
-   that actually exist + their run commands). This is **general-purpose** — for *each* criterion decide
-   where the behaviour lives, because that picks the test type:
+   under-name. Read the **Test Tooling inventory** from `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the
+   bug path, from `BUG_CONTEXT.md`, which carries the same section since no `PLAN_BRIEF.md` is written
+   (the frameworks that actually exist + their run commands). This is **general-purpose** — for *each*
+   criterion decide where the behaviour lives, because that picks the test type:
    - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s)
    - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
    - **API / service** → integration / contract test hitting the endpoint or calling the service
