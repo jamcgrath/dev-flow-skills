@@ -11,7 +11,7 @@ record of *why*, which is the part no diff or terraform plan can recover later. 
 one question at a time, each with a recommended answer, ending in a written artifact.
 
 **Opt-in and standalone.** You invoke it; it never fires on its own. Its natural slot is *before*
-`/plan-brief` — but nothing wires them together: `/dev-flow` neither invokes it nor reads what it
+`/dev-flow` — but nothing wires them together: `/dev-flow` neither invokes it nor reads what it
 writes. Run it whenever, on whatever.
 
 **It does not need a codebase.** Two normal entries, equally valid:
@@ -83,9 +83,11 @@ writes. Run it whenever, on whatever.
 
    Sections that would be empty get dropped, not filled with "none".
 
-6. **Read back and stop.** List the decisions in a few lines, confirm, and finish. Hand off if
-   there's an obvious next step (`/plan-brief`, `/dev-flow`, or just doing the infra work) — but
-   **stop at the handoff**; don't take it.
+6. **Read back and stop.** List the decisions in a few lines, confirm, and finish. Offer at most
+   two handoffs: **`/dev-flow`** if the decision lands in the codebase, or **just doing the work**
+   if it doesn't (infra, process, a tool to install). Never hand off to `/plan-brief` or any other
+   mid-flow step on its own — work worth building goes through the flow, which runs those steps
+   itself with its gates attached. Then **stop at the handoff**; don't take it.
 
 ## Guards
 

@@ -79,8 +79,8 @@ flow layers on — the proportional PLAN gate and the persisted, visualised `.de
 only happens under `/dev-flow`.
 
 `discuss` goes further: it isn't part of the flow at all. `/dev-flow` never invokes it and never reads
-what it writes. Its natural slot is upstream of `plan-brief` — settle *what* you're doing and why
-before gathering context on how — but it's equally for work that never reaches a codebase, like
+what it writes. Its natural slot is upstream of `/dev-flow` — settle *what* you're doing and why
+before the flow gathers context on how — but it's equally for work that never reaches a codebase, like
 standing up infrastructure or choosing a tool. Invoke it deliberately or not at all; it's marked
 `disable-model-invocation`, so it will never start an interrogation on its own.
 
