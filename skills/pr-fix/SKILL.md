@@ -1,6 +1,6 @@
 ---
 name: pr-fix
-description: Resolve all open review comments on a GitHub PR — human and bot (Gemini, Copilot, CodeRabbit) — then reply to each thread. Triages each comment as actionable / false-positive / needs-decision, applies the actionable fixes, runs the project's lint/typecheck, replies to every thread (including bot threads) explaining the resolution, and commits + pushes. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR #N", or hands over a PR review thread to clear.
+description: Resolve all open review comments on a GitHub PR — human and bot (Gemini, Copilot, CodeRabbit) — then reply to each thread. Triages each comment as actionable / false-positive / needs-decision, applies the actionable fixes, runs the project's lint/typecheck, replies to every thread (including bot threads) explaining the resolution, commits + pushes, and re-requests a Copilot review on the fixes. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR #N", or hands over a PR review thread to clear.
 ---
 
 # pr-fix
@@ -41,7 +41,9 @@ Clears a PR's review feedback end-to-end: fetch every comment, fix what's real, 
 
 7. **Commit & push.** One clear commit (or grouped commits) describing the fixes; push to the PR branch. Confirm the repo with `git status` first; never touch `.git`.
 
-8. **Summarise.** End with a table: each comment → bucket → action taken, plus current mergeability. Batch any **needs-decision** items into a single question for me at the end — don't stall the rest of the loop on them.
+8. **Re-request a Copilot review** on the pushed fixes: `gh pr edit {N} --add-reviewer "@copilot"` (the same flag re-requests an existing reviewer). The code the last review saw is not the code that's there now, and without continuous review nothing else asks for a second look. **Best-effort, never fatal** — if it fails (Copilot review not enabled here, `gh` too old for `@copilot`), say so in one line and carry on to the summary. Don't wait for the review to come back: this skill is one pass, so the new round is for the *next* `/pr-fix`.
+
+9. **Summarise.** End with a table: each comment → bucket → action taken, plus current mergeability and whether a fresh Copilot review is pending. Batch any **needs-decision** items into a single question for me at the end — don't stall the rest of the loop on them.
 
 ## Notes
 - Bot threads (Gemini/Copilot/CodeRabbit) get the same treatment as human ones — reply even when it's a false positive.

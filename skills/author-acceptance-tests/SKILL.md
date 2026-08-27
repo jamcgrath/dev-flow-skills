@@ -20,11 +20,13 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
 
 1. **Read the criteria + the repo's test tooling, then classify each by layer.** Acceptance criteria
    from `.dev-flow/<task>/TICKET_CONTEXT.md` if it exists; otherwise from the task description / the
-   approved `.dev-flow/<task>/PLAN.md` / `PLAN_BRIEF.md`'s Goal. Read `PLAN.md` for the intended surface
-   *and* its build steps — they can diverge, and the build steps name surfaces a suggested test list may
-   under-name. Read the **Test Tooling inventory** from `.dev-flow/<task>/PLAN_BRIEF.md` (the frameworks
-   that actually exist + their run commands). This is **general-purpose** — for *each* criterion decide
-   where the behaviour lives, because that picks the test type:
+   approved `.dev-flow/<task>/PLAN.md` / `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal. Read `PLAN.md` for
+   the intended surface *and* its build steps — they can diverge, and the build steps name surfaces
+   a suggested test list may under-name. Read the **Test Tooling inventory** from
+   `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the bug path, from `.dev-flow/<task>/BUG_CONTEXT.md`,
+   which carries the same section since no `PLAN_BRIEF.md` is written (the frameworks that actually
+   exist + their run commands). This is **general-purpose** — for *each* criterion decide where the
+   behaviour lives, because that picks the test type:
    - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s)
    - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
    - **API / service** → integration / contract test hitting the endpoint or calling the service
@@ -84,6 +86,11 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
      *different* reason (lint, format, a type error) is a real problem — fix it, don't bypass it.
    - **Record the commit's sha as `base` in the manifest** (step 5) — `/verify-build` runs in a
      fresh context and cannot recompute it.
+   - **Re-invoked to strengthen flagged tests** (dev-flow's audit-gap "strengthen the tests first"):
+     revise those files in place, then commit them the same way — `Strengthen acceptance tests for
+     <task>` — and **overwrite `base` in the manifest with the new sha**. The revision must be its own
+     commit and the new sha must become `base`, or the strengthened tests read as edits to protected
+     paths in `git diff <base>` and `/verify-build` scores them as tampering.
    (Unborn branch / can't commit → fall back to recording each authored file's path **and content hash**
    in the manifest so edits are still detectable; commit-first is preferred.)
 

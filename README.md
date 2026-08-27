@@ -32,7 +32,7 @@ skills **derive conventions from the codebase they're in — they never assume t
   → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
   → plan-brief (feature)  |  investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
   → plan the approach (ALWAYS) — then:
-       · human path → ⏸ PLAN gate: forks surfaced, plan, WAIT FOR APPROVAL
+       · human path → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
        · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
   → branch off default (if needed)
        · human path only → /author-acceptance-tests → /commit (= base) → /audit-tests
@@ -79,10 +79,12 @@ flow layers on — the proportional PLAN gate and the persisted, visualised `.de
 only happens under `/dev-flow`.
 
 `discuss` goes further: it isn't part of the flow at all. `/dev-flow` never invokes it and never reads
-what it writes. Its natural slot is upstream of `plan-brief` — settle *what* you're doing and why
-before gathering context on how — but it's equally for work that never reaches a codebase, like
+what it writes. Its natural slot is upstream of `/dev-flow` — settle *what* you're doing and why
+before the flow gathers context on how — but it's equally for work that never reaches a codebase, like
 standing up infrastructure or choosing a tool. Invoke it deliberately or not at all; it's marked
-`disable-model-invocation`, so it will never start an interrogation on its own.
+`disable-model-invocation`, so it will never start an interrogation on its own — which also means it
+won't appear in Claude's skill list even when correctly installed. Reach it as `/discuss`; absence
+from the list isn't a broken install.
 
 ## Layout
 
@@ -127,13 +129,24 @@ nudge).
 
 ### For development (live edits)
 
-Symlink the skill folders into your user skills dir so edits in this repo are live immediately:
+Symlink the skill folders into your user skills dir so edits in this repo are live immediately.
+Run it from the repo root; it discovers whatever is in `skills/`, so re-run it after pulling to
+pick up skills added since:
 
 ```sh
-for d in dev-flow verify-ticket plan-brief investigate-bug implement-brief author-acceptance-tests audit-tests verify-build commit pr pr-fix debrief; do
-  ln -s "$PWD/skills/$d" ~/.claude/skills/"$d"
+for d in "$PWD"/skills/*/; do
+  n=$(basename "$d")
+  if [ -e ~/.claude/skills/"$n" ] && [ ! -L ~/.claude/skills/"$n" ]; then
+    echo "skipped $n — something that isn't a symlink is already there"
+  else
+    ln -sfn "${d%/}" ~/.claude/skills/"$n"
+  fi
 done
 ```
+
+Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that already
+exists and isn't one — a real directory or a regular file. New symlinks register at startup, so
+restart the session to pick them up.
 
 ## Conventions & things to know before you adopt these
 
@@ -166,8 +179,12 @@ done
   behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
   bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill
   pauses and asks rather than silently retrying with `--no-verify`.
-- **`pr` pushes.** When a remote exists it runs `git push -u origin HEAD` and opens the PR; on a
-  local-only repo it writes a `PR_PREVIEW.md` instead of pushing.
+- **`pr` pushes, and asks a bot to review.** When a remote exists it runs `git push -u origin HEAD`,
+  opens the PR, then requests a Copilot review on it (`gh pr edit --add-reviewer "@copilot"`) so the
+  flow's "bots comment → `/pr-fix`" step has something to clear on a repo with no continuous review
+  configured; `pr-fix` re-requests one after pushing its fixes. Both are best-effort — if Copilot
+  review isn't enabled, they say so and carry on. On a local-only repo `pr` writes a `PR_PREVIEW.md`
+  instead of pushing, and requests nothing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
   contributor — and applies the "actionable" ones as code changes, then pushes. It mitigates this
   by triaging every comment and showing the triage before big batches (it does **not** blindly

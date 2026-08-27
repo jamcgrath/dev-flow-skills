@@ -75,6 +75,12 @@ code will. Spend the effort there.
     and the failing output. This is what the fix has to turn green, and what /verify-build can re-run.
     If none could be built, say so here and list what would unblock one.]
 
+   ## Test Tooling
+   [Frameworks present + run command + the layer each covers; flag any layer this bug touches with NO
+    tooling. Note how each runner reports an assertion failure vs an error — on the bug path this
+    section is the inventory /author-acceptance-tests, /audit-tests and /verify-build read, since no
+    PLAN_BRIEF.md is written. Survey the repo for it even if the red command only needed one runner.]
+
    ## Investigation findings
    [What each check showed — rule things out explicitly, then narrow to the cause. For a browser bug:
     - console: <clean / the error>
