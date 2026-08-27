@@ -135,17 +135,18 @@ pick up skills added since:
 for d in "$PWD"/skills/*/; do
   n=$(basename "$d")
   if [ -e ~/.claude/skills/"$n" ] && [ ! -L ~/.claude/skills/"$n" ]; then
-    echo "skipped $n — a real directory is already there"
+    echo "skipped $n — something that isn't a symlink is already there"
   else
     ln -sfn "${d%/}" ~/.claude/skills/"$n"
   fi
 done
 ```
 
-Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that's a real
-directory rather than a link. A skill that sets `disable-model-invocation: true` won't show up in
-Claude's skill list even when correctly installed — it's reachable only as `/<name>`. New symlinks
-register at startup, so restart the session to pick them up.
+Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that already
+exists and isn't one — a real directory or a regular file. A skill that sets
+`disable-model-invocation: true` won't show up in Claude's skill list even when correctly installed
+— it's reachable only as `/<name>`. New symlinks register at startup, so restart the session to pick
+them up.
 
 ## Conventions & things to know before you adopt these
 
