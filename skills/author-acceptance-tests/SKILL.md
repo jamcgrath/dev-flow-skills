@@ -85,6 +85,11 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
      *different* reason (lint, format, a type error) is a real problem — fix it, don't bypass it.
    - **Record the commit's sha as `base` in the manifest** (step 5) — `/verify-build` runs in a
      fresh context and cannot recompute it.
+   - **Re-invoked to strengthen flagged tests** (dev-flow's audit-gap "strengthen the tests first"):
+     revise those files in place, then commit them the same way — `Strengthen acceptance tests for
+     <task>` — and **overwrite `base` in the manifest with the new sha**. The revision must be its own
+     commit and the new sha must become `base`, or the strengthened tests read as edits to protected
+     paths in `git diff <base>` and `/verify-build` scores them as tampering.
    (Unborn branch / can't commit → fall back to recording each authored file's path **and content hash**
    in the manifest so edits are still detectable; commit-first is preferred.)
 

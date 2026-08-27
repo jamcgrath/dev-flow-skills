@@ -222,8 +222,11 @@ pushes unreviewed.
      > proves nothing): `<list>`. How do you want to proceed?"
      > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
      >   at verify.
-     > - **Strengthen the tests first** — pause here; revise the flagged tests to assert real
-     >   behaviour, then re-run `/audit-tests`.
+     > - **Strengthen the tests first** — pause here; hand the flagged criteria back to
+     >   `/author-acceptance-tests` to revise those tests to assert real behaviour. It **re-commits**
+     >   them and **re-records the new sha as `base`** in `ACCEPTANCE_TESTS.md` — without that, the
+     >   strengthened tests land as edits to protected paths in `git diff <base>` and `/verify-build`
+     >   reads them as tampering. Then re-run `/audit-tests` as a **new** fresh subagent.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
      bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
