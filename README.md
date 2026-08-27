@@ -82,7 +82,9 @@ only happens under `/dev-flow`.
 what it writes. Its natural slot is upstream of `/dev-flow` — settle *what* you're doing and why
 before the flow gathers context on how — but it's equally for work that never reaches a codebase, like
 standing up infrastructure or choosing a tool. Invoke it deliberately or not at all; it's marked
-`disable-model-invocation`, so it will never start an interrogation on its own.
+`disable-model-invocation`, so it will never start an interrogation on its own — which also means it
+won't appear in Claude's skill list even when correctly installed. Reach it as `/discuss`; absence
+from the list isn't a broken install.
 
 ## Layout
 
@@ -143,10 +145,8 @@ done
 ```
 
 Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that already
-exists and isn't one — a real directory or a regular file. A skill that sets
-`disable-model-invocation: true` won't show up in Claude's skill list even when correctly installed
-— it's reachable only as `/<name>`. New symlinks register at startup, so restart the session to pick
-them up.
+exists and isn't one — a real directory or a regular file. New symlinks register at startup, so
+restart the session to pick them up.
 
 ## Conventions & things to know before you adopt these
 
