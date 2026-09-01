@@ -1,6 +1,6 @@
 ---
 name: author-acceptance-tests
-description: Author executable acceptance tests from a task's acceptance criteria, after the PLAN gate has fixed the surface but INDEPENDENT of the implementation, then commit them so they become the build's base. Invoked by /dev-flow between plan approval and the build, on the human-approved path only — a trivial auto-approved change has no acceptance criteria worth pinning down this way. Picks the test type per criterion's LAYER (UI → Playwright + data-testids, logic → unit, API/service → integration, data → seeded-DB) rather than defaulting to the browser. The builder must SATISFY these tests, never edit them — committing them first is what makes any later edit visible in the diff. One half of dev-flow's test-integrity defense (the other half is /verify-build). Non-interactive, except that a commit-hook rejection for a non-test reason pauses and asks.
+description: Author executable acceptance tests from a task's acceptance criteria, after the PLAN gate has fixed the surface but INDEPENDENT of the implementation, then commit them so they become the build's base. Invoked by /dev-flow between plan approval and the build, on the human-approved path only — a trivial auto-approved change has no acceptance criteria worth pinning down this way. Picks the test type per criterion's LAYER (UI → Playwright + data-testids + an a11y baseline, logic → unit, API/service → integration, data → seeded-DB) rather than defaulting to the browser. The builder must SATISFY these tests, never edit them — committing them first is what makes any later edit visible in the diff. One half of dev-flow's test-integrity defense (the other half is /verify-build). Non-interactive, except that a commit-hook rejection for a non-test reason pauses and asks.
 ---
 
 # author-acceptance-tests
@@ -27,7 +27,8 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    which carries the same section since no `PLAN_BRIEF.md` is written (the frameworks that actually
    exist + their run commands). This is **general-purpose** — for *each* criterion decide where the
    behaviour lives, because that picks the test type:
-   - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s)
+   - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s,
+     plus the a11y baseline below)
    - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
    - **API / service** → integration / contract test hitting the endpoint or calling the service
    - **Data / schema** → assertions against a seeded DB (+ migration up→down)
@@ -44,6 +45,23 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    **unverifiable (tooling gap)**, not licence to invent a harness. A change with **no new observable
    behaviour** (a pure refactor) gets **no acceptance test** — record that its verification is "the full
    suite stays green" (regression-only); don't invent a criterion.
+
+   **The UI layer carries an a11y baseline — contract, not an invented criterion.** Any criterion
+   producing something a person **perceives or operates** — a rendered component, a server-rendered
+   template, an HTML email — also asserts the element's **role + accessible name**, that it is
+   **reachable and operable by keyboard** when interactive, and an **automated scan of the changed
+   view**. This sits at the same level as a `data-testid`: no ticket states either, and both are what
+   "works" *means* at this layer — so the fail-closed guard against inventing acceptance behaviour
+   doesn't reach it. It is **tooling-gated** — assert only what the Test Tooling inventory says the repo
+   actually has (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers). No
+   harness → record the a11y line **unverifiable (tooling gap)** like any other missing layer; never add
+   the dependency to close it.
+
+   **Route that a11y line by new-vs-existing surface, or it trips the audit gap for nothing.** On a
+   **new** element it fails at `base` by absence — *weak*, which rides forward. On an **existing** view
+   it **passes** at base, so authored as new behaviour it reads *vacuous* to `/audit-tests` and stops
+   the flow over a view that was already fine. That one is a **preservation** criterion ("this view
+   stays accessible") — author it in the preservation lane of step 2 and expect green at base.
 
 2. **Author each test independent of the implementation, in its layer's idiom.** Key on the **contract**
    the builder must honour, never on internal structure it happens to choose (or the test fails for the
@@ -113,19 +131,21 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
    - <path>            (+ content hash, only on the can't-commit fallback)
 
    ## Criterion → test
-   - <criterion> → <test name / file>  ·  expected red-at-base: adequate | weak (<why>)  ·  or: unverifiable — <why>
-     (expected-* is a *hypothesis* for /audit-tests to confirm — never a verdict)
+   - <criterion> → <test name / file>  ·  expected red-at-base: adequate | weak (<why>)  ·  or: preservation — expected green at base  ·  or: unverifiable — <why>
+     (expected-* is a *hypothesis* for /audit-tests to confirm — never a verdict; it classifies
+     new/changed vs preservation itself and will not take this line's word for it)
 
    ## Test catalog (one line per test function — what each actually asserts)
    - `<test name>` (<file>) — asserts <the single behaviour it checks>
 
    ## Residual gaps (what a passing test still does NOT prove)
    - <e.g. helper output asserted; its wiring into the rendered DOM is not — no jsdom harness>
+   - <e.g. axe scan clean on the changed view; keyboard-only operation and screen-reader announcement not asserted>
 
    ## Side effects (tests that write / regenerate outside their own package)
    - <e.g. the config spec's beforeAll regenerates workers/src/config/generated/**>
 
-   ## Contracts the builder must expose (UI data-testids / function signatures / endpoints)
+   ## Contracts the builder must expose (UI data-testids + accessible roles/names / function signatures / endpoints)
    - <contract> — <what it is>
    ```
 
@@ -133,6 +153,10 @@ files would itself trip its own new-file tripwire — so it's skipped there.)
 - **Independent of the implementation; authored once, here, before the build.** The point is a *fixed*
   bar — never re-author or relax tests later to match what got built.
 - **Don't fake coverage.** A criterion you can't test executably is `unverifiable`, not a tautology.
+- **A11y is layer-scoped, tooling-gated, and never overclaimed.** It rides the UI layer's contract,
+  not a task-type label, so it's silent on backend criteria and in a repo with no harness. A clean
+  automated scan covers a fraction of WCAG — say what it still doesn't prove in Residual gaps rather
+  than letting green read as "accessible".
 - **Don't manufacture an adequate-looking red, and don't grade your own.** A bolted-on existence assertion
   on a missing symbol is still red-by-absence; a net-new pure symbol is *structurally* weak. Author for a
   genuine assertion — the fresh auditor decides adequacy, never you.

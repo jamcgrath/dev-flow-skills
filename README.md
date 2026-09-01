@@ -175,6 +175,16 @@ restart the session to pick them up.
   check. They're skipped on the auto
   (trivial-change) path: it has no acceptance criteria worth pinning down this way, and committing a
   new test file would itself trip the auto path's own new-file tripwire.
+- **Accessibility rides the UI layer — and the auto path is a known gap.** There's no a11y *step* and no
+  "is this a UI ticket?" flag. `author-acceptance-tests` treats a role + accessible name, keyboard
+  operability, and a scan of the changed view as part of what the UI layer's contract already means —
+  decided per **criterion**, so it's silent on a backend criterion inside a UI-ish task and still fires
+  on the one rendered element inside a backend one. It's **tooling-gated**: with no harness in the repo
+  (`@axe-core/*`, `jest-axe`, `pa11y`) the line is recorded `unverifiable (tooling gap)` rather than
+  installing one, so this is a no-op wherever you don't already test a11y. `verify-build` then enforces
+  it for free — the criteria are its spec. The deliberate hole: the **auto path skips acceptance tests
+  entirely**, so a trivial colour or font-size tweak gets no a11y check at all, and the always-human
+  REVIEW gate is what has to catch a contrast regression there.
 - **The acceptance-test commit keeps hooks on.** It's intentionally red (the tests reference
   behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
   bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill

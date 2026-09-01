@@ -76,8 +76,10 @@ code will. Spend the effort there.
     If none could be built, say so here and list what would unblock one.]
 
    ## Test Tooling
-   [Frameworks present + run command + the layer each covers; flag any layer this bug touches with NO
-    tooling. Note how each runner reports an assertion failure vs an error — on the bug path this
+   [Frameworks present + run command + the layer each covers, and whether an a11y harness exists
+    (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers — the UI layer's
+    a11y baseline is gated on one); flag any layer this bug touches with NO tooling. Note how each
+    runner reports an assertion failure vs an error — on the bug path this
     section is the inventory /author-acceptance-tests, /audit-tests and /verify-build read, since no
     PLAN_BRIEF.md is written. Survey the repo for it even if the red command only needed one runner.]
 

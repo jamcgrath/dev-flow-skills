@@ -39,8 +39,10 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
      `package.json` scripts/devDeps and config files (`playwright.config`, `vitest.config`,
      `jest.config`, `pytest.ini`, `go test`, …), and note **which layer each covers** (Playwright /
      Cypress → UI/e2e; Vitest / Jest / Mocha → unit/component; supertest / integration runners → API;
-     DB-backed tests → data). Flag any layer this change touches that has **no** tooling — those
-     criteria will be unverifiable to any test authored for them.
+     DB-backed tests → data). Note separately whether an **accessibility harness** exists
+     (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers) — the UI
+     layer's a11y baseline is gated on one. Flag any layer this change touches that has **no** tooling
+     — those criteria will be unverifiable to any test authored for them.
    - constraints **specific to this change** that aren't already in `TICKET_CONTEXT` — read them
      out of the existing code; never assume the stack.
 
@@ -83,7 +85,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
    [The closest existing implementation(s) to copy, named with file + line anchors]
 
    ## Test Tooling
-   [Frameworks present + run command + the layer each covers; flag any layer this change touches with NO tooling]
+   [Frameworks present + run command + the layer each covers; whether an a11y harness exists; flag any layer this change touches with NO tooling]
 
    ## Constraints
    [Only rules specific to THIS change and not already in TICKET_CONTEXT — reference it, don't repeat it]
