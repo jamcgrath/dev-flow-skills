@@ -5,10 +5,11 @@ packaged as one installable plugin. It sequences skills you'd otherwise run by h
 structured flow with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
 presentational changes), review before the PR.
 
-The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier, the
-persisted plan (`PLAN.md`) at the PLAN gate, and (human path only) two test-integrity checkpoints
-before and after the build, `/dev-flow <task>` is a thin orchestrator that routes feature vs bug and
-runs the chain below. Outside it, work stays conversational — nothing fires unless you invoke it.
+The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier,
+the persisted plan (`PLAN.md`) at the PLAN gate, the condition that fires a security review before
+the REVIEW gate, and (human path only) two test-integrity checkpoints before and after the build,
+`/dev-flow <task>` is a thin orchestrator that routes feature vs bug and runs the chain below.
+Outside it, work stays conversational — nothing fires unless you invoke it.
 
 ## Who it's for
 
@@ -42,6 +43,7 @@ skills **derive conventions from the codebase they're in — they never assume t
             → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
        · auto path → read-only checks only
   → /code-review        (Claude Code built-in)
+  → [/security-review]  (built-in)  only when the diff touches a security surface
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → /pr                 (bots/CI after → /pr-fix)
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
@@ -69,7 +71,8 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
-`/code-review` is a Claude Code built-in and is used by the flow but isn't bundled here.
+`/code-review` and `/security-review` are Claude Code built-ins used by the flow but aren't bundled here
+(the security review runs only when the diff touches a security surface).
 
 **You don't have to run the whole flow.** The recon skills — `verify-ticket`, `plan-brief`,
 `investigate-bug` — also work as standalone one-offs: reality-check a ticket, gather plan context, or

@@ -68,7 +68,7 @@ flowchart TD
 
     VRO["read-only checks only"]:::auto --> CR
 
-    CR["Code review"]:::always --> RG
+    CR["Code review<br/>+ security review if the diff<br/>touches a security surface"]:::always --> RG
 
     RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>surfaces any noted verification gap"]:::human --> PR
 

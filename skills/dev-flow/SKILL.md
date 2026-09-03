@@ -1,14 +1,14 @@
 ---
 name: dev-flow
-description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → on the human path, author-acceptance-tests → audit-tests → build → verify-build → commit → code-review → human review → pr), pausing at the human gates and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running — the trivial path skips the acceptance-test machinery too, since it has no acceptance criteria worth pinning down. Beyond that classifier and the two test-integrity escalations it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
+description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → on the human path, author-acceptance-tests → audit-tests → build → verify-build → commit → code-review, plus security-review when the diff touches a security surface → human review → pr), pausing at the human gates and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running — the trivial path skips the acceptance-test machinery too, since it has no acceptance criteria worth pinning down. Beyond that classifier, the two test-integrity escalations and one conditional security-review trigger it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
 ---
 
 # dev-flow
 
 The one explicit way to **kick off the structured flow**. Beyond the proportional-approval classifier
-around the PLAN gate (steps 2–5) and, on the human path, two test-integrity checkpoints (steps 5–6), it
-**adds no behaviour of its own** — it sequences the skills you already have and pauses at the same
-human gates as running them by hand.
+around the PLAN gate (steps 2–5), the condition that fires `/security-review` at step 7, and, on the
+human path, two test-integrity checkpoints (steps 5–6), it **adds no behaviour of its own** — it
+sequences the skills you already have and pauses at the same human gates as running them by hand.
 
 It's also the entry an automation/agent would call to run the flow unattended, so it takes the task as
 args and treats the PLAN gate as an **explicit gate** swappable for an auto-approver (without changing
@@ -33,7 +33,8 @@ pushes unreviewed.
   → verify   · human path → verify-build (fresh subagent, strong model, tries to falsify the change)
             → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build / proceed with gap noted / abandon
        · auto path → read-only checks only
-  → code-review
+  → code-review  · + security-review when the diff touches a security surface (auth / permission /
+                   secret / endpoint tokens, or an injection sink)
   → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
   → pr
 ```
@@ -301,12 +302,27 @@ pushes unreviewed.
    diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a
    tiny change.
 
-8. **⏸ REVIEW gate — always human (hard stop).** Surface the diff + review for a human sanity-check
-   before the PR — and, when `.dev-flow/<task>/VERIFICATION.md` exists, its verdict and any unresolved
-   criteria, so a "proceed with the gap noted" choice from step 6 is actually seen here, not silently
-   dropped. This gate is **not** auto-approved by the classifier, never skipped on the auto path,
-   and (for now) not swappable for an auto-approver: an unattended run **stops here and does not push**
-   until a human approves. This is what keeps "every diff is seen before it leaves the repo" true.
+   **Then the built-in `/security-review`, but only when the change touches a security surface.**
+   Grep for that *here*, over `git diff <base>` and both sides of each hunk (removing a guard shows
+   only as a `-` line) — step 2's tripwires classify from the task description, so on the human path
+   nothing has yet grepped the actual code. Run it on the auth / permission / secret / endpoint
+   tokens, or where the diff adds a sink the review is built for: SQL or a shell command built from
+   input, `innerHTML` / `{@html}`, `eval`, deserialisation, a path or URL from request data, session /
+   cookie / CORS / crypto config. **Unsure → run it** — a false fire costs time and nothing else.
+   It takes no arguments and scopes itself to `git diff origin/HEAD...`, a range the flow can't
+   override, so check `git rev-parse --verify origin/HEAD` first: where that ref doesn't resolve
+   (local-only repo, remote not named `origin`) it reviews an empty diff and finds nothing, which is
+   **not run, never clean** — report it that way. No artifact, no new pause: findings ride to the
+   REVIEW gate beside the code review. Tripping this on the auto path means the classifier let a
+   non-presentational change through — say so at the gate.
+
+8. **⏸ REVIEW gate — always human (hard stop).** Surface the diff, the code review and any
+   security-review findings for a human sanity-check before the PR — and, when
+   `.dev-flow/<task>/VERIFICATION.md` exists, its verdict and any unresolved criteria, so a "proceed
+   with the gap noted" choice from step 6 is actually seen here, not silently dropped. This gate is
+   **not** auto-approved by the classifier, never skipped on the auto path, and (for now) not
+   swappable for an auto-approver: an unattended run **stops here and does not push** until a human
+   approves. This is what keeps "every diff is seen before it leaves the repo" true.
 
 9. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
@@ -317,16 +333,17 @@ pushes unreviewed.
   is deliberately confined to a small set of things: the front-of-flow scaffolding (the readiness
   scan), the proportional-approval classifier around the PLAN gate (the tripwire checks + the
   independent verifier subagent), and — human path only — two test-integrity checkpoints (the
-  audit-gap pause before the build, the verify-build-failure pause after it). Everything else
-  parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them.
+  audit-gap pause before the build, the verify-build-failure pause after it), and the one condition
+  that fires `/security-review` at step 7. Everything else parameterises the skills it calls (e.g.
+  code-review effort), leaving their behaviour to them.
 - **A closed set of subagents.** The flow's sanctioned spawns are exactly four: `Explore` for recon
   (fanned out in proportion to the surface, per `plan-brief`), the Checkpoint-2 trivial-verifier,
-  `/audit-tests`, and `/verify-build`. Each one exists to buy a **fresh context the build can't see** —
-  that independence *is* the product, and it's what separates them from the self-checking a current
-  model already does unprompted and doesn't need to be told to do. So don't add ad-hoc ones: no
-  subagent to re-check your own work, no second reviewer beyond `/code-review`, and one where one will
-  do. (Removing any of the four is a different thing entirely — that's a safety regression, not a
-  saving.)
+  `/audit-tests`, and `/verify-build`. Each one exists to buy a **fresh context the build can't
+  see** — that independence *is* the product, and it's what separates them from the self-checking a
+  current model already does unprompted and doesn't need to be told to do. So don't add ad-hoc ones:
+  no subagent to re-check your own work, no reviewer beyond `/code-review` and step 7's conditional
+  `/security-review`, and one where one will do. (Removing any of the four is a
+  different thing entirely — that's a safety regression, not a saving.)
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
 - **Scope discipline.** Build exactly what was agreed. Anything extra you notice → surface it as a
