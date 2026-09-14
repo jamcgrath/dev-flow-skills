@@ -1,6 +1,6 @@
 ---
 name: audit-tests
-description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green". Because the tests are committed before the feature exists (base), a genuine test for new behaviour must FAIL at base; one that passes is vacuous. Spawned as a FRESH subagent (the author must not grade its own tests), it runs the tests at base and returns a THREE-valued per-test verdict — adequate (failed via a real assertion), weak (failed only by error/absence), inadequate (passed = vacuous). It classifies each criterion new/changed vs preservation itself (not from an author label). Detect-and-flag only: inadequate → criterion unverifiable, weak → softer verified. Writes TEST_AUDIT.md. Invoked by /dev-flow on the human path, between the acceptance-test commit and the build — an inadequate (vacuously-passing) test pauses dev-flow to ask how to proceed, while a weak (red-by-absence) verdict rides forward as a softer verified rather than a pause. Non-interactive.
+description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green". Because the tests are committed before the feature exists (base), a genuine test for new behaviour must FAIL at base; one that passes is vacuous. Spawned as a FRESH subagent (the author must not grade its own tests), it runs the tests at base and returns a THREE-valued per-test verdict — adequate (failed via a real assertion), weak (failed only by error/absence), inadequate (passed = vacuous). It classifies each criterion new/changed vs preservation itself (not from an author label). Detect-and-flag only: inadequate → criterion unverifiable, weak → softer verified. Writes TEST_AUDIT.md. Invoked by /dev-flow between the acceptance-test commit and the build — an inadequate (vacuously-passing) test pauses dev-flow to ask how to proceed, while a weak (red-by-absence) verdict rides forward as a softer verified rather than a pause. Non-interactive.
 ---
 
 # audit-tests
@@ -12,7 +12,7 @@ exists (`base`), so a real test for new behaviour must **fail at `base`**. A tes
 pre-build is vacuous; a test that fails only because a symbol is missing is red but **unproven**.
 
 **Spawned fresh** — the skill that authored the tests must not grade them — and **runs once**,
-between the acceptance-test commit and the build, on `/dev-flow`'s **human path only**. It judges
+between the acceptance-test commit and the build. It judges
 the *tests*, not the code (there is no code yet), and it **does not fix** them (detect-and-flag
 only — `/dev-flow` decides what happens with a gap it finds).
 

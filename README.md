@@ -2,14 +2,14 @@
 
 A project-agnostic, AI-assisted **dev flow** for [Claude Code](https://claude.com/claude-code),
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
-structured flow with up to two human gates — fire it off, approve the plan (auto-approved for trivial,
-presentational changes), review before the PR.
+structured flow with two human gates — fire it off, approve the plan, review before the PR.
 
-The flow adds **almost no behaviour of its own** — beyond the proportional-approval classifier,
-the persisted plan (`PLAN.md`) at the PLAN gate, the condition that fires a security review before
-the REVIEW gate, and (human path only) two test-integrity checkpoints before and after the build,
-`/dev-flow <task>` is a thin orchestrator that routes feature vs bug and runs the chain below.
-Outside it, work stays conversational — nothing fires unless you invoke it.
+The flow adds **almost no behaviour of its own** — beyond the persisted plan (`PLAN.md`) at the PLAN
+gate, the condition that fires a security review before the REVIEW gate, and two test-integrity
+checkpoints before and after the build, `/dev-flow <task>` is a thin orchestrator that routes feature
+vs bug and runs the chain below. Outside it, work stays conversational — nothing fires unless you
+invoke it. There's no fast path: a change small enough to want one doesn't need the orchestrator, so
+just ask for it conversationally instead.
 
 ## Who it's for
 
@@ -18,10 +18,10 @@ on any repo and any (or no) tracker. It's deliberately tool-agnostic: the contex
 skills **derive conventions from the codebase they're in — they never assume the stack**.
 
 > **This is one developer's workflow — it may not be yours, and that's fine.** It encodes my
-> preferences: where the human gates sit, the Decision Log commit style, what counts as "trivial"
-> enough to auto-approve. Treat it as a starting point, not a prescription. The skills are plain
-> markdown, so **adapt them to how *you* work** — fork the gates you don't want, change the commit
-> format, retune the classifier, drop skills you won't use. If you only keep one invariant, keep the
+> preferences: where the human gates sit, the Decision Log commit style, how much evidence a review
+> gate deserves. Treat it as a starting point, not a prescription. The skills are plain markdown, so
+> **adapt them to how *you* work** — fork the gates you don't want, change the commit format, drop
+> skills you won't use. If you only keep one invariant, keep the
 > **always-human REVIEW gate before the PR** — that's the load-bearing safety property the rest leans
 > on. Issues and forks welcome, but you never have to ask permission to make it fit you.
 
@@ -29,19 +29,18 @@ skills **derive conventions from the codebase they're in — they never assume t
 
 ```
 /dev-flow <task>
-  → route: feature or bug? · ticket or none? · approval mode (human vs auto) · readiness scan
+  → route: feature or bug? · ticket or none? · readiness scan
   → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
-  → plan-brief (feature)  |  investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
-  → plan the approach (ALWAYS) — then:
-       · human path → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
-       · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
+  → plan-brief (feature)  |  investigate-bug (bug)
+  → plan the approach
+       → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
   → branch off default (if needed)
-       · human path only → /author-acceptance-tests → /commit (= base) → /audit-tests
-            → ⏸ audit-gap checkpoint (only an *inadequate*/vacuous-at-base test; weak/red-by-absence rides forward): proceed anyway / strengthen tests first
-  → build + /commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
-  → verify   · human path → /verify-build (fresh subagent, strong model, tries to falsify the change)
-            → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
-       · auto path → read-only checks only
+  → /author-acceptance-tests → /commit (= base) → /audit-tests
+       → ⏸ audit-gap checkpoint (only an *inadequate*/vacuous-at-base test; weak/red-by-absence
+                                  rides forward): proceed anyway / strengthen tests first
+  → build + /commit each change
+  → /verify-build (fresh subagent, strong model, tries to falsify the change)
+       → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
   → /code-review        (Claude Code built-in)
   → [/security-review]  (built-in)  only when the diff touches a security surface
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here;
@@ -50,9 +49,9 @@ skills **derive conventions from the codebase they're in — they never assume t
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
 
-> 📊 For a rendered flowchart of the human/auto branches and the three classifier checkpoints, see
-> [docs/dev-flow.md](docs/dev-flow.md). For a log of how the auto-path classifier actually decided on
-> real and adversarial tasks (and any misclassifications), see [docs/classifier-log.md](docs/classifier-log.md).
+> 📊 For a rendered flowchart of the full sequence, see [docs/dev-flow.md](docs/dev-flow.md).
+> [docs/classifier-log.md](docs/classifier-log.md) is the closed record of the auto-approval
+> classifier this flow used to carry, and why it was removed.
 
 ## What's in it
 
@@ -63,9 +62,9 @@ skills **derive conventions from the codebase they're in — they never assume t
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
 | `investigate-bug` | bug recon — get it reproducing red at the bug's own layer before any theory, then trace it |
 | `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + verify at the change's layer (browser for UI, tests/DB otherwise) |
-| `author-acceptance-tests` | *(human path)* turn acceptance criteria into committed tests, independent of the build, before it starts |
-| `audit-tests` | *(human path)* fresh-subagent adequacy audit of those tests via red-before-green |
-| `verify-build` | *(human path)* fresh-subagent independent falsifier — replaces builder self-checking at verify |
+| `author-acceptance-tests` | turn acceptance criteria into committed tests, independent of the build, before it starts |
+| `audit-tests` | fresh-subagent adequacy audit of those tests via red-before-green |
+| `verify-build` | fresh-subagent independent falsifier — replaces builder self-checking at verify |
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
@@ -79,8 +78,8 @@ skills **derive conventions from the codebase they're in — they never assume t
 `investigate-bug` — also work as standalone one-offs: reality-check a ticket, gather plan context, or
 investigate a bug without committing to the pipeline. Run alone, each writes its context file
 (`TICKET_CONTEXT.md` / `PLAN_BRIEF.md` / `BUG_CONTEXT.md`) and stops there; the orchestration the full
-flow layers on — the proportional PLAN gate and the persisted, visualised `.dev-flow/<task>/PLAN.md` —
-only happens under `/dev-flow`.
+flow layers on — the PLAN gate and the persisted, visualised `.dev-flow/<task>/PLAN.md` — only
+happens under `/dev-flow`.
 
 `discuss` goes further: it isn't part of the flow at all. `/dev-flow` never invokes it and never reads
 what it writes. Its natural slot is upstream of `/dev-flow` — settle *what* you're doing and why
@@ -157,18 +156,15 @@ restart the session to pick them up.
 - **`commit` and `pr` embed a "Decision Log" commit convention** (Intent / Approach / Alternatives
   ruled out / Assumptions / Trade-offs). Installing them means adopting that commit style — the
   skills carry the format themselves, so it works standalone, but it's opinionated by design.
-- **The PLAN gate is proportional (approval only).** Recon and planning always run; what's conditional
-  is the *human approval* of the plan. Only **trivial, presentational** changes — a font-size, a layout
-  tweak, a *non-load-bearing* copy string — auto-approve and build (plus anything you explicitly tell it
-  to skip). A classifier re-validates after recon, after the plan (via an independent verifier
-  subagent), and before every commit. Its mechanical tripwires *exclude* the dangerous stuff (more than
-  one file, new/deleted files, new deps, and any edit to existing **functional/logic** behaviour —
-  control flow, a guard, a limit, a default, auth/secret/endpoint tokens) but they don't *certify* what's
-  left safe: for the cosmetic edits that remain, the real net is a small judgment call (decisive fork? a
-  load-bearing string?) **plus the always-human REVIEW gate**. Any breach or doubt reverts to the human
-  gate. The pre-PR **review gate is always human — even an unattended run stops there before pushing** —
-  and commits are reversible, so a misclassification is at worst a cheap commit caught at review.
-- **Three test-integrity skills run on the human path only.** `author-acceptance-tests`,
+- **Both gates are human, and there is no fast path.** Invoking `/dev-flow` means the full sequence:
+  plan approval, acceptance tests, an independent falsifier, and a human review before the PR. Nothing
+  auto-approves. This is deliberate — the flow used to carry a classifier that fast-tracked trivial,
+  presentational changes, and it was removed after three months in which it auto-approved exactly one
+  change (a synthetic test). The reason it went unused is worth stating, because it will apply to your
+  fork too: **a fast path inside the orchestrator competes with not invoking the orchestrator**, and it
+  loses, because the tool for a one-line tweak is a sentence to Claude Code, not a pipeline with a
+  classifier in it. `docs/classifier-log.md` keeps the record.
+- **Three test-integrity skills defend the tests against the build.** `author-acceptance-tests`,
   `audit-tests`, and `verify-build` turn acceptance criteria into committed tests, audit their
   red-before-green adequacy, and independently try to falsify the finished build — see
   [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 5–6. What that machinery defends is the
@@ -176,9 +172,7 @@ restart the session to pick them up.
   **literally** — a hardcoded expected value, a special-cased fixture, a `data-testid` on a stub —
   because nothing has been tampered with and everything goes green. So the build step also points the
   work at the criteria rather than the tests. Treat that half as prompt discipline, not an enforced
-  check. They're skipped on the auto
-  (trivial-change) path: it has no acceptance criteria worth pinning down this way, and committing a
-  new test file would itself trip the auto path's own new-file tripwire.
+  check.
 - **The review gate is ranked, not just assembled.** `verify-build` doesn't only return a verdict — it
   sorts the criteria **weakest oracle first, widest reach breaking the tie** (oracle strength comes from
   `audit-tests`' adequate/weak/inadequate grade, reach from the diff's per-file churn and, where the
@@ -189,16 +183,17 @@ restart the session to pick them up.
   matters most for the criteria that don't stop the flow — a `weak`, red-by-absence test rides forward
   without a pause by design, so without a rank the thinnest oracle in the change arrives as the quietest
   line on the page.
-- **Accessibility rides the UI layer — and the auto path is a known gap.** There's no a11y *step* and no
-  "is this a UI ticket?" flag. `author-acceptance-tests` treats a role + accessible name, keyboard
+- **Accessibility rides the UI layer.** There's no a11y *step* and no "is this a UI ticket?" flag.
+  `author-acceptance-tests` treats a role + accessible name, keyboard
   operability, and a scan of the changed view as part of what the UI layer's contract already means —
   decided per **criterion**, so it's silent on a backend criterion inside a UI-ish task and still fires
   on the one rendered element inside a backend one. It's **tooling-gated**: with no harness in the repo
   (`@axe-core/*`, `jest-axe`, `pa11y`) the line is recorded `unverifiable (tooling gap)` rather than
   installing one, so this is a no-op wherever you don't already test a11y. `verify-build` then enforces
-  it for free — the criteria are its spec. The deliberate hole: the **auto path skips acceptance tests
-  entirely**, so a trivial colour or font-size tweak gets no a11y check at all, and the always-human
-  REVIEW gate is what has to catch a contrast regression there.
+  it for free — the criteria are its spec. (Removing the auto path closed a hole here: a trivial colour
+  or font-size tweak used to skip the acceptance-test machinery entirely and so got no a11y check at
+  all. Every `/dev-flow` run now authors them. A tweak you *don't* run through the flow is still on you
+  — that's the trade for keeping the fast path outside the tool.)
 - **The acceptance-test commit keeps hooks on.** It's intentionally red (the tests reference
   behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
   bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill

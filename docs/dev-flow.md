@@ -1,39 +1,26 @@
 # The dev-flow flowchart
 
-A rendered flowchart of `/dev-flow`, showing the proportional **PLAN-gate fast-path** — the
-human vs auto branching, the three classifier checkpoints, and the fail-closed escalations.
-For the quick-scan version, see the ASCII flow in the [README](../README.md#the-flow); for the
-full spec, see [`skills/dev-flow/SKILL.md`](../skills/dev-flow/SKILL.md).
+A rendered flowchart of `/dev-flow` — the two human gates, the test-integrity steps between them, and
+the fail-closed escalations. For the quick-scan version, see the ASCII flow in the
+[README](../README.md#the-flow); for the full spec, see
+[`skills/dev-flow/SKILL.md`](../skills/dev-flow/SKILL.md).
 
 ```mermaid
 flowchart TD
     A([/dev-flow · task]):::start --> B
 
-    B["Route<br/>feature vs bug · ticket?<br/>approval mode: human or auto<br/>readiness scan"]:::always --> C
+    B["Route<br/>feature vs bug · ticket?<br/>readiness scan"]:::always --> C
 
-    C["Recon — ALWAYS runs<br/>plan-brief / investigate-bug"]:::always --> CP1
+    C["Recon<br/>plan-brief / investigate-bug"]:::always --> D
 
-    CP1{"Checkpoint 1 · auto path<br/>blast radius still small?"}:::auto
-    CP1 -->|"bigger than it looked"| GATE
-    CP1 -->|ok| D
+    D["Plan the approach"]:::always --> GATE
 
-    D["Plan the approach — ALWAYS runs"]:::always --> M
+    GATE["⏸ PLAN gate — HUMAN<br/>surface forks + conflicts · wait for approval"]:::human --> AT
 
-    M{"approval mode?"}:::auto
-    M -->|human path| GATE
-    M -->|auto path| CP2
+    AT["author-acceptance-tests<br/>write + commit tests (= base)"]:::testint --> AUD
+    AUD["audit-tests · FRESH subagent<br/>red-before-green adequacy"]:::testint --> AGCHK
 
-    CP2{"Checkpoint 2 · binding<br/>tripwires + recon file list<br/>+ independent verifier subagent"}:::auto
-    CP2 -->|"fail · doubt · verifier unavailable"| GATE
-    CP2 -->|"trivial ✓"| AN
-
-    GATE["⏸ PLAN gate — HUMAN<br/>surface forks · wait for approval"]:::human --> AT
-    AN["announce in one line · proceed, no wait"]:::auto --> BUILD
-
-    AT["author-acceptance-tests · human path<br/>write + commit tests (= base)"]:::humanpath --> AUD
-    AUD["audit-tests · human path · FRESH subagent<br/>red-before-green adequacy"]:::humanpath --> AGCHK
-
-    AGCHK{"any <i>inadequate</i><br/>(vacuous-at-base) test?"}:::humanpath
+    AGCHK{"any <i>inadequate</i><br/>(vacuous-at-base) test?"}:::testint
     AGCHK -->|"inadequate found"| AESC
     AGCHK -->|"clean or weak-only<br/>(weak rides forward)"| BUILD
 
@@ -41,21 +28,11 @@ flowchart TD
     AESC -->|strengthen| AT
     AESC -->|"proceed anyway"| BUILD
 
-    BUILD["Build + commit each change"]:::always --> CP3
+    BUILD["Build + commit each change"]:::always --> VB
 
-    CP3{"Checkpoint 3 · auto path · the REAL gate<br/>tripwires on cumulative diff since base<br/>side-effecting build / migration / deploy?"}:::auto
-    CP3 -->|"breach"| ESC
-    CP3 -->|clean| VMODE
+    VB["verify-build · FRESH subagent<br/>strong model · tries to falsify the change"]:::testint --> VCHK
 
-    ESC["⏸ stop — HUMAN approves<br/>the now-non-trivial change"]:::human --> BUILD
-
-    VMODE{"approval mode?"}:::auto
-    VMODE -->|human path| VB
-    VMODE -->|auto path| VRO
-
-    VB["verify-build · human path · FRESH subagent<br/>strong model · tries to falsify the change"]:::humanpath --> VCHK
-
-    VCHK{"verified?"}:::humanpath
+    VCHK{"verified?"}:::testint
     VCHK -->|yes| CR
     VCHK -->|"falsified / couldn't-verify"| VESC
 
@@ -66,8 +43,6 @@ flowchart TD
 
     STOP(["stop · report why<br/>no code review, no PR"]):::human
 
-    VRO["read-only checks only"]:::auto --> CR
-
     CR["Code review<br/>+ security review if the diff<br/>touches a security surface"]:::always --> RG
 
     RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>verdict + weakest-oracle criteria + rollback route first, diff last"]:::human --> PR
@@ -76,30 +51,28 @@ flowchart TD
 
     classDef start fill:#1f2937,color:#fff,stroke:#111;
     classDef always fill:#e5e7eb,color:#111,stroke:#9ca3af;
-    classDef auto fill:#dbeafe,color:#0c4a6e,stroke:#2563eb;
     classDef human fill:#fee2e2,color:#7f1d1d,stroke:#ef4444,stroke-width:2px;
-    classDef humanpath fill:#fef3c7,color:#78350f,stroke:#f59e0b;
+    classDef testint fill:#fef3c7,color:#78350f,stroke:#f59e0b;
 ```
 
 ## How to read it
 
-- 🟥 **Red = human gates/escalations.** 🟦 **Blue = the auto-path classifier checkpoints.**
-  🟨 **Amber = human-path-only test-integrity steps** (author-acceptance-tests, audit-tests,
-  verify-build, and their verdict checks). ⬜ **Grey = steps that always run** — recon, planning, and
-  the build itself are never skipped, on either path.
-- **The auto path skips exactly one red node — the PLAN gate — and only when *all* blue checkpoints
-  pass.** The last red node (the REVIEW gate) is never skippable: even an unattended run hard-stops
-  there, so nothing reaches a remote unreviewed.
-- **Every blue checkpoint has one escape hatch: → red.** Any breach, any doubt, or an unreachable
-  verifier funnels back to a human (fail-closed). Blue can only ever *downgrade* to red, never the
-  reverse — that's the whole safety story in one visual.
-- **Checkpoint 3 is "the real gate"** because it's the one checking an actual diff (cumulative since
-  the auto path began), and it also catches side-effecting build commands *before* they run.
-- **The two amber checkpoints (audit gap, verify-build failure) are conditional escalations, not new
-  structural gates** — the same category as Checkpoint 3's tripwire breach. They only exist on the
-  human path, and only fire when their check finds something (a criterion with an *inadequate* /
-  vacuous-at-base test; a falsified or unverifiable build); a clean run never sees them. A `weak`
-  (red-by-absence) audit verdict — unavoidable for a net-new pure symbol — does **not** fire the
-  audit-gap pause: it rides forward as a softer verified — and because it never stops the flow, it is
-  exactly what `verify-build`'s attention order ranks to the top, so the REVIEW gate leads with it by
-  name rather than burying it in a count.
+- 🟥 **Red = human gates and escalations.** 🟨 **Amber = the test-integrity steps**
+  (author-acceptance-tests, audit-tests, verify-build, and their verdict checks). ⬜ **Grey = the
+  steps that always run** — recon, planning, and the build itself.
+- **The flow is linear and every node runs.** There is no fast path and no branch that skips a gate:
+  a change small enough to want one doesn't need the orchestrator at all. An earlier version carried
+  an auto-approving classifier that could bypass the PLAN gate for trivial changes; it was removed
+  after auto-approving exactly one change in three months, and that one synthetic — see
+  [`classifier-log.md`](classifier-log.md).
+- **The two amber checkpoints (audit gap, verify-build failure) are conditional escalations, not
+  structural gates.** They fire only when their check finds something (a criterion with an
+  *inadequate* / vacuous-at-base test; a falsified or unverifiable build); a clean run never sees
+  them. Everything that can go wrong funnels to a red node — fail-closed, with no path that resolves
+  a doubt in the flow's own favour.
+- **A `weak` (red-by-absence) audit verdict — unavoidable for a net-new pure symbol — does not fire
+  the audit-gap pause.** It rides forward as a softer verified; and because it never stops the flow,
+  it is exactly what `verify-build`'s attention order ranks to the top, so the REVIEW gate leads with
+  it by name rather than burying it in a count.
+- **The REVIEW gate is the load-bearing one.** It is never skipped and never auto-approved: even an
+  unattended run hard-stops there, so nothing reaches a remote unreviewed.

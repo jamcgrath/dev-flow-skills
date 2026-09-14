@@ -24,10 +24,9 @@ on the page, not a task it starts.
    name matches the branch slug — `/dev-flow` names the branch *from* `<task>`, so on a keyless task
    they are the same string; else the sole `.dev-flow/*` dir; else **ask which run to debrief** rather
    than guessing, since debriefing the wrong task is worse than a question. **No `.dev-flow/<task>/`
-   at all → stop and say so** — this is a dev-flow epilogue, and recon always runs on both paths, so
-   the directory exists after any real run. Then resolve `base`: the base commit recorded in
-   `.dev-flow/<task>/ACCEPTANCE_TESTS.md` (human path only — the auto path never writes that file),
-   else `git merge-base` against the default branch.
+   at all → stop and say so** — this is a dev-flow epilogue, and recon always runs, so the directory
+   exists after any real run. Then resolve `base`: the base commit recorded in
+   `.dev-flow/<task>/ACCEPTANCE_TESTS.md`, else `git merge-base` against the default branch.
 
 2. **Gather the evidence — read-only, and nothing from memory.** Everything the page says must trace
    to one of these:
@@ -36,8 +35,8 @@ on the page, not a task it starts.
    - `git diff -M --numstat <base>..HEAD` — per-file `+`/`−`, which is what sizes the churn map
    - the `.dev-flow/<task>/` artifacts that exist — read only the lines the page shows (the verdict
      from `VERIFICATION.md`, the counts from `TEST_AUDIT.md`, the goal from `PLAN_BRIEF.md`) and link
-     the rest. An artifact that isn't there is **stated as absent** ("no acceptance tests — auto
-     path"), never reconstructed.
+     the rest. An artifact that isn't there is **stated as absent** ("no `VERIFICATION.md` — verify
+     never ran"), never reconstructed.
    - `gh pr view --json number,url,title,state` and `gh repo view --json url` when there's a remote —
      the PR itself, and the base URL that makes each commit sha a link. No remote → skip both silently.
 
