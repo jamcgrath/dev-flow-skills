@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. When the branch came through /dev-flow the body leads with the verification verdict, the criteria to look at first (carried across from verify-build's weakest-oracle-first ranking, named rather than counted) and the rollback route, before the Decision Log. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
+description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. On a branch that came through /dev-flow it leads with that run's verification evidence instead. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
 ---
 
 # pr

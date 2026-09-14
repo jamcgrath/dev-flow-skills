@@ -1,6 +1,6 @@
 ---
 name: audit-tests
-description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green". Because the tests are committed before the feature exists (base), a genuine test for new behaviour must FAIL at base; one that passes is vacuous. Spawned as a FRESH subagent (the author must not grade its own tests), it runs the tests at base and returns a THREE-valued per-test verdict — adequate (failed via a real assertion), weak (failed only by error/absence), inadequate (passed = vacuous). It classifies each criterion new/changed vs preservation itself (not from an author label). Detect-and-flag only: inadequate → criterion unverifiable, weak → softer verified. Writes TEST_AUDIT.md. Invoked by /dev-flow between the acceptance-test commit and the build — an inadequate (vacuously-passing) test pauses dev-flow to ask how to proceed, while a weak (red-by-absence) verdict rides forward as a softer verified rather than a pause. Non-interactive.
+description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green" — a genuine test for new behaviour must FAIL at base, and one that passes there is vacuous. Spawned as a FRESH subagent, because the author must not grade its own tests. Returns a THREE-valued per-test verdict (adequate / weak / inadequate) and writes TEST_AUDIT.md; detect-and-flag only, it never edits a test. Invoked by /dev-flow between the acceptance-test commit and the build. Non-interactive.
 ---
 
 # audit-tests
