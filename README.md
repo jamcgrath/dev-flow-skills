@@ -44,7 +44,8 @@ skills **derive conventions from the codebase they're in — they never assume t
        · auto path → read-only checks only
   → /code-review        (Claude Code built-in)
   → [/security-review]  (built-in)  only when the diff touches a security surface
-  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
+  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here;
+       leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
   → /pr                 (bots/CI after → /pr-fix)
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
@@ -178,6 +179,16 @@ restart the session to pick them up.
   check. They're skipped on the auto
   (trivial-change) path: it has no acceptance criteria worth pinning down this way, and committing a
   new test file would itself trip the auto path's own new-file tripwire.
+- **The review gate is ranked, not just assembled.** `verify-build` doesn't only return a verdict — it
+  sorts the criteria **weakest oracle first, widest reach breaking the tie** (oracle strength comes from
+  `audit-tests`' adequate/weak/inadequate grade, reach from the diff's per-file churn and, where the
+  project exposes an import graph, the changed files' fan-in). The REVIEW gate and the PR body then lead
+  with that order — intent, verdict, the named criteria to check first, the findings, the rollback
+  route, and the complete diff **last**, still available but no longer the lead. The counts (`N adequate
+  / N weak`) stay as supporting detail: they say how much was checked, never *where to look*. This
+  matters most for the criteria that don't stop the flow — a `weak`, red-by-absence test rides forward
+  without a pause by design, so without a rank the thinnest oracle in the change arrives as the quietest
+  line on the page.
 - **Accessibility rides the UI layer — and the auto path is a known gap.** There's no a11y *step* and no
   "is this a UI ticket?" flag. `author-acceptance-tests` treats a role + accessible name, keyboard
   operability, and a scan of the changed view as part of what the UI layer's contract already means —

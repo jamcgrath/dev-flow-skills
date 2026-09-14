@@ -35,7 +35,8 @@ pushes unreviewed.
        · auto path → read-only checks only
   → code-review  · + security-review when the diff touches a security surface (auth / permission /
                    secret / endpoint tokens, or an injection sink)
-  → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
+  → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here;
+       leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
   → pr
 ```
 
@@ -233,10 +234,14 @@ pushes unreviewed.
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
      fixable action and "strengthen" is a dead end; a weak test is a *softer verified*, not a gap.
      Record it and **ride it forward**: `/verify-build` softens its verdict for weak-backed criteria
-     and the REVIEW gate surfaces that softening. Announce in one line ("`<N>` criteria are
-     weak/red-by-absence — verified post-build by the suite, not assertion-proven at base") and
-     proceed. (Manufactured-weak is a fixable author slip, but the softened verify + REVIEW gate still
-     catch it — escalate it to a pause only if the surface-only treatment proves to miss them.)
+     and **ranks them to the top of its attention order**, which the REVIEW gate leads with. Announce
+     in one line and **name the criteria, don't just count them** ("`<criterion>` and `<criterion>` are
+     weak/red-by-absence — verified post-build by the suite, not assertion-proven at base"); a bare
+     `<N>` hides *which* behaviour has the thinnest oracle, which is the only part of the count worth
+     a human's attention. More than three → name the two with the widest reach and give the count for
+     the rest. Then proceed. (Manufactured-weak is a fixable author slip, but the softened verify +
+     REVIEW gate still catch it — escalate it to a pause only if the surface-only treatment proves to
+     miss them.)
    - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
    Then build per the plan in **logical increments**, applying `implement-brief`'s reuse-survey +
@@ -316,13 +321,33 @@ pushes unreviewed.
    REVIEW gate beside the code review. Tripping this on the auto path means the classifier let a
    non-presentational change through — say so at the gate.
 
-8. **⏸ REVIEW gate — always human (hard stop).** Surface the diff, the code review and any
-   security-review findings for a human sanity-check before the PR — and, when
-   `.dev-flow/<task>/VERIFICATION.md` exists, its verdict and any unresolved criteria, so a "proceed
-   with the gap noted" choice from step 6 is actually seen here, not silently dropped. This gate is
+8. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
    **not** auto-approved by the classifier, never skipped on the auto path, and (for now) not
    swappable for an auto-approver: an unattended run **stops here and does not push** until a human
    approves. This is what keeps "every diff is seen before it leaves the repo" true.
+
+   **Surface it in this order — outcome first, diff last.** Attention is spent in the order things are
+   presented, so present them in the order they'd change the decision. Leading with the diff spends the
+   reader's first and best attention on the largest, least-ranked artifact and leaves the verdict to be
+   found:
+   1. **What this was meant to do** — one line of intent, from the approved plan or the ticket. The
+      reviewer may not have been at the PLAN gate.
+   2. **The verdict, and what to look at first.** When `.dev-flow/<task>/VERIFICATION.md` exists: its
+      verdict, then the head of its **`## Attention order`** — the weakest-oracle, widest-reach criteria,
+      **named**, with what to check on each — then any unresolved criterion, so a "proceed with the gap
+      noted" choice from step 6 is actually seen here rather than silently dropped. Carry that order
+      across as written; don't re-sort it into ticket order or flatten it back to counts (`N adequate /
+      N weak` tells a reviewer nothing about *where* to look). Where there is no `VERIFICATION.md` (the
+      auto path writes none), say so plainly: read-only checks only, nothing independently falsified
+      this change.
+   3. **Findings** — the code review, and any `/security-review` findings beside it.
+   4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one and
+      what a revert would leave behind. On the auto path there's no `VERIFICATION.md`, so read it off the
+      diff in one line (a single presentational edit is almost always a clean revert — say so; if it
+      isn't, the classifier should not have let it here). That one-liner stays here at the gate: `/pr`
+      deliberately reconstructs no rollback claim for a durable PR body, since one it invented would
+      carry none of the fresh verifier's independence.
+   5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
 
 9. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
@@ -361,7 +386,9 @@ pushes unreviewed.
 - **Spend the words at the gates.** One line before a step that will take a while, one when a
   checkpoint fires or the path changes, and nothing much in between. At each gate, **lead with the
   outcome** — what happened and what it means for the decision now in front of the reader — with the
-  supporting detail underneath for whoever wants it. The pauses are where a human's attention is
+  supporting detail underneath for whoever wants it. **And rank what you surface**: weakest oracle over
+  the widest reach goes first (step 8), never the artifact that happens to be biggest or the order the
+  ticket happened to list things in. The pauses are where a human's attention is
   actually spent; running commentary between them spends it for nothing and trains them to skim the
   places it matters.
 - **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), the

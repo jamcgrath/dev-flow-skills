@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
+description: Open a pull request whose body synthesises the Decision Log from the branch's commit messages, so the reviewer gets the intent without reading every commit. When the branch came through /dev-flow the body leads with the verification verdict, the criteria to look at first (carried across from verify-build's weakest-oracle-first ranking, named rather than counted) and the rollback route, before the Decision Log. Use when the user says "make a pr", "raise a pr", "open a pr", or "simulate a pr". Detects a task key (e.g. Jira PROJ-1234) from the branch name and includes it only when present.
 ---
 
 # pr
@@ -24,7 +24,11 @@ rolls them up (see global CLAUDE.md).
    evidence — `.dev-flow/<task>/VERIFICATION.md` (verify-build's verdict) and
    `.dev-flow/<task>/TEST_AUDIT.md` (test adequacy), where `<task>` is the key from step 2 or the sole
    `.dev-flow/*` dir for this branch — so the body can **lead with the verification** a downstream
-   reviewer needs. Then, from the commits' Decision Logs, write one PR body:
+   reviewer needs. **Carry `VERIFICATION.md`'s `## Attention order` across, don't recompute or flatten
+   it**: it is already sorted weakest-oracle-first over widest reach, and a reviewer who reads one line
+   of this PR should get the criterion most likely to be wrong — which `N adequate / N weak / N
+   inadequate` cannot tell them. Name the criteria; keep the counts as the supporting line beneath.
+   Then, from the commits' Decision Logs, write one PR body:
 
    ```markdown
    ## Summary
@@ -34,8 +38,13 @@ rolls them up (see global CLAUDE.md).
 
    ### Verification       ← include this whole block ONLY if .dev-flow/<task>/VERIFICATION.md exists
    **Verdict:** verified | couldn't-verify | falsified — <one-line reason>  (LLM judgment in fresh context, not ground truth)
+   **Look here first:** <head of VERIFICATION.md's Attention order — the weakest-oracle, widest-reach criteria, NAMED, each with what to check>
    **Test integrity:** <tests added / changed / removed; surface any tamper breach loudly>
    **Test adequacy:** <from TEST_AUDIT.md — N adequate / N weak / N inadequate; inadequate criteria are unverifiable, weak = red-by-absence only>
+
+   ### Rollback           ← include this block ONLY if .dev-flow/<task>/VERIFICATION.md exists
+   **Revert:** clean | not clean — <the range, or what blocks it>
+   **Leaves behind:** none | <irreversible side effects a revert does not undo>
 
    ### Decision Log
    **Intent:** <combined goal across the commits>
@@ -48,8 +57,10 @@ rolls them up (see global CLAUDE.md).
    ### Commits
    - <short-sha> <subject>
    ```
-   Omit any Decision Log section that's empty, and the whole **Verification** block on a standalone PR
-   with no `VERIFICATION.md`. Merge duplicates; drop decisions reversed later in the branch.
+   Omit any Decision Log section that's empty, and both the **Verification** and **Rollback** blocks on
+   a standalone PR with no `VERIFICATION.md` — never reconstruct either from the diff here, since a
+   rollback claim this skill invented carries none of the fresh-context verifier's independence. Merge
+   duplicates; drop decisions reversed later in the branch.
 
 4. **Title:** concise imperative covering the branch's theme. Prefix with the key when found:
    `<KEY>: <title>` if a key was detected, otherwise just `<title>`.

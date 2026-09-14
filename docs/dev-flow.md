@@ -70,7 +70,7 @@ flowchart TD
 
     CR["Code review<br/>+ security review if the diff<br/>touches a security surface"]:::always --> RG
 
-    RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>surfaces any noted verification gap"]:::human --> PR
+    RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>verdict + weakest-oracle criteria + rollback route first, diff last"]:::human --> PR
 
     PR([/pr · push + PR]):::start
 
@@ -100,4 +100,6 @@ flowchart TD
   human path, and only fire when their check finds something (a criterion with an *inadequate* /
   vacuous-at-base test; a falsified or unverifiable build); a clean run never sees them. A `weak`
   (red-by-absence) audit verdict — unavoidable for a net-new pure symbol — does **not** fire the
-  audit-gap pause: it rides forward as a softer verified (surfaced later at verify + the REVIEW gate).
+  audit-gap pause: it rides forward as a softer verified — and because it never stops the flow, it is
+  exactly what `verify-build`'s attention order ranks to the top, so the REVIEW gate leads with it by
+  name rather than burying it in a count.
