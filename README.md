@@ -17,6 +17,13 @@ Anyone using Claude Code who wants a repeatable, opt-in structure around feature
 on any repo and any (or no) tracker. It's deliberately tool-agnostic: the context-gathering
 skills **derive conventions from the codebase they're in — they never assume the stack**.
 
+**Both gates here are human — if you want this hands-off, you want the other one.**
+[`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills) is the unattended counterpart:
+ticket in, PR out, both gates swapped for automated approvers, with the review guarantee relocated to
+the merge decision rather than dropped. It's a separate plugin with its own vendored sub-skills
+precisely because removing a gate isn't a setting — it changes the safety model. So there's no
+"hands-off mode" flag to look for here, and no fast path inside this flow.
+
 > **This is one developer's workflow — it may not be yours, and that's fine.** It encodes my
 > preferences: where the human gates sit, the Decision Log commit style, how much evidence a review
 > gate deserves. Treat it as a starting point, not a prescription. The skills are plain markdown, so
@@ -43,7 +50,7 @@ skills **derive conventions from the codebase they're in — they never assume t
        → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
   → /code-review        (Claude Code built-in)
   → [/security-review]  (built-in)  only when the diff touches a security surface
-  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human; even unattended stops here;
+  → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human, never auto-approved;
        leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
   → /pr                 (bots/CI after → /pr-fix)
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
@@ -51,7 +58,8 @@ skills **derive conventions from the codebase they're in — they never assume t
 
 > 📊 For a rendered flowchart of the full sequence, see [docs/dev-flow.md](docs/dev-flow.md).
 > [docs/classifier-log.md](docs/classifier-log.md) is the closed record of the auto-approval
-> classifier this flow used to carry, and why it was removed.
+> classifier this flow used to carry, and why it was removed — worth reading before adding a fast
+> path of your own.
 
 ## What's in it
 

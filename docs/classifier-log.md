@@ -117,10 +117,17 @@ had all been written as conditional on a path that now always runs. It also clos
 the auto path skipped acceptance tests, so a colour or font-size tweak run through the flow got no
 accessibility check at all. Every run authors them now.
 
-**What was knowingly given up.** The auto path was the only working instance of the "PLAN gate is
-swappable for an auto-approver" design point, which existed for unattended/agentic runs. The design
-point survives in prose; the implementation doesn't. A future unattended runner would need to build
-one — and should read the paragraph above before assuming a classifier is the right shape for it.
+**What was knowingly given up: nothing that was still needed.** The auto path was the only working
+instance of the "PLAN gate is swappable for an auto-approver" design point — but the unattended use
+case it was reaching for is already served, and better, by
+[`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills): a separate plugin that swaps
+*both* gates for automated approvers, vendors its own `auto-`prefixed copies of the sub-skills, and
+relocates the review guarantee to the merge decision rather than dropping it. That repo's README
+states the principle this removal was really applying: *"dev-flow's gates are deliberately human —
+that's the point of it for hands-on work. Removing them isn't a setting; it changes the safety
+model."* Which makes the auto path a **third mode** wedged between the two plugins, running the
+unattended premise at a scale too small to be worth a separate safety model — and, tellingly, the
+only one of the three nobody used.
 
 **One thing this log never resolved, worth carrying forward if anyone rebuilds it:** no checkpoint
 ever caught *cross-file* significance — a locally-trivial diff whose impact lives elsewhere (the

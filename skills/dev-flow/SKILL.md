@@ -17,9 +17,12 @@ instruction this skill can honour; if the plan gate is unwanted, don't invoke `/
 version carried an auto-approving classifier for trivial changes. It was removed: in three months of use
 it auto-approved exactly one change, and that was a synthetic test — see `docs/classifier-log.md`.)
 
-It takes the task as args so an automation/agent can call it, and treats the PLAN gate as an **explicit
-gate** — swappable for an auto-approver without changing any delegated step, should an unattended runner
-ever need one. The **REVIEW gate is not** swappable: nothing reaches a remote unreviewed.
+It takes the task as args so an automation/agent can call it, but **unattended runs are not what this
+skill is for** — that's [`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills), a separate
+plugin that swaps both gates for automated approvers and vendors its own copies of the sub-skills. Two
+plugins rather than a flag is deliberate on both sides: removing a gate isn't a setting, it's a
+different safety model. Keep that split — a fast path added back here would be a third mode between
+them, which is what the classifier already turned out to be.
 
 ```
 /dev-flow <task>
@@ -53,8 +56,7 @@ ever need one. The **REVIEW gate is not** swappable: nothing reaches a remote un
    - **bug** — something is broken / misbehaving / a defect to fix → bug path.
    - **feature / change / new thing** → feature path.
    Also decide whether there's an **externally-authored** item to reconcile (Jira / GitHub issue /
-   AI brief). Detect both from the task; **ask only if genuinely ambiguous.** In an unattended run,
-   make a documented best guess and state it rather than blocking.
+   AI brief). Detect both from the task; **ask only if genuinely ambiguous.**
 
    **Readiness scan — do this once, here, before the front.** Cheaply surface what would otherwise
    block or derail the build later:
@@ -235,8 +237,7 @@ ever need one. The **REVIEW gate is not** swappable: nothing reaches a remote un
    REVIEW gate beside the code review.
 
 8. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
-   never skipped and (for now) not swappable for an auto-approver: an unattended run **stops here and
-   does not push** until a human approves. This is what keeps "every diff is seen before it leaves the
+   never skipped and never auto-approved. This is what keeps "every diff is seen before it leaves the
    repo" true.
 
    **Surface it in this order — outcome first, diff last.** Attention is spent in the order things are

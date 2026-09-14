@@ -74,5 +74,6 @@ flowchart TD
   the audit-gap pause.** It rides forward as a softer verified; and because it never stops the flow,
   it is exactly what `verify-build`'s attention order ranks to the top, so the REVIEW gate leads with
   it by name rather than burying it in a count.
-- **The REVIEW gate is the load-bearing one.** It is never skipped and never auto-approved: even an
-  unattended run hard-stops there, so nothing reaches a remote unreviewed.
+- **The REVIEW gate is the load-bearing one.** It is never skipped and never auto-approved, so
+  nothing reaches a remote unreviewed. A hands-off variant of this flow is a different plugin —
+  [`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills) — not a mode of this one.
