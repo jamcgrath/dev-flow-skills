@@ -28,6 +28,15 @@ rolls them up (see global CLAUDE.md).
    it**: it is already sorted weakest-oracle-first over widest reach, and a reviewer who reads one line
    of this PR should get the criterion most likely to be wrong — which `N adequate / N weak / N
    inadequate` cannot tell them. Name the criteria; keep the counts as the supporting line beneath.
+
+   **Check the verdict still covers HEAD.** `VERIFICATION.md`'s `## Scope` records the `base..HEAD` it
+   was computed over. If that HEAD isn't the current one — a fix landed after the verdict, usually at
+   the REVIEW gate — say so on the Verdict line (`verified as of <sha>; N later commit(s) not
+   covered`) instead of publishing it flat. Don't re-run anything and don't re-verify: the builder
+   already self-checks a fix it was asked for, and a second `/verify-build` for a one-line nit is the
+   duplicate work `/dev-flow`'s subagent guard rules out. Just never state a verdict as covering
+   commits it never saw.
+
    Then, from the commits' Decision Logs, write one PR body:
 
    ```markdown
