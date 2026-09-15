@@ -184,9 +184,20 @@ them, which is what the classifier already turned out to be.
      miss them.)
    - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
-   Then build per the plan in **logical increments**, applying `implement-brief`'s reuse-survey +
-   minimal-build discipline — but **not** its own approval pause or its layer-verification step: the
-   PLAN gate already approved the approach, and step 6's `/verify-build` owns verification here.
+   **Survey before writing code, and record the call.** For each plan item, search for what already
+   exists to reuse — props, components, renderers, hooks, utilities, conventions — and record the
+   result as a short table: item · reused (existing) · new (only if needed) · files, with a one-line
+   reason wherever you add a new abstraction. That table is what catches the
+   wrapper-instead-of-an-existing-prop mistake. **Don't pause on it** — the PLAN gate approved the
+   approach, and a reuse call that genuinely *contradicts* that plan is a scope breach to raise, not
+   a gate to re-open.
+
+   Then build per the plan in **logical increments**, and **minimally** — the smallest change that
+   satisfies each item, no drive-by refactors, extra flags or redundant deriveds. (That is
+   `implement-brief`'s discipline, stated here rather than delegated: this flow names that skill but
+   never invokes it, so its body isn't loaded. Its approval pause and its layer-verification step
+   stay dropped — the PLAN gate already approved the approach, and step 6's `/verify-build` owns
+   verification here.)
    The build must **satisfy** `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must
    **never edit** a protected acceptance-test file (an edit is what `/verify-build` flags as a tamper
    breach): as each self-contained change is done and sanity-checks clean, `/commit` it **right
