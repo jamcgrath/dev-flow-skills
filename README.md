@@ -69,7 +69,6 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `verify-ticket` | *(optional)* reconcile an externally-authored ticket/issue/brief against the actual code |
 | `plan-brief` | feature recon — gather grounded context for `/plan` mode (the portable entry; no tracker required) |
 | `investigate-bug` | bug recon — get it reproducing red at the bug's own layer before any theory, then trace it |
-| `implement-brief` | build a brief the lean way — reuse survey first, then minimal build + verify at the change's layer (browser for UI, tests/DB otherwise) |
 | `author-acceptance-tests` | turn acceptance criteria into committed tests, independent of the build, before it starts |
 | `audit-tests` | fresh-subagent adequacy audit of those tests via red-before-green |
 | `verify-build` | fresh-subagent independent falsifier — replaces builder self-checking at verify |

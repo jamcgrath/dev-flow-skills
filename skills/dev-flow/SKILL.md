@@ -193,16 +193,15 @@ them, which is what the classifier already turned out to be.
    a gate to re-open.
 
    Then build per the plan in **logical increments**, and **minimally** — the smallest change that
-   satisfies each item, no drive-by refactors, extra flags or redundant deriveds. (That is
-   `implement-brief`'s discipline, stated here rather than delegated: this flow names that skill but
-   never invokes it, so its body isn't loaded. Its approval pause and its layer-verification step
-   stay dropped — the PLAN gate already approved the approach, and step 6's `/verify-build` owns
-   verification here.)
+   satisfies each item, no drive-by refactors, extra flags or redundant deriveds.
    The build must **satisfy** `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must
    **never edit** a protected acceptance-test file (an edit is what `/verify-build` flags as a tamper
-   breach): as each self-contained change is done and sanity-checks clean, `/commit` it **right
-   away** — one logical change per commit, Decision Log proportional (per convention), while the
-   reasoning is fresh. **Stay in scope** — the plan is the contract.
+   breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
+   it actually declares, in its manifest scripts or task runner — plus a cheap smoke check, then
+   `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
+   convention), while the reasoning is fresh. That bar is deliberately shallow: step 6's
+   `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
+   nothing it won't. **Stay in scope** — the plan is the contract.
 
    **Implement to the criteria, not to the tests.** The acceptance tests are how the bar gets
    *checked*; the criteria **are** the bar. Write the solution that holds for every valid input, not

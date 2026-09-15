@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "dev-flow",
-      "description": "Project-agnostic AI-assisted dev flow: route feature vs bug, gather grounded context, gate on a plan (always human-approved), author and audit acceptance tests before the build, build minimally, independently verify the result, commit with intent, always-human review, and open a PR. Bundles the orchestrator (dev-flow) plus verify-ticket, plan-brief, investigate-bug, implement-brief, author-acceptance-tests, audit-tests, verify-build, commit, pr, pr-fix, and debrief — plus the standalone discuss.",
+      "description": "Project-agnostic AI-assisted dev flow: route feature vs bug, gather grounded context, gate on a plan (always human-approved), author and audit acceptance tests before the build, build minimally, independently verify the result, commit with intent, always-human review, and open a PR. Bundles the orchestrator (dev-flow) plus verify-ticket, plan-brief, investigate-bug, author-acceptance-tests, audit-tests, verify-build, commit, pr, pr-fix, and debrief — plus the standalone discuss.",
       "source": "./",
       "strict": false
     }
