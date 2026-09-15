@@ -174,7 +174,7 @@ restart the session to pick them up.
 - **Three test-integrity skills defend the tests against the build.** `author-acceptance-tests`,
   `audit-tests`, and `verify-build` turn acceptance criteria into committed tests, audit their
   red-before-green adequacy, and independently try to falsify the finished build — see
-  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 5–6. What that machinery defends is the
+  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 6–8. What that machinery defends is the
   tests' integrity against the *build*; what it can't catch is a build that satisfies them
   **literally** — a hardcoded expected value, a special-cased fixture, a `data-testid` on a stub —
   because nothing has been tampered with and everything goes green. So the build step also points the

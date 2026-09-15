@@ -11,7 +11,7 @@ decision at its source, which is the one thing this flow can't allow.
 
 **Spawned fresh every pass — this is non-negotiable.** Run as an **isolated subagent with NO builder
 session state**, given only the diff, the acceptance criteria, and the acceptance-test paths.
-`/dev-flow` owns what happens with the verdict (step 5) and **re-spawns a new verifier on every
+`/dev-flow` owns what happens with the verdict (step 8) and **re-spawns a new verifier on every
 retry** — never persist this across retries, never reuse the builder's context. A verifier that
 accumulates the builder's state is just the self-grading this skill exists to replace.
 

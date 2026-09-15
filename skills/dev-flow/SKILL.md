@@ -6,7 +6,7 @@ description: Kick off the full AI-assisted dev flow for a task in one command �
 # dev-flow
 
 The one explicit way to **kick off the structured flow**. Beyond the condition that fires
-`/security-review` at step 7 and two test-integrity checkpoints (steps 5–6), it **adds no behaviour of
+`/security-review` at step 9 and two test-integrity checkpoints (steps 6 and 8), it **adds no behaviour of
 its own** — it sequences the skills you already have and pauses at the same human gates as running them
 by hand.
 
@@ -32,7 +32,7 @@ them, which is what the classifier already turned out to be.
   → plan the approach
        → ⏸ PLAN gate: surface decisive fork(s) + any unsatisfiable constraint,
                        present plan, WAIT FOR APPROVAL
-  → branch off default (if needed)
+  → branch off default (if needed) · persist PLAN.md
   → author-acceptance-tests → commit (= base) → audit-tests
        → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides
                                   forward as a softer verified): proceed / strengthen
@@ -88,64 +88,71 @@ them, which is what the classifier already turned out to be.
    and design the approach **strictly within the task's scope**.
 
    **First surface the decisive fork(s) as explicit questions** — the one or two choices that most
-   change the build (approach, library, in-scope vs deferred) — via
-   AskUserQuestion *before* finalising the plan. Don't bury a contested approach as a recommendation
-   the human has to reject to redirect. **Put decisions to them, and only decisions.** Anything you
-   could settle by reading the code, running a command, or checking a tool is a **fact** — go and
-   get it. A gate that spends the human's attention on answerable questions buys nothing and trains
-   them to skim the ones that matter. **Then name any conflict — separately from the forks.** A fork
-   is a choice you're putting to the human; a **conflict** is a constraint the plan *can't* satisfy —
-   two requirements from the ticket/brief that contradict, or one the codebase's own conventions make
-   impossible without leaving the task's scope. The failure mode is silent: pick a side, and the
-   losing constraint disappears into the plan's prose where the gate can't see it. So state which
-   constraints collide, what the plan does about it, and — when the person at the gate doesn't own
-   that call — who does. Don't dress a conflict up as a fork with a fabricated option, and don't
-   manufacture one: no conflicts, say nothing. **Present the plan summary-first** so it can be read
-   at a glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two
-   aids each gated on a concrete test — **default to omitting both; add one only when it clearly
-   clears its bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),
-   has steps that depend on each other out of order, fans out across several files/components, or
-   loops; a purely sequential plan needs none, the numbered steps already are the flow. **Draw it in
-   whatever form renders on the surface it's read on.** Here that's the terminal, so **never emit a
-   mermaid fence at this gate** — Claude Code shows it as its own source, which is strictly worse
-   than no diagram: it costs the reader a wall of syntax and gives back nothing. Draw a plain-text
-   one instead, in a fenced block so it stays monospaced and its alignment holds. The ASCII flow at
-   the top of this file, and the one in the README, are the bar — legible at a glance, no renderer
-   required. A
-   **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen),
-   so the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're
-   independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a diagram but
-   no TOC.) Then the detail below. The approved plan also gets a durable record at
-   **`.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. Same rule there, and
-   note `.dev-flow/` is **git-ignored**, so nothing ever renders that file's markdown: keep any
-   diagram readable as plain text. **Write the plan that was approved — same scope, same length, no
-   expansion.** When there's no ticket this file *is* the acceptance criteria downstream
-   (`/author-acceptance-tests` and `/verify-build` both read it), so detail the human never saw at
-   the gate silently widens the bar they agreed to. Record what was on screen, not a fuller
-   version of it. Record any conflict the human settled here too, but **under its own
-   `## Accepted conflicts — not criteria` heading** — `/author-acceptance-tests` and `/verify-build`
-   read this file as the bar, so a constraint knowingly left unsatisfied written into the prose gets
-   a test authored for it and comes back `falsified`. Under that heading it rides forward as the
-   exemption it is.
-   **Plan mode blocks file writes, so it isn't written here**:
-   persisting it is the first build action (step 5), only once the human approves. **On request**, a
-   `.dev-flow/<task>/PLAN.html` is emitted the same way — self-contained, drawing its own diagram
-   with **no CDN**, so it still opens with no network. (A **committed** doc read on GitHub is the one
-   surface where a mermaid fence genuinely renders — that's why `docs/dev-flow.md` uses one.)
-   Diagrams are best-effort — the prose plan stays the source of truth and approval never stalls
-   on a diagram that won't render. Then **wait for approval** — revise until approved. This is where
-   alignment is confirmed and over-reach is caught.
+   change the build (approach, library, in-scope vs deferred) — via AskUserQuestion *before*
+   finalising the plan. Don't bury a contested approach as a recommendation the human has to reject
+   to redirect. **Put decisions to them, and only decisions.** Anything you could settle by reading
+   the code, running a command, or checking a tool is a **fact** — go and get it. A gate that spends
+   the human's attention on answerable questions buys nothing and trains them to skim the ones that
+   matter.
 
-5. **Build — commit as you go.** On approval: **first, get on a task branch.**
-   If you're on the repo's default branch (`main` / `master`), create one before any commit —
-   `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one (e.g.
-   `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is what lets
-   `/pr` (step 9) detect it and open the PR off a feature branch; already on a non-default branch →
-   use it, don't nest. **Next, persist the approved plan** — write it (and `PLAN.html` if requested)
-   to `.dev-flow/<task>/PLAN.md` before any code change. Plan mode blocked this until now; you still
-   have the approved plan in context, so write that.
+   **Then name any conflict — separately from the forks.** A fork is a choice you're putting to the
+   human; a **conflict** is a constraint the plan *can't* satisfy — two requirements from the
+   ticket/brief that contradict, or one the codebase's own conventions make impossible without
+   leaving the task's scope. The failure mode is silent: pick a side, and the losing constraint
+   disappears into the plan's prose where the gate can't see it. So state which constraints collide,
+   what the plan does about it, and — when the person at the gate doesn't own that call — who does.
+   Don't dress a conflict up as a fork with a fabricated option, and don't manufacture one: no
+   conflicts, say nothing.
 
-   **Author and audit the acceptance tests before writing code** — before any implementation code:
+   **Present the plan summary-first** so it can be read at a glance rather than skimmed: a 2–3 line
+   TL;DR (what changes, why, blast radius), then two aids each gated on a concrete test — **default
+   to omitting both; add one only when it clearly clears its bar** — then the detail below.
+
+   A **diagram** when the approach is *non-linear* — it branches (conditional paths), has steps that
+   depend on each other out of order, fans out across several files/components, or loops; a purely
+   sequential plan needs none, the numbered steps already are the flow. **Draw it in whatever form
+   renders on the surface it's read on.** Here that's the terminal, so **never emit a mermaid fence
+   at this gate** — Claude Code shows it as its own source, which is strictly worse than no diagram:
+   it costs the reader a wall of syntax and gives back nothing. Draw a plain-text one instead, in a
+   fenced block so it stays monospaced and its alignment holds. The ASCII flow at the top of this
+   file, and the one in the README, are the bar — legible at a glance, no renderer required.
+   Diagrams are best-effort: the prose plan stays the source of truth and approval never stalls on
+   one that won't render.
+
+   A **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a
+   screen), so the reader can jump instead of scrolling; skip it for one- or two-step plans. (The two
+   aids are independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a
+   diagram but no TOC.)
+
+   Then **wait for approval** — revise until approved. This is where alignment is confirmed and
+   over-reach is caught. The approved plan also gets a durable record, but **plan mode blocks file
+   writes** — writing it is step 5's first action, once the human has approved.
+
+5. **Branch, and persist the approved plan.** On approval, before any code change:
+   - **Get on a task branch.** If you're on the repo's default branch (`main` / `master`), create one
+     — `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one
+     (e.g. `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is
+     what lets `/pr` (step 11) detect it and open the PR off a feature branch; already on a
+     non-default branch → use it, don't nest.
+   - **Write `.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. You still
+     have the approved plan in context, so write **that**: same scope, same length, **no expansion**.
+     When there's no ticket this file *is* the acceptance criteria downstream
+     (`/author-acceptance-tests` and `/verify-build` both read it), so detail the human never saw at
+     the gate silently widens the bar they agreed to. Record what was on screen, not a fuller
+     version of it.
+
+     Record any conflict the human settled at the gate too, but **under its own `## Accepted
+     conflicts — not criteria` heading** — the two skills above read this file as the bar, so a
+     constraint knowingly left unsatisfied, written into the prose, gets a test authored for it and
+     comes back `falsified`. Under that heading it rides forward as the exemption it is.
+
+     `.dev-flow/` is **git-ignored**, so nothing ever renders this file's markdown: keep any diagram
+     in it readable as plain text. **On request**, a `.dev-flow/<task>/PLAN.html` is emitted the same
+     way — self-contained, drawing its own diagram with **no CDN**, so it still opens with no
+     network. (A **committed** doc read on GitHub is the one surface where a mermaid fence genuinely
+     renders — that's why `docs/dev-flow.md` uses one.)
+
+6. **Author and audit the acceptance tests.** Before any implementation code:
    - `/author-acceptance-tests` — writes executable acceptance tests from the criteria
      (`TICKET_CONTEXT.md` if there is one, else the approved plan / task description), independent of
      the implementation, and commits them. `.dev-flow/<task>/ACCEPTANCE_TESTS.md` records the resulting
@@ -184,10 +191,10 @@ them, which is what the classifier already turned out to be.
      miss them.)
    - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
-   **Survey before writing code, and record the call.** For each plan item, search for what already
-   exists to reuse — props, components, renderers, hooks, utilities, conventions — and record the
-   result as a short table: item · reused (existing) · new (only if needed) · files, with a one-line
-   reason wherever you add a new abstraction. That table is what catches the
+7. **Build — survey, then commit as you go.** For each plan item, search for what already exists to
+   reuse — props, components, renderers, hooks, utilities, conventions — and record the result as a
+   short table: item · reused (existing) · new (only if needed) · files, with a one-line reason
+   wherever you add a new abstraction. That table is what catches the
    wrapper-instead-of-an-existing-prop mistake. **Don't pause on it** — the PLAN gate approved the
    approach, and a reuse call that genuinely *contradicts* that plan is a scope breach to raise, not
    a gate to re-open.
@@ -199,7 +206,7 @@ them, which is what the classifier already turned out to be.
    breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
    it actually declares, in its manifest scripts or task runner — plus a cheap smoke check, then
    `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
-   convention), while the reasoning is fresh. That bar is deliberately shallow: step 6's
+   convention), while the reasoning is fresh. That bar is deliberately shallow: step 8's
    `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
    nothing it won't. **Stay in scope** — the plan is the contract.
 
@@ -212,7 +219,7 @@ them, which is what the classifier already turned out to be.
    looks wrong, or a criterion turns out infeasible, **stop and say so**; the one move that isn't
    available is editing the test to fit.
 
-6. **Verify — replace self-checking with an independent falsifier.** Spawn
+8. **Verify — replace self-checking with an independent falsifier.** Spawn
    `/verify-build` as a **fresh subagent with zero context from the build**, passing it `base` (from
    `ACCEPTANCE_TESTS.md`), the acceptance criteria, the protected test paths, and `TEST_AUDIT.md`'s
    adequacy verdicts. Run it at a **strong model regardless of diff size** — never downsized, this is
@@ -230,7 +237,7 @@ them, which is what the classifier already turned out to be.
    > - **Abandon** — stop here and report why. No code review, no PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
 
-7. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
+9. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
    diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a
    tiny change.
 
@@ -246,7 +253,7 @@ them, which is what the classifier already turned out to be.
    **not run, never clean** — report it that way. No artifact, no new pause: findings ride to the
    REVIEW gate beside the code review.
 
-8. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
+10. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
    never skipped and never auto-approved. This is what keeps "every diff is seen before it leaves the
    repo" true.
 
@@ -259,7 +266,7 @@ them, which is what the classifier already turned out to be.
    2. **The verdict, and what to look at first.** When `.dev-flow/<task>/VERIFICATION.md` exists: its
       verdict, then the head of its **`## Attention order`** — the weakest-oracle, widest-reach criteria,
       **named**, with what to check on each — then any unresolved criterion, so a "proceed with the gap
-      noted" choice from step 6 is actually seen here rather than silently dropped. Carry that order
+      noted" choice from step 8 is actually seen here rather than silently dropped. Carry that order
       across as written; don't re-sort it into ticket order or flatten it back to counts (`N adequate /
       N weak` tells a reviewer nothing about *where* to look).
    3. **Findings** — the code review, and any `/security-review` findings beside it.
@@ -267,7 +274,7 @@ them, which is what the classifier already turned out to be.
       and what a revert would leave behind.
    5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
 
-9. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
+11. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
    change, linking the artifacts → `/debrief`; opt-in, adds no step and no pause.)
 
@@ -275,7 +282,7 @@ them, which is what the classifier already turned out to be.
 - **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
   is deliberately confined to three things: the front-of-flow scaffolding (the readiness scan), the
   two test-integrity checkpoints (the audit-gap pause before the build, the verify-build-failure pause
-  after it), and the one condition that fires `/security-review` at step 7. Everything else
+  after it), and the one condition that fires `/security-review` at step 9. Everything else
   parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them. When
   something new wants to live here, that list is the bar it has to clear — the auto-path classifier
   that used to sit alongside it grew to a quarter of this file before it was cut for never being used.
@@ -284,7 +291,7 @@ them, which is what the classifier already turned out to be.
   Each one exists to buy a **fresh context the build can't see** — that independence *is* the product,
   and it's what separates them from the self-checking a current model already does unprompted and
   doesn't need to be told to do. So don't add ad-hoc ones: no subagent to re-check your own work, no
-  reviewer beyond `/code-review` and step 7's conditional `/security-review`, and one where one will
+  reviewer beyond `/code-review` and step 9's conditional `/security-review`, and one where one will
   do. (Removing any of the three is a different thing entirely — that's a safety regression, not a
   saving.)
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
@@ -292,14 +299,14 @@ them, which is what the classifier already turned out to be.
 - **Scope discipline.** Build exactly what was agreed. Anything extra you notice → surface it as a
   follow-up at the end. The PLAN gate is the contract.
 - **The guarantee binds to the sequence.** "Nothing reaches a remote unreviewed" holds only when the
-  flow runs as a whole; invoking `/pr` directly (or any caller that skips step 8) bypasses the REVIEW
+  flow runs as a whole; invoking `/pr` directly (or any caller that skips step 10) bypasses the REVIEW
   gate. Step 8 is the backstop that keeps every diff seen before it leaves the repo, so never route
   around it.
 - **Spend the words at the gates.** One line before a step that will take a while, one when a
   checkpoint fires or the path changes, and nothing much in between. At each gate, **lead with the
   outcome** — what happened and what it means for the decision now in front of the reader — with the
   supporting detail underneath for whoever wants it. **And rank what you surface**: weakest oracle over
-  the widest reach goes first (step 8), never the artifact that happens to be biggest or the order the
+  the widest reach goes first (step 10), never the artifact that happens to be biggest or the order the
   ticket happened to list things in. The pauses are where a human's attention is actually spent;
   running commentary between them spends it for nothing and trains them to skim the places it
   matters.
