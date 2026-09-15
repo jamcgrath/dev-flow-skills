@@ -115,7 +115,6 @@ the arbiter** (steps 1, 4–6 and Guards).
 - **Don't stop the flow — one exception.** Every mismatch is a **Flag** and the flow continues;
   decisive forks are raised at the PLAN gate, not here. **Stop only on a confabulation** (step 5) — and
   even then **write the evidence, present it, let the human override or kill**, never abort silently.
-  Fail-closed: holds on the auto path too.
 - **Supplementary context is evidence, not truth.** Files handed alongside the ticket are reconciled
   like it, not trusted over it: the **code is the arbiter**, a note closes a fork only when its claim
   checks out, and a note-vs-ticket conflict is a flag — never a silent override. A design suggestion a

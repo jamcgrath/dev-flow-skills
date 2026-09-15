@@ -1,41 +1,49 @@
 ---
 name: dev-flow
-description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → on the human path, author-acceptance-tests → audit-tests → build → verify-build → commit → code-review, plus security-review when the diff touches a security surface → human review → pr), pausing at the human gates and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Plan *approval* is proportional: trivial, no-risk changes (or ones you tell it to skip) auto-approve and build, with a classifier re-validating at each boundary and the pre-PR review gate always running — the trivial path skips the acceptance-test machinery too, since it has no acceptance criteria worth pinning down. Beyond that classifier, the two test-integrity escalations and one conditional security-review trigger it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational. Self-contained (task passed as args), so it can also be invoked by automation for an unattended/agentic run.
+description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → author-acceptance-tests → audit-tests → build → verify-build → commit → code-review, plus security-review when the diff touches a security surface → human review → pr), pausing at the two human gates (PLAN, REVIEW) and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Beyond those escalations and the one conditional security-review trigger it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational; trivial one-off work doesn't need it, so there is no fast path and no skipping the PLAN gate. Self-contained (task passed as args), so it can also be invoked by automation.
 ---
 
 # dev-flow
 
-The one explicit way to **kick off the structured flow**. Beyond the proportional-approval classifier
-around the PLAN gate (steps 2–5), the condition that fires `/security-review` at step 7, and, on the
-human path, two test-integrity checkpoints (steps 5–6), it **adds no behaviour of its own** — it
-sequences the skills you already have and pauses at the same human gates as running them by hand.
+The one explicit way to **kick off the structured flow**. Beyond the condition that fires
+`/security-review` at step 9 and two test-integrity checkpoints (steps 6 and 8), it **adds no behaviour of
+its own** — it sequences the skills you already have and pauses at the same human gates as running them
+by hand.
 
-It's also the entry an automation/agent would call to run the flow unattended, so it takes the task as
-args and treats the PLAN gate as an **explicit gate** swappable for an auto-approver (without changing
-any delegated step). The **auto path** below is the first concrete instance of that swap: for trivial,
-additive work the PLAN gate's approver becomes the classifier — re-validated at three checkpoints. The
-**REVIEW gate stays human** (a hard stop before the PR, for now), so even an unattended run never
-pushes unreviewed.
+**Both gates are human, and neither is skippable.** There is no fast path: a task small enough to want
+one is a task that doesn't need the orchestrator at all — do it conversationally and let the REVIEW
+gate's absence be a deliberate choice rather than a classifier's guess. "Just do it" therefore isn't an
+instruction this skill can honour; if the plan gate is unwanted, don't invoke `/dev-flow`. (An earlier
+version carried an auto-approving classifier for trivial changes. It was removed: in three months of use
+it auto-approved exactly one change, and that was a synthetic test — see `docs/classifier-log.md`.)
+
+It takes the task as args so an automation/agent can call it, but **unattended runs are not what this
+skill is for** — that's [`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills), a separate
+plugin that swaps both gates for automated approvers and vendors its own copies of the sub-skills. Two
+plugins rather than a flag is deliberate on both sides: removing a gate isn't a setting, it's a
+different safety model. Keep that split — a fast path added back here would be a third mode between
+them, which is what the classifier already turned out to be.
 
 ```
 /dev-flow <task>
-  → route: feature or bug? · ticket or none? · approval mode (human vs auto) · readiness scan
+  → route: feature or bug? · ticket or none? · readiness scan
   → [verify-ticket]   only if there's an external ticket/issue/brief
-  → plan-brief (feature) | investigate-bug (bug)   → checkpoint 1 (auto path): blast radius still small?
-  → plan the approach (ALWAYS) — then:
-       · human path → ⏸ PLAN gate: surface decisive fork(s) + any unsatisfiable constraint,
-                         present plan, WAIT FOR APPROVAL
-       · auto path  → checkpoint 2: classifier + independent verifier OK the plan → announce, proceed
-  → branch off default (if needed)
-       · human path only → author-acceptance-tests → commit (= base) → audit-tests
-            → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides forward as a softer verified): proceed / strengthen
-  → build + commit each change   · checkpoint 3 (auto path): before each commit, tripwire; breach → ⏸ human gate
-  → verify   · human path → verify-build (fresh subagent, strong model, tries to falsify the change)
-            → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build / proceed with gap noted / abandon
-       · auto path → read-only checks only
+  → plan-brief (feature) | investigate-bug (bug)
+  → plan the approach
+       → ⏸ PLAN gate: surface decisive fork(s) + any unsatisfiable constraint,
+                       present plan, WAIT FOR APPROVAL
+  → branch off default (if needed) · persist PLAN.md
+  → author-acceptance-tests → commit (= base) → audit-tests
+       → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides
+                                  forward as a softer verified): proceed / strengthen
+  → build + commit each change
+  → verify-build (fresh subagent, strong model, tries to falsify the change)
+       → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build /
+                                             proceed with gap noted / abandon
   → code-review  · + security-review when the diff touches a security surface (auth / permission /
                    secret / endpoint tokens, or an injection sink)
-  → ⏸ REVIEW gate — human sanity-check before PR (ALWAYS human; even unattended stops here; surfaces any noted verification gap)
+  → ⏸ REVIEW gate — human sanity-check before PR (leads with the verdict + the weakest-oracle
+       criteria + the rollback route, diff last)
   → pr
 ```
 
@@ -48,48 +56,7 @@ pushes unreviewed.
    - **bug** — something is broken / misbehaving / a defect to fix → bug path.
    - **feature / change / new thing** → feature path.
    Also decide whether there's an **externally-authored** item to reconcile (Jira / GitHub issue /
-   AI brief). Detect both from the task; **ask only if genuinely ambiguous.** In an unattended run,
-   make a documented best guess and state it rather than blocking.
-
-   **Approval mode — human gate vs auto-approve.** Recon and planning **always run**; this only
-   decides whether the *plan* needs a human to approve it. The PLAN gate's job is to surface the
-   *decisive fork(s)* — when there are none and nothing risky is touched it has nothing to do, so the
-   plan can auto-approve and proceed. A task is on the **auto path** in either of two ways:
-   - **You said skip** — the user explicitly says "just do it" / "no need to plan" / "skip approval".
-     This waives only the *human plan approval*; it never disables the tripwires or the three
-     checkpoints, which still re-validate and can pull the task back to the human gate.
-   - **Agent self-classified** — provisionally eligible when there's **no decisive fork**,
-     **unambiguous intent** (an ambiguous ask, e.g. "make the heading bigger" with no value, *is* a
-     fork → ask one quick question or stay on the human path), **no colliding constraint**, and **no
-     risk surface**.
-
-   This is a *provisional* call made on the task description alone — most tripwires below can't fire
-   until there's a file list or a diff, so they bite hardest at the three checkpoints. It is
-   re-validated at those checkpoints and reverts to the human gate on any breach (on the
-   **you-said-skip** path too: a declared "trivial" can be wrong the same way, and if the work trips a
-   tripwire the premise no longer holds). The classifier is three kinds of check:
-   - **Spread tripwires** (mechanical) — more than one changed file (count `git status --porcelain`
-     lines; a `renamed:` / moved file counts — it breaks imports repo-wide); a new or deleted file; a
-     new dependency (manifest diff); an exported-symbol or signature change (grep the diff —
-     best-effort, not authoritative: a changed *contract* behind an unchanged signature won't grep).
-   - **Impact tripwires** — danger a single contained file can still carry, keyed on *what the change
-     does*: any edit to existing **functional/logic** behaviour — control flow, validation, a guard, a
-     limit, a default, data, security, or a side effect; a destructive or irreversible op (DDL
-     drop/truncate, record/file deletion, a deploy / migration / install / network-mutating call); or a
-     diff touching auth / permission / secret / feature-flag / endpoint / limit tokens (grep the diff)
-     wherever it lives. The auto path is for **presentational, localized** edits — a font-size, a layout
-     tweak, a *non-load-bearing* copy string. Two traps: "new lines" is **not** a safe-harbour (an
-     inserted early-return, guard, bypass, cache, or retry alters how existing paths behave → human
-     gate); and even a copy/string edit can be load-bearing (a price, legal text, a security label).
-     **Unsure whether it's presentational or behaviour-altering, or whether a string is load-bearing →
-     human gate.** (A genuine bug fix alters existing behaviour, so it almost always takes the human
-     path — the auto path is mostly cosmetic tweaks.)
-   - **Judgment slice** (small, soft): *is there a decisive fork?*, *is the ask ambiguous?*, and *does
-     the task collide with a constraint it can't satisfy?* (that last one only really answerable from
-     CP1 on, once recon has surfaced the constraints) — also exposed to self-assessment, backstopped by
-     the always-human REVIEW gate.
-   **Any** spread or impact tripwire, or **any** doubt (impact classification or judgment slice) →
-   human gate.
+   AI brief). Detect both from the task; **ask only if genuinely ambiguous.**
 
    **Readiness scan — do this once, here, before the front.** Cheaply surface what would otherwise
    block or derail the build later:
@@ -111,100 +78,81 @@ pushes unreviewed.
    - Feature **with** an external ticket/issue/brief → `/verify-ticket` → `.dev-flow/<task>/TICKET_CONTEXT.md`.
      verify-ticket **flags drift and flows on** (it is not a gate — open forks ride forward to the PLAN
      gate); it escalates to the human only when the ticket is a **confabulation** — premised on
-     something the repo isn't — fail-closed on either path. If there are handoff/discovery notes or
+     something the repo isn't — fail-closed. If there are handoff/discovery notes or
      prior research files, pass their paths to `/verify-ticket` too — it reconciles them alongside the
      ticket (the code stays the arbiter).
    - Feature (self-defined or after verify-ticket) → `/plan-brief` → `.dev-flow/<task>/PLAN_BRIEF.md`.
    - Bug → `/investigate-bug` → `.dev-flow/<task>/BUG_CONTEXT.md`.
 
-   **Checkpoint 1 — post-recon (auto path only).** Recon now shows the real blast radius. Run the
-   tripwires the file list can already answer (file count; a shared interface / token / config now in
-   scope) plus the judgment slice. There's no diff yet, so this is an early exit on what recon can
-   show — not the full per-commit check: if it's bigger than it looked (the "one file" is imported in
-   20 places), drop to the human gate now, before planning. **When the project exposes an
-   import/dependency graph** (an MCP server, usage indexer, or LSP), use it to *measure* a file's
-   actual fan-in rather than eyeballing it — a high parent count means the blast radius is larger than
-   the file count suggests → human gate. No such tool → fall back to the estimate as before.
+4. **Plan the approach, then get it approved. ⏸** Enter `/plan` mode referencing the context file
+   and design the approach **strictly within the task's scope**.
 
-4. **Plan the approach (always) — then approve.** Enter `/plan` mode referencing the context file and
-   design the approach **strictly within the task's scope**. Planning is **not** skipped on the auto
-   path — only the human *approval* of it is. Then branch on the approval mode set in step 2:
+   **First surface the decisive fork(s) as explicit questions** — the one or two choices that most
+   change the build (approach, library, in-scope vs deferred) — via AskUserQuestion *before*
+   finalising the plan. Don't bury a contested approach as a recommendation the human has to reject
+   to redirect. **Put decisions to them, and only decisions.** Anything you could settle by reading
+   the code, running a command, or checking a tool is a **fact** — go and get it. A gate that spends
+   the human's attention on answerable questions buys nothing and trains them to skim the ones that
+   matter.
 
-   - **Human path (full gate). ⏸** **First surface the decisive fork(s) as explicit questions** — the
-     one or two choices that most change the build (approach, library, in-scope vs deferred) — via
-     AskUserQuestion *before* finalising the plan. Don't bury a contested approach as a recommendation
-     the human has to reject to redirect. **Put decisions to them, and only decisions.** Anything you
-     could settle by reading the code, running a command, or checking a tool is a **fact** — go and
-     get it. A gate that spends the human's attention on answerable questions buys nothing and trains
-     them to skim the ones that matter. **Then name any conflict — separately from the forks.** A fork
-     is a choice you're putting to the human; a **conflict** is a constraint the plan *can't* satisfy —
-     two requirements from the ticket/brief that contradict, or one the codebase's own conventions make
-     impossible without leaving the task's scope. The failure mode is silent: pick a side, and the
-     losing constraint disappears into the plan's prose where the gate can't see it. So state which
-     constraints collide, what the plan does about it, and — when the person at the gate doesn't own
-     that call — who does. Don't dress a conflict up as a fork with a fabricated option, and don't
-     manufacture one: no conflicts, say nothing. **Present the plan summary-first** so it can be read
-     at a glance rather than skimmed: a 2–3 line TL;DR (what changes, why, blast radius), then two aids each
-     gated on a concrete test — **default to omitting both; add one only when it clearly clears its
-     bar.** A **diagram** when the approach is *non-linear* — it branches (conditional paths),
-     has steps that depend on each other out of order, fans out across several files/components, or
-     loops; a purely sequential plan needs none, the numbered steps already are the flow. **Draw it in
-     whatever form renders on the surface it's read on.** Here that's the terminal, so **never emit a
-     mermaid fence at this gate** — Claude Code shows it as its own source, which is strictly worse
-     than no diagram: it costs the reader a wall of syntax and gives back nothing. Draw a plain-text
-     one instead, in a fenced block so it stays monospaced and its alignment holds. The ASCII flow at
-     the top of this file, and the one in the README, are the bar — legible at a glance, no renderer
-     required. A
-     **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a screen),
-     so the reader can jump instead of scrolling; skip it for one- or two-step plans. (They're
-     independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a diagram but
-     no TOC.) Then the detail below. The approved plan also gets a durable record at
-     **`.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. Same rule there, and
-     note `.dev-flow/` is **git-ignored**, so nothing ever renders that file's markdown: keep any
-     diagram readable as plain text. **Write the plan that was approved — same scope, same length, no
-     expansion.** When there's no ticket this file *is* the acceptance criteria downstream
+   **Then name any conflict — separately from the forks.** A fork is a choice you're putting to the
+   human; a **conflict** is a constraint the plan *can't* satisfy — two requirements from the
+   ticket/brief that contradict, or one the codebase's own conventions make impossible without
+   leaving the task's scope. The failure mode is silent: pick a side, and the losing constraint
+   disappears into the plan's prose where the gate can't see it. So state which constraints collide,
+   what the plan does about it, and — when the person at the gate doesn't own that call — who does.
+   Don't dress a conflict up as a fork with a fabricated option, and don't manufacture one: no
+   conflicts, say nothing.
+
+   **Present the plan summary-first** so it can be read at a glance rather than skimmed: a 2–3 line
+   TL;DR (what changes, why, blast radius), then two aids each gated on a concrete test — **default
+   to omitting both; add one only when it clearly clears its bar** — then the detail below.
+
+   A **diagram** when the approach is *non-linear* — it branches (conditional paths), has steps that
+   depend on each other out of order, fans out across several files/components, or loops; a purely
+   sequential plan needs none, the numbered steps already are the flow. **Draw it in whatever form
+   renders on the surface it's read on.** Here that's the terminal, so **never emit a mermaid fence
+   at this gate** — Claude Code shows it as its own source, which is strictly worse than no diagram:
+   it costs the reader a wall of syntax and gives back nothing. Draw a plain-text one instead, in a
+   fenced block so it stays monospaced and its alignment holds. The ASCII flow at the top of this
+   file, and the one in the README, are the bar — legible at a glance, no renderer required.
+   Diagrams are best-effort: the prose plan stays the source of truth and approval never stalls on
+   one that won't render.
+
+   A **table of contents** when the plan is *long* — 3+ distinct steps/sections (or more than a
+   screen), so the reader can jump instead of scrolling; skip it for one- or two-step plans. (The two
+   aids are independent: a long linear plan gets a TOC but no diagram; a short branchy one gets a
+   diagram but no TOC.)
+
+   Then **wait for approval** — revise until approved. This is where alignment is confirmed and
+   over-reach is caught. The approved plan also gets a durable record, but **plan mode blocks file
+   writes** — writing it is step 5's first action, once the human has approved.
+
+5. **Branch, and persist the approved plan.** On approval, before any code change:
+   - **Get on a task branch.** If you're on the repo's default branch (`main` / `master`), create one
+     — `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one
+     (e.g. `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is
+     what lets `/pr` (step 11) detect it and open the PR off a feature branch; already on a
+     non-default branch → use it, don't nest.
+   - **Write `.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. You still
+     have the approved plan in context, so write **that**: same scope, same length, **no expansion**.
+     When there's no ticket this file *is* the acceptance criteria downstream
      (`/author-acceptance-tests` and `/verify-build` both read it), so detail the human never saw at
      the gate silently widens the bar they agreed to. Record what was on screen, not a fuller
-     version of it. Record any conflict the human settled here too, but **under its own
-     `## Accepted conflicts — not criteria` heading** — `/author-acceptance-tests` and `/verify-build`
-     read this file as the bar, so a constraint knowingly left unsatisfied written into the prose gets
-     a test authored for it and comes back `falsified`. Under that heading it rides forward as the
-     exemption it is.
-     **Plan mode blocks file writes, so it isn't written here**:
-     persisting it is the first build action (step 5), only once the human approves. **On request**, a
-     `.dev-flow/<task>/PLAN.html` is emitted the same way — self-contained, drawing its own diagram
-     with **no CDN**, so it still opens with no network. (A **committed** doc read on GitHub is the one
-     surface where a mermaid fence genuinely renders — that's why `docs/dev-flow.md` uses one.)
-     Diagrams are best-effort — the prose plan stays the source of truth and approval never stalls
-     on a diagram that won't render. (Human path only: the auto path presents no plan, so trivial fast-tracked tasks get
-     none of this.) Then **wait for approval** — revise until approved. This is where alignment is
-     confirmed and over-reach is caught.
+     version of it.
 
-   - **Auto path. Checkpoint 2 — post-plan (binding).** Validate the written plan instead of asking a
-     human: run the tripwires against the plan's **stated file scope** *and the recon file list* (not
-     just the plan's prose — that's the same model's self-report and can under-state scope), and
-     confirm the judgment slice. **Then get an independent read** — spawn a fresh subagent given the
-     plan + the recon file list + the classifier criteria from step 2 (no other session context) and
-     ask "trivial — yes/no, and why?". Its verdict is binding; if it is unavailable, errors, times
-     out, or answers ambiguously → **human gate** (fail-closed — never fail-open to "proceed"). Pass
-     on all three (tripwires + judgment + verifier) → **announce in one line** (what + why trivial — a
-     costless veto when a human is watching) and proceed without waiting. Any fail or any doubt → fall
-     back to the human path above.
+     Record any conflict the human settled at the gate too, but **under its own `## Accepted
+     conflicts — not criteria` heading** — the two skills above read this file as the bar, so a
+     constraint knowingly left unsatisfied, written into the prose, gets a test authored for it and
+     comes back `falsified`. Under that heading it rides forward as the exemption it is.
 
-5. **Build — commit as you go.** On approval (or once auto-approved): **first, get on a task branch.**
-   If you're on the repo's default branch (`main` / `master`), create one before any commit —
-   `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one (e.g.
-   `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is what lets
-   `/pr` (step 9) detect it and open the PR off a feature branch; already on a non-default branch →
-   use it, don't nest. **Next, if a human approved the plan at the PLAN gate, persist it** — write the
-   approved plan (and `PLAN.html` if requested) to
-   `.dev-flow/<task>/PLAN.md` before any code change. Plan mode blocked this until now; you still have
-   the approved plan in context, so write that. Skip on the auto path — no plan doc there.
+     `.dev-flow/` is **git-ignored**, so nothing ever renders this file's markdown: keep any diagram
+     in it readable as plain text. **On request**, a `.dev-flow/<task>/PLAN.html` is emitted the same
+     way — self-contained, drawing its own diagram with **no CDN**, so it still opens with no
+     network. (A **committed** doc read on GitHub is the one surface where a mermaid fence genuinely
+     renders — that's why `docs/dev-flow.md` uses one.)
 
-   **Human path only — author and audit the acceptance tests before writing code.** Skip this whole
-   block on the auto path: a trivial, presentational change has no acceptance criteria worth pinning
-   down this way, and committing new test files would itself trip the auto path's own new-file spread
-   tripwire at Checkpoint 3. On the human path, before any implementation code:
+6. **Author and audit the acceptance tests.** Before any implementation code:
    - `/author-acceptance-tests` — writes executable acceptance tests from the criteria
      (`TICKET_CONTEXT.md` if there is one, else the approved plan / task description), independent of
      the implementation, and commits them. `.dev-flow/<task>/ACCEPTANCE_TESTS.md` records the resulting
@@ -233,21 +181,34 @@ pushes unreviewed.
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
      fixable action and "strengthen" is a dead end; a weak test is a *softer verified*, not a gap.
      Record it and **ride it forward**: `/verify-build` softens its verdict for weak-backed criteria
-     and the REVIEW gate surfaces that softening. Announce in one line ("`<N>` criteria are
-     weak/red-by-absence — verified post-build by the suite, not assertion-proven at base") and
-     proceed. (Manufactured-weak is a fixable author slip, but the softened verify + REVIEW gate still
-     catch it — escalate it to a pause only if the surface-only treatment proves to miss them.)
+     and **ranks them to the top of its attention order**, which the REVIEW gate leads with. Announce
+     in one line and **name the criteria, don't just count them** ("`<criterion>` and `<criterion>` are
+     weak/red-by-absence — verified post-build by the suite, not assertion-proven at base"); a bare
+     `<N>` hides *which* behaviour has the thinnest oracle, which is the only part of the count worth
+     a human's attention. More than three → name the two with the widest reach and give the count for
+     the rest. Then proceed. (Manufactured-weak is a fixable author slip, but the softened verify +
+     REVIEW gate still catch it — escalate it to a pause only if the surface-only treatment proves to
+     miss them.)
    - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
 
-   Then build per the plan in **logical increments**, applying `implement-brief`'s reuse-survey +
-   minimal-build discipline — but **not** its own approval pause or its layer-verification step: the
-   PLAN gate already approved the approach, and step 6's `/verify-build` owns verification here.
-   On the human path, the build must **satisfy**
-   `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must **never edit** a protected
-   acceptance-test file (an edit is what `/verify-build` flags as a tamper breach):
-   as each self-contained change is done and sanity-checks clean, `/commit` it **right away** — one
-   logical change per commit, Decision Log proportional (per convention), while the reasoning is
-   fresh. **Stay in scope** — the plan is the contract.
+7. **Build — survey, then commit as you go.** For each plan item, search for what already exists to
+   reuse — props, components, renderers, hooks, utilities, conventions — and record the result as a
+   short table: item · reused (existing) · new (only if needed) · files, with a one-line reason
+   wherever you add a new abstraction. That table is what catches the
+   wrapper-instead-of-an-existing-prop mistake. **Don't pause on it** — the PLAN gate approved the
+   approach, and a reuse call that genuinely *contradicts* that plan is a scope breach to raise, not
+   a gate to re-open.
+
+   Then build per the plan in **logical increments**, and **minimally** — the smallest change that
+   satisfies each item, no drive-by refactors, extra flags or redundant deriveds.
+   The build must **satisfy** `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must
+   **never edit** a protected acceptance-test file (an edit is what `/verify-build` flags as a tamper
+   breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
+   it actually declares, in its manifest scripts or task runner — plus a cheap smoke check, then
+   `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
+   convention), while the reasoning is fresh. That bar is deliberately shallow: step 8's
+   `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
+   nothing it won't. **Stay in scope** — the plan is the contract.
 
    **Implement to the criteria, not to the tests.** The acceptance tests are how the bar gets
    *checked*; the criteria **are** the bar. Write the solution that holds for every valid input, not
@@ -258,23 +219,7 @@ pushes unreviewed.
    looks wrong, or a criterion turns out infeasible, **stop and say so**; the one move that isn't
    available is editing the test to fit.
 
-   **Checkpoint 3 — before each commit (auto path; the real gate).** Capture `base = git rev-parse HEAD`
-   when the auto path's build starts (if that fails — e.g. an unborn branch with no commits — fail
-   closed to the human gate). Before each commit, re-run the tripwires against everything done since
-   `base`, not just the staged change: enumerate changed **and untracked** files with
-   `git status --porcelain` for the file-count / new-file / rename tripwires (`git diff` alone hides
-   untracked files), and inspect content with `git diff <base>` plus the contents of any untracked
-   files for the impact / token tripwires. Use the plain `git diff <base>` form, *not* the three-dot
-   `<base>...` (which diffs the merge-base and misses the uncommitted delta). Otherwise committing "one
-   file per commit" (the rule above) would let a five-file blast radius pass as five clean single-file
-   commits. Any breach (a second file, a new dependency, an edit to existing
-   behaviour, an interface / schema / config / auth change…) → **stop before committing** and escalate
-   to the human gate. Two limits to respect: a side-effecting build/verify command (migration, install,
-   deploy, network-mutating call) can run *before* this check and isn't undone by reverting a commit —
-   so on the auto path treat such a command as a tripwire and gate *before* running it; and "costs
-   nothing irreversible" holds for the tracked-file edits caught here, not for actions already taken.
-
-6. **Verify.** **Human path — replace self-checking with an independent falsifier.** Spawn
+8. **Verify — replace self-checking with an independent falsifier.** Spawn
    `/verify-build` as a **fresh subagent with zero context from the build**, passing it `base` (from
    `ACCEPTANCE_TESTS.md`), the acceptance criteria, the protected test paths, and `TEST_AUDIT.md`'s
    adequacy verdicts. Run it at a **strong model regardless of diff size** — never downsized, this is
@@ -292,78 +237,79 @@ pushes unreviewed.
    > - **Abandon** — stop here and report why. No code review, no PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
 
-   **Auto path (unchanged).** Run only read-only checks unattended (lint / typecheck / static
-   analysis): any **side-effecting** verify/build command (migration, install, deploy, codegen
-   that pushes, a dev server making network calls) is a tripwire — **drop to the human gate before
-   running it**, since its effects aren't undone by reverting a commit. `/commit` any fixes this
-   surfaces (still one logical change per commit).
-
-7. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
+9. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
    diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a
    tiny change.
 
    **Then the built-in `/security-review`, but only when the change touches a security surface.**
    Grep for that *here*, over `git diff <base>` and both sides of each hunk (removing a guard shows
-   only as a `-` line) — step 2's tripwires classify from the task description, so on the human path
-   nothing has yet grepped the actual code. Run it on the auth / permission / secret / endpoint
-   tokens, or where the diff adds a sink the review is built for: SQL or a shell command built from
-   input, `innerHTML` / `{@html}`, `eval`, deserialisation, a path or URL from request data, session /
-   cookie / CORS / crypto config. **Unsure → run it** — a false fire costs time and nothing else.
+   only as a `-` line) — nothing earlier in the flow has grepped the actual code. Run it on the
+   auth / permission / secret / endpoint tokens, or where the diff adds a sink the review is built
+   for: SQL or a shell command built from input, `innerHTML` / `{@html}`, `eval`, deserialisation, a
+   path or URL from request data, session / cookie / CORS / crypto config. **Unsure → run it** — a false fire costs time and nothing else.
    It takes no arguments and scopes itself to `git diff origin/HEAD...`, a range the flow can't
    override, so check `git rev-parse --verify origin/HEAD` first: where that ref doesn't resolve
    (local-only repo, remote not named `origin`) it reviews an empty diff and finds nothing, which is
    **not run, never clean** — report it that way. No artifact, no new pause: findings ride to the
-   REVIEW gate beside the code review. Tripping this on the auto path means the classifier let a
-   non-presentational change through — say so at the gate.
+   REVIEW gate beside the code review.
 
-8. **⏸ REVIEW gate — always human (hard stop).** Surface the diff, the code review and any
-   security-review findings for a human sanity-check before the PR — and, when
-   `.dev-flow/<task>/VERIFICATION.md` exists, its verdict and any unresolved criteria, so a "proceed
-   with the gap noted" choice from step 6 is actually seen here, not silently dropped. This gate is
-   **not** auto-approved by the classifier, never skipped on the auto path, and (for now) not
-   swappable for an auto-approver: an unattended run **stops here and does not push** until a human
-   approves. This is what keeps "every diff is seen before it leaves the repo" true.
+10. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
+   never skipped and never auto-approved. This is what keeps "every diff is seen before it leaves the
+   repo" true.
 
-9. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
+   **Surface it in this order — outcome first, diff last.** Attention is spent in the order things are
+   presented, so present them in the order they'd change the decision. Leading with the diff spends the
+   reader's first and best attention on the largest, least-ranked artifact and leaves the verdict to be
+   found:
+   1. **What this was meant to do** — one line of intent, from the approved plan or the ticket. The
+      reviewer may not have been at the PLAN gate.
+   2. **The verdict, and what to look at first.** When `.dev-flow/<task>/VERIFICATION.md` exists: its
+      verdict, then the head of its **`## Attention order`** — the weakest-oracle, widest-reach criteria,
+      **named**, with what to check on each — then any unresolved criterion, so a "proceed with the gap
+      noted" choice from step 8 is actually seen here rather than silently dropped. Carry that order
+      across as written; don't re-sort it into ticket order or flatten it back to counts (`N adequate /
+      N weak` tells a reviewer nothing about *where* to look).
+   3. **Findings** — the code review, and any `/security-review` findings beside it.
+   4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
+      and what a revert would leave behind.
+   5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
+
+11. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
    change, linking the artifacts → `/debrief`; opt-in, adds no step and no pause.)
 
 ## Guards
 - **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
-  is deliberately confined to a small set of things: the front-of-flow scaffolding (the readiness
-  scan), the proportional-approval classifier around the PLAN gate (the tripwire checks + the
-  independent verifier subagent), and — human path only — two test-integrity checkpoints (the
-  audit-gap pause before the build, the verify-build-failure pause after it), and the one condition
-  that fires `/security-review` at step 7. Everything else parameterises the skills it calls (e.g.
-  code-review effort), leaving their behaviour to them.
-- **A closed set of subagents.** The flow's sanctioned spawns are exactly four: `Explore` for recon
-  (fanned out in proportion to the surface, per `plan-brief`), the Checkpoint-2 trivial-verifier,
-  `/audit-tests`, and `/verify-build`. Each one exists to buy a **fresh context the build can't
-  see** — that independence *is* the product, and it's what separates them from the self-checking a
-  current model already does unprompted and doesn't need to be told to do. So don't add ad-hoc ones:
-  no subagent to re-check your own work, no reviewer beyond `/code-review` and step 7's conditional
-  `/security-review`, and one where one will do. (Removing any of the four is a
-  different thing entirely — that's a safety regression, not a saving.)
+  is deliberately confined to three things: the front-of-flow scaffolding (the readiness scan), the
+  two test-integrity checkpoints (the audit-gap pause before the build, the verify-build-failure pause
+  after it), and the one condition that fires `/security-review` at step 9. Everything else
+  parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them. When
+  something new wants to live here, that list is the bar it has to clear — the auto-path classifier
+  that used to sit alongside it grew to a quarter of this file before it was cut for never being used.
+- **A closed set of subagents.** The flow's sanctioned spawns are exactly three: `Explore` for recon
+  (fanned out in proportion to the surface, per `plan-brief`), `/audit-tests`, and `/verify-build`.
+  Each one exists to buy a **fresh context the build can't see** — that independence *is* the product,
+  and it's what separates them from the self-checking a current model already does unprompted and
+  doesn't need to be told to do. So don't add ad-hoc ones: no subagent to re-check your own work, no
+  reviewer beyond `/code-review` and step 9's conditional `/security-review`, and one where one will
+  do. (Removing any of the three is a different thing entirely — that's a safety regression, not a
+  saving.)
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
   Outside it, stay conversational — iterate and discuss freely; no pipeline, no auto plan-mode.
 - **Scope discipline.** Build exactly what was agreed. Anything extra you notice → surface it as a
-  follow-up at the end. On the human path the PLAN gate is the contract; on the auto path the
-  classifier's eligibility criteria + the per-commit tripwire are.
-- **Proportional approval, never proportional review.** The auto path skips only the *human approval*
-  of the plan, and only while the classifier holds — it **never** skips recon, planning, the
-  per-commit tripwire, code-review, or the REVIEW gate (step 8). Every diff is still seen before it
-  leaves the repo, the mechanical tripwires keep obviously-dangerous changes off the auto path (they
-  exclude danger, they don't certify safety), and any doubt or breach reverts to the human gate.
+  follow-up at the end. The PLAN gate is the contract.
 - **The guarantee binds to the sequence.** "Nothing reaches a remote unreviewed" holds only when the
-  flow runs as a whole; invoking `/pr` directly (or any caller that skips step 8) bypasses the REVIEW
-  gate. The auto path's local checks are best-effort — step 8 is the backstop that makes a
-  misclassification at worst a reversible local commit, so never route around it.
+  flow runs as a whole; invoking `/pr` directly (or any caller that skips step 10) bypasses the REVIEW
+  gate. Step 8 is the backstop that keeps every diff seen before it leaves the repo, so never route
+  around it.
 - **Spend the words at the gates.** One line before a step that will take a while, one when a
   checkpoint fires or the path changes, and nothing much in between. At each gate, **lead with the
   outcome** — what happened and what it means for the decision now in front of the reader — with the
-  supporting detail underneath for whoever wants it. The pauses are where a human's attention is
-  actually spent; running commentary between them spends it for nothing and trains them to skim the
-  places it matters.
-- **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), the
-  Checkpoint-2 verifier can't be reached or answers ambiguously, or a gate is rejected — stop and
-  report, or drop to the human gate. Those two are the whole set of moves available here.
+  supporting detail underneath for whoever wants it. **And rank what you surface**: weakest oracle over
+  the widest reach goes first (step 10), never the artifact that happens to be biggest or the order the
+  ticket happened to list things in. The pauses are where a human's attention is actually spent;
+  running commentary between them spends it for nothing and trains them to skim the places it
+  matters.
+- **Stop at blockers, fail closed.** If a step's tool is unavailable (Rovo, `gh`, browser), a
+  subagent can't be reached or answers ambiguously, or a gate is rejected — stop and report. That is
+  the whole set of moves available here.

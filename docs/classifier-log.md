@@ -1,8 +1,12 @@
-# Classifier log
+# Classifier log — CLOSED
+
+> **Status: the classifier was removed from `/dev-flow` on 2026-09-14.** This file is kept as the
+> record of why, not as live documentation — the auto path it describes no longer exists, and
+> `skills/dev-flow/SKILL.md` no longer has steps matching the references below. **The verdict is at
+> the bottom.**
 
 A running record of how the dev-flow **proportional-approval classifier** (the auto-path gate around
-PLAN — see [`skills/dev-flow/SKILL.md`](../skills/dev-flow/SKILL.md) steps 2–5) actually decided on real
-and adversarial tasks. Two jobs:
+PLAN) actually decided on real and adversarial tasks. Two jobs:
 
 1. **Baseline / regression cases** — curated tasks with a known-correct expected outcome, so a change to
    the tripwire wording can be re-checked against them.
@@ -83,3 +87,49 @@ Copy this template; flag every ❌ for follow-up.
 ```
 | YYYY-MM-DD | <task as the user framed it> | <repo · file(s)> | auto/human | auto/gate | <auto | step-2 | CP1 | CP2 | CP3> | <which tripwire / verifier verdict> | ✅/⚠️/❌ |
 ```
+
+---
+
+## Outcome — removed 2026-09-14
+
+**What the log shows.** Three decisions, all dated 2026-06-26, all in `intent-hook-test` (a two-file
+scratch repo), all synthetic seeds written during the dev-loop→dev-flow rename. Exactly **one** of them
+auto-approved and built. The "Trial log — add a row per real `/dev-flow` run" section above stayed
+**empty for the whole life of the feature**: not one real run was ever logged, so the calibration this
+file was created to gather never happened, and the three candidate follow-ups — each gated on "only if
+the trial surfaces the matching miss" — could never fire.
+
+**Why it went unused, which is the part worth keeping.** The classifier wasn't badly tuned; 3/3
+synthetic cases graded correctly. It was aimed at a need that isn't there. Its real competitor was
+never the human path — it was **not invoking `/dev-flow` at all**. For a one-line presentational tweak
+the natural move is a sentence to Claude Code, and that beats any in-flow fast path on friction no
+matter how well the tripwires are tuned. A fast path inside an orchestrator is solving for a user who
+has already decided to run the orchestrator, which is not who wants a fast path.
+
+So this was a **premise** failure rather than a tuning failure, and no amount of tripwire refinement
+would have reached it. The remedy was to delete the path and state the rule plainly: if you don't want
+the PLAN gate, don't invoke the flow.
+
+**What removing it bought.** `skills/dev-flow/SKILL.md` lost ~1,100 words (roughly a quarter of the
+file, and its largest single concentration of logic), and the `human path only` qualifier disappeared
+from four other skills — `author-acceptance-tests`, `audit-tests`, `verify-build` and `debrief` — which
+had all been written as conditional on a path that now always runs. It also closed a known a11y gap:
+the auto path skipped acceptance tests, so a colour or font-size tweak run through the flow got no
+accessibility check at all. Every run authors them now.
+
+**What was knowingly given up: nothing that was still needed.** The auto path was the only working
+instance of the "PLAN gate is swappable for an auto-approver" design point — but the unattended use
+case it was reaching for is already served, and better, by
+[`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills): a separate plugin that swaps
+*both* gates for automated approvers, vendors its own `auto-`prefixed copies of the sub-skills, and
+relocates the review guarantee to the merge decision rather than dropping it. That repo's README
+states the principle this removal was really applying: *"dev-flow's gates are deliberately human —
+that's the point of it for hands-on work. Removing them isn't a setting; it changes the safety
+model."* Which makes the auto path a **third mode** wedged between the two plugins, running the
+unattended premise at a scale too small to be worth a separate safety model — and, tellingly, the
+only one of the three nobody used.
+
+**One thing this log never resolved, worth carrying forward if anyone rebuilds it:** no checkpoint
+ever caught *cross-file* significance — a locally-trivial diff whose impact lives elsewhere (the
+`"basic" → "free"` label some billing check keys on). Every check inspected the changed file or the
+diff, never the use-sites. That hole was open the whole time.

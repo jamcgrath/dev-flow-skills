@@ -1,6 +1,6 @@
 ---
 name: verify-build
-description: The independent build verifier. Spawned as a FRESH subagent with no builder context, given only {diff since base, acceptance criteria, acceptance-test paths}, it tries to FALSIFY the change against the criteria through each criterion's layer harness (Playwright for UI, unit/integration/DB otherwise) + the full suite, and adversarially reviews the test diff for tampering, then writes a structured verdict (verified / couldn't-verify / falsified) to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow on the human path, after each build attempt, replacing the builder's self-check. ONE pass only — /dev-flow pauses and asks the human on falsified/couldn't-verify rather than owning an automated retry loop. Fail-closed: if it can't verify, the verdict is couldn't-verify, never a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
+description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow after each build attempt, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
 ---
 
 # verify-build
@@ -11,20 +11,21 @@ decision at its source, which is the one thing this flow can't allow.
 
 **Spawned fresh every pass — this is non-negotiable.** Run as an **isolated subagent with NO builder
 session state**, given only the diff, the acceptance criteria, and the acceptance-test paths.
-`/dev-flow` owns what happens with the verdict (step 5) and **re-spawns a new verifier on every
+`/dev-flow` owns what happens with the verdict (see step 5 below) and **re-spawns a new verifier on every
 retry** — never persist this across retries, never reuse the builder's context. A verifier that
 accumulates the builder's state is just the self-grading this skill exists to replace.
 
 ## Steps
 
-1. **Gather the evidence (read-only).** `git diff <base>`, where `base` is the acceptance-test commit
-   sha **recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`** (and also passed to you by the
-   orchestrator) — you run fresh and cannot recompute it, so read it. The authored tests are *in* that
-   base, so any builder edit to one surfaces in the diff. Also read the acceptance criteria
-   (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the approved `.dev-flow/<task>/PLAN.md` /
-   task description), the protected acceptance-test paths (same manifest), and the
-   **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose test was judged
-   `inadequate` is **not** verifiable by that test, no matter what it does now.
+1. **Gather the evidence (read-only).** `git diff <base>` for the falsification and tamper work, plus
+   `git diff -M --numstat --name-status <base>` for the per-file reach that ranks the criteria in step 4.
+   `base` is the acceptance-test commit sha **recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`** (and
+   also passed to you by the orchestrator) — you run fresh and cannot recompute it, so read it. The
+   authored tests are *in* that base, so any builder edit to one surfaces in the diff. Also read the
+   acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the approved
+   `.dev-flow/<task>/PLAN.md` / task description), the protected acceptance-test paths (same
+   manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
+   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now.
 
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
@@ -55,6 +56,14 @@ accumulates the builder's state is just the self-grading this skill exists to re
    ## Verdict
    verified | couldn't-verify | falsified   — <one-line reason>
 
+   ## Attention order   (weakest oracle first; widest reach breaks the tie)
+   1. <criterion> — oracle: none | weak (structural|manufactured) | adequate
+      reach: <N files, M dirs[, fan-in]> — <what to look at>
+
+   ## Rollback
+   - revert: clean | not clean — <the range, or what blocks it>
+   - leaves behind: none | <irreversible side effects a revert does not undo>
+
    ## Criteria
    - <criterion> → pass | fail | unverifiable   (+ adequacy from TEST_AUDIT.md + evidence)
 
@@ -79,6 +88,39 @@ accumulates the builder's state is just the self-grading this skill exists to re
      unavailable, DB or dependent service unreachable), or a criterion is unverifiable-by-nature
      (subjective). **Fail closed → this, never a false `verified`.**
 
+   **Then rank the criteria — weakest oracle first, widest reach breaks the tie.** The verdict says
+   whether the change holds; the rank says where a human should look *first* if they only look once.
+   Both keys are already in hand:
+   - **Oracle strength**, from `TEST_AUDIT.md`: **none** — the criterion is `unverifiable`, or its test
+     was judged `inadequate` (a vacuous pass proves nothing), so *nothing* is actually checking it. Then
+     **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
+     is an author slip where a real assertion *was* available; a structural one is the best any test
+     could do at `base`). A preservation criterion carried by the regression suite alone ranks with
+     `weak`. Then **adequate**, last.
+   - **Reach**, from `git diff -M --numstat --name-status <base>`: the files and directories that
+     criterion's surface actually touches. Where the project exposes an import/dependency graph (an MCP
+     server, usage indexer, or LSP), **measure the changed files' fan-in** rather than eyeballing it — a
+     contained-looking file imported in twenty places has a reach its own line count doesn't show. No
+     such tool → estimate, and say that you estimated.
+
+   Give each ranked line **what to look at**, not just its position. This is the only place the flow
+   orders anything for a human: everything else it writes is criterion-order, which buries the riskiest
+   item wherever the ticket happened to list it — and the weakest oracles are exactly the ones that
+   *don't* stop the flow, so without a rank they arrive as the quietest item on the page.
+
+   **Say how the change comes back out — `## Rollback`.** The reviewer is at the last stop before a PR
+   and you are the one agent holding the whole diff, so state the route that exists:
+   - **revert** — `clean` when `git revert <base>..HEAD` restores the prior behaviour with nothing
+     else to do; `not clean` otherwise, naming what blocks it (a migration with no `down`, data already
+     written, a regenerated artefact committed outside its package, a consumer that has already read the
+     new shape).
+   - **leaves behind** — what reverting the commits does *not* undo. `ACCEPTANCE_TESTS.md`'s **Side
+     effects** section names the test-side ones; the diff names the rest (a DDL drop/truncate, a deploy,
+     an install, a network-mutating call).
+   **Don't design a rollback** — don't propose a flag, a down-migration, or a safer shape. The build is
+   over and you are read-only; report the route the change already has, including when that route is
+   "revert the commits, and the migration stays."
+
 5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to code review.
    `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
    to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
@@ -98,6 +140,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
 - **It is LLM judgment in fresh context** — better than self-grading, *not* ground truth. Subjective
   criteria are `unverifiable`, not a guess. Mutation testing — the strong defense against vacuous
   tests — is deferred, not implemented here.
+- **The rank is presentation, never a second verdict.** A criterion that sorts last is not thereby
+  verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
+  criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
+  promote one to `fail` because it ranked high.
 - **Read-only except `VERIFICATION.md`.** Never touches the source (the builder fixes, on the human's
   retry choice) and never edits tests.
 - **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this

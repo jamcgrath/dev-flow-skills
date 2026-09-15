@@ -1,6 +1,6 @@
 ---
 name: author-acceptance-tests
-description: Author executable acceptance tests from a task's acceptance criteria, after the PLAN gate has fixed the surface but INDEPENDENT of the implementation, then commit them so they become the build's base. Invoked by /dev-flow between plan approval and the build, on the human-approved path only — a trivial auto-approved change has no acceptance criteria worth pinning down this way. Picks the test type per criterion's LAYER (UI → Playwright + data-testids + an a11y baseline, logic → unit, API/service → integration, data → seeded-DB) rather than defaulting to the browser. The builder must SATISFY these tests, never edit them — committing them first is what makes any later edit visible in the diff. One half of dev-flow's test-integrity defense (the other half is /verify-build). Non-interactive, except that a commit-hook rejection for a non-test reason pauses and asks.
+description: Author executable acceptance tests from a task's acceptance criteria, after the PLAN gate has fixed the surface but INDEPENDENT of the implementation, then commit them so they become the build's base. Invoked by /dev-flow between plan approval and the build. Picks the test type per criterion's LAYER (UI → Playwright + data-testids + an a11y baseline, logic → unit, API/service → integration, data → seeded-DB) rather than defaulting to the browser. The builder must SATISFY these tests, never edit them — committing them first is what makes any later edit visible in the diff. One half of dev-flow's test-integrity defense (the other half is /verify-build). Non-interactive, except that a commit-hook rejection for a non-test reason pauses and asks.
 ---
 
 # author-acceptance-tests
@@ -10,11 +10,10 @@ of the implementation* so they can't be shaped to whatever the builder happens t
 them up front is what makes "the builder satisfies a fixed bar, it doesn't edit the bar" **enforceable**
 rather than aspirational — see step 4.
 
-Runs on `/dev-flow`'s **human path only**, between plan approval and the build:
-`plan-brief → /plan (human-approved) → **author acceptance tests** → /audit-tests → build →
-/verify-build`. It writes tests, commits them, and records a manifest; it does **not** implement the
-feature. (The auto path has no acceptance criteria worth pinning down this way, and committing new test
-files would itself trip its own new-file tripwire — so it's skipped there.)
+Runs between plan approval and the build:
+`plan-brief → /plan (approved) → **author acceptance tests** → /audit-tests → build →
+/verify-build`. It writes tests, commits them, and records a manifest; it does **not** implement
+the feature.
 
 ## Steps
 
