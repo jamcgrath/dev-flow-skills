@@ -1,14 +1,14 @@
 ---
 name: dev-flow
-description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → author-acceptance-tests → audit-tests → build → verify-build → commit → code-review, plus security-review when the diff touches a security surface → human review → pr), pausing at the two human gates (PLAN, REVIEW) and at two conditional escalations (a test-adequacy gap before the build, an unverified build after it). Beyond those escalations and the one conditional security-review trigger it adds no behaviour of its own — it just sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational; trivial one-off work doesn't need it, so there is no fast path and no skipping the PLAN gate. Self-contained (task passed as args), so it can also be invoked by automation.
+description: Kick off the full AI-assisted dev flow for a task in one command — routes feature vs bug, then runs the existing chain (verify-ticket if there's a ticket → plan-brief → plan-mode approval gate → author-acceptance-tests → audit-tests → build → code-review and fix, plus security-review when the diff touches a security surface → verify-build on the settled diff → human review → pr), pausing at the two human gates (PLAN, REVIEW) and at three conditional escalations (a test-adequacy gap before the build, a review fix that contradicts the agreed bar, an unverified build after it). Review runs BEFORE verification so the verdict the review gate leads with describes the code that actually ships. Beyond those escalations, the review loop's triage and the one conditional security-review trigger, it adds little behaviour of its own — it mostly sequences the skills you already have. Use when the user says "dev flow", "/dev-flow <task>", "run the flow", or "kick off the flow". This is the single explicit entry to the structured flow — without it, work stays conversational; trivial one-off work doesn't need it, so there is no fast path and no skipping the PLAN gate. Self-contained (task passed as args), so it can also be invoked by automation.
 ---
 
 # dev-flow
 
 The one explicit way to **kick off the structured flow**. Beyond the condition that fires
-`/security-review` at step 9 and two test-integrity checkpoints (steps 6 and 8), it **adds no behaviour of
-its own** — it sequences the skills you already have and pauses at the same human gates as running them
-by hand.
+`/security-review` at step 8, two test-integrity checkpoints (steps 6 and 9) and the review loop's
+own needs-decision pause (step 8), it **adds little behaviour of its own** — it sequences the skills
+you already have and pauses at the same human gates as running them by hand.
 
 **Both gates are human, and neither is skippable.** There is no fast path: a task small enough to want
 one is a task that doesn't need the orchestrator at all — do it conversationally and let the REVIEW
@@ -34,14 +34,19 @@ them, which is what the classifier already turned out to be.
                        present plan, WAIT FOR APPROVAL
   → branch off default (if needed) · persist PLAN.md
   → author-acceptance-tests → commit (= base) → audit-tests
-       → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides
-                                  forward as a softer verified): proceed / strengthen
+       → ⏸ audit-gap checkpoint (a test that cannot do its job — *inadequate*/always-green or
+                                  *unsatisfiable*/never-green? weak + quality defects ride forward):
+                                  proceed / strengthen / rewrite-or-retire
   → build + commit each change
-  → verify-build (fresh subagent, strong model, tries to falsify the change)
+  → code-review → triage (actionable / false-positive / needs-decision) → fix + commit → re-review
+       → ⏸ needs-decision checkpoint (a fix that contradicts the agreed bar): take it + amend the
+                                       test / keep the agreed behaviour / narrow it
+     · + security-review once the loop settles, when the diff touches a security surface
+       (auth / permission / secret / endpoint tokens, or an injection sink)
+  → verify-build on the SETTLED diff (fresh subagent, strong model, tries to falsify the change)
        → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build /
+                                             amend the test (base held still) /
                                              proceed with gap noted / abandon
-  → code-review  · + security-review when the diff touches a security surface (auth / permission /
-                   secret / endpoint tokens, or an injection sink)
   → ⏸ REVIEW gate — human sanity-check before PR (leads with the verdict + the weakest-oracle
        criteria + the rollback route, diff last)
   → pr
@@ -162,8 +167,8 @@ them, which is what the classifier already turned out to be.
      each test's red-at-base adequacy → `.dev-flow/<task>/TEST_AUDIT.md`.
 
    **⏸ Checkpoint — audit gap.** Key the pause off the failure *kind* the audit records, **not** a
-   blanket "no adequate test" — the three verdicts mean different things and only one is an actionable
-   gap a human can fix here:
+   blanket "no adequate test" — the findings mean different things, and only the two where the test
+   **cannot do its job at all** are actionable gaps a human can fix here:
    - **`inadequate`** (a test that *passes vacuously at `base`* — it doesn't exercise the new behaviour
      at all) → **stop and ask** via `AskUserQuestion`; a vacuous pass is genuinely misleading and
      strengthening is a real remedy:
@@ -176,6 +181,23 @@ them, which is what the classifier already turned out to be.
      >   them and **re-records the new sha as `base`** in `ACCEPTANCE_TESTS.md` — without that, the
      >   strengthened tests land as edits to protected paths in `git diff <base>` and `/verify-build`
      >   reads them as tampering. Then re-run `/audit-tests` as a **new** fresh subagent.
+   - **`unsatisfiable`** (a test **no conforming build can pass** — an assertion contradicting
+     something this change never touches, a malformed matcher, a threshold the codebase already
+     exceeds) → **stop and ask**, for the opposite reason to `inadequate`: never green rather than
+     always green. Building against it spends a whole build to reach a red nobody can clear, and the
+     builder cannot edit it, so it dead-ends unless it is settled here.
+     > "The test audit proved `<N>` acceptance tests cannot be satisfied by any correct build:
+     > `<list, each with the demonstration>`. How do you want to proceed?"
+     > - **Rewrite them first** — hand the flagged tests back to `/author-acceptance-tests` to
+     >   re-express the criterion in a form a conforming build can meet. Same mechanic as
+     >   strengthening: it **re-commits** and **re-records the new sha as `base`**, then
+     >   `/audit-tests` runs again as a **new** fresh subagent. **Strengthening is the wrong move
+     >   here** — it makes an already-impossible test harder, not possible.
+     > - **Retire the test and carry the criterion unverified** — drop it from the protected set and
+     >   record the criterion as having no executable oracle, so the REVIEW gate meets it as a known
+     >   hole rather than a red.
+     > - **Proceed anyway** — build against it knowing the red is unclearable; `/verify-build` will
+     >   return `couldn't-verify` for that criterion rather than `falsified`.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
      bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
@@ -189,7 +211,16 @@ them, which is what the classifier already turned out to be.
      the rest. Then proceed. (Manufactured-weak is a fixable author slip, but the softened verify +
      REVIEW gate still catch it — escalate it to a pause only if the surface-only treatment proves to
      miss them.)
-   - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
+   - **test-quality defects** (a mutation survivor, a guard that could reject a correct build, a
+     wired-untested path — an assertion hole on a test whose *verdict* is otherwise fine) → **do not
+     pause.** These are not adequacy gaps: the test still reds at `base` for the right reason, its
+     assertion just has a named hole, and closing it is a build-time or review-time call rather than
+     anything the human can action at this checkpoint. Same handling as `weak` — announce in one
+     line, **name them**, and ride them forward for `/verify-build` to rank and the REVIEW gate to
+     lead with. An audit that reports these is doing its job, not reporting a failure; treating them
+     as a gate is what turns a clean run into a question with no answer behind it.
+   - Only `adequate` verdicts (or a mix of `adequate` and `weak`, with or without quality defects) →
+     proceed without a pause.
 
 7. **Build — survey, then commit as you go.** For each plan item, search for what already exists to
    reuse — props, components, renderers, hooks, utilities, conventions — and record the result as a
@@ -206,7 +237,7 @@ them, which is what the classifier already turned out to be.
    breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
    it actually declares, in its manifest scripts or task runner — plus a cheap smoke check, then
    `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
-   convention), while the reasoning is fresh. That bar is deliberately shallow: step 8's
+   convention), while the reasoning is fresh. That bar is deliberately shallow: step 9's
    `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
    nothing it won't. **Stay in scope** — the plan is the contract.
 
@@ -219,7 +250,63 @@ them, which is what the classifier already turned out to be.
    looks wrong, or a criterion turns out infeasible, **stop and say so**; the one move that isn't
    available is editing the test to fit.
 
-8. **Verify — replace self-checking with an independent falsifier.** Spawn
+8. **Review the change — triage, fix, re-review.** The diff gets read by something other than what
+   wrote it, and its findings get **acted on here** rather than filed for the gate. Review runs
+   before verification so that verification runs on what actually ships: a verdict reached before
+   the last edits describes a diff that no longer exists.
+
+   **Round 1 — the whole diff.** Built-in `/code-review` on `git diff <base>`, at an effort level
+   **proportional to the diff** (small / mechanical → low–medium; large / risky → high+), so it
+   doesn't default heavy on a tiny change. **Don't pass `--fix`** — it applies findings straight to
+   the working tree and skips the triage below, which is where the judgement lives.
+
+   **Triage every finding** — the same three buckets `/pr-fix` already uses:
+   - **actionable** — a real defect whose fix sits inside the approved scope. Fix it and `/commit`
+     it, one logical change per commit, Decision Log proportional.
+   - **false-positive** — the review misread the code. One line on why; it rides to the REVIEW gate
+     so the human sees what was dismissed rather than only what was done.
+   - **needs-decision** — the fix collides with something already agreed. ⏸ see the checkpoint below.
+
+   **Round 2+ — review the increment, not the whole diff again.** `<last-reviewed sha>..HEAD`. The
+   fixes are what changed; re-reading the whole diff each round pays for the same reading twice.
+
+   **Stop when nothing actionable is left, not when findings stop appearing.** A finding that is a
+   *consequence of this round's own fixes* gets fixed; a genuine pre-existing one that round 1 missed
+   gets fixed. A round that keeps surfacing consequences of its own fixes is thrash — name what is
+   left and take it to the gate. There is no budget to count down: in practice this settles in one or
+   two rounds, and a loop that will not settle is itself the finding.
+
+   **⏸ Checkpoint — a fix that contradicts the bar.** A `needs-decision` finding means the review is
+   right about the code *and* its fix collides with something already agreed — most often a protected
+   acceptance test, sometimes a conflict you accepted at the PLAN gate. The builder cannot resolve
+   that, so ask via `AskUserQuestion`, naming the finding, what its fix would break, and the options
+   that actually exist:
+   > - **Take the fix and amend the test** — the acceptance test encodes a bar this fix invalidates.
+   >   Commit the fix and the test change, then record `## Approved test amendment (post-build)` in
+   >   `ACCEPTANCE_TESTS.md` — sha, paths, approver, `Changes ONLY:` — with `base` **unchanged**.
+   >   Step 9 reconciles it on its single pass; nothing needs re-verifying, because verification has
+   >   not run yet.
+   > - **Keep the agreed behaviour** — drop the fix. The finding rides to the REVIEW gate as a
+   >   deliberate decline, with the conflict named, so the gate meets a decision rather than a gap.
+   > - **Narrow it** — a smaller fix that clears the finding without touching what was agreed.
+
+   **Then the built-in `/security-review`, once the loop has settled** — it greps the final diff, so
+   running it mid-loop reviews code that is about to change. Only when the change touches a security
+   surface. Grep for that *here*, over `git diff <base>` and both sides of each hunk (removing a guard
+   shows only as a `-` line) — nothing earlier in the flow has grepped the actual code. Run it on the
+   auth / permission / secret / endpoint tokens, or where the diff adds a sink the review is built
+   for: SQL or a shell command built from input, `innerHTML` / `{@html}`, `eval`, deserialisation, a
+   path or URL from request data, session / cookie / CORS / crypto config. **Unsure → run it** — a
+   false fire costs time and nothing else.
+   It takes no arguments and scopes itself to `git diff origin/HEAD...`, a range the flow can't
+   override, so check `git rev-parse --verify origin/HEAD` first: where that ref doesn't resolve
+   (local-only repo, remote not named `origin`) it reviews an empty diff and finds nothing, which is
+   **not run, never clean** — report it that way. Its findings triage like any other: actionable ones
+   are fixed here, the rest ride to the gate.
+
+9. **Verify the settled diff — replace self-checking with an independent falsifier.** Review is
+   done and the diff has stopped moving, so this verdict describes what ships and is still true at
+   the gate. Spawn
    `/verify-build` as a **fresh subagent with zero context from the build**, passing it `base` (from
    `ACCEPTANCE_TESTS.md`), the acceptance criteria, the protected test paths, and `TEST_AUDIT.md`'s
    adequacy verdicts. Run it at a **strong model regardless of diff size** — never downsized, this is
@@ -227,31 +314,41 @@ them, which is what the classifier already turned out to be.
    suite, adversarially reviews `git diff <base>` for tamper, and writes
    `.dev-flow/<task>/VERIFICATION.md`.
 
-   **⏸ Checkpoint — verify-build failure.** `verified` → proceed to code review. `falsified` or
+   **⏸ Checkpoint — verify-build failure.** `verified` → proceed to the REVIEW gate. `falsified` or
    `couldn't-verify` → stop and ask via `AskUserQuestion`:
    > "verify-build could not confirm the change: `<one-line reason>`. How do you want to proceed?"
    > - **Retry the build** — hand the named failing/unverifiable criteria back to the builder as a fix
    >   task (same `base`, not re-captured), then re-run `/verify-build` as a **new** fresh subagent.
-   > - **Proceed to review with the gap noted** — continue to code review and the REVIEW gate, carrying
-   >   the verdict forward.
-   > - **Abandon** — stop here and report why. No code review, no PR.
+   > - **Amend the test** — *only* when the defect is in the **test**, not the build: a bad regex, an
+   >   assertion pinned to a value this task legitimately changes, a prior task's protected test that
+   >   this change contradicts. No amount of building satisfies a test that is wrong, and the builder
+   >   is barred from touching it, so the call is yours. Commit the fix, then record
+   >   `## Approved test amendment (post-build)` in `ACCEPTANCE_TESTS.md` — sha, paths, who approved,
+   >   and `Changes ONLY:` enumerating each edit precisely enough that `/verify-build` can fail the
+   >   diff *against* it. Then re-run `/verify-build` fresh.
+   > - **Proceed to the gate with the gap noted** — carry the verdict to the REVIEW gate as it
+   >   stands. The code review is already done and rides forward beside it.
+   > - **Abandon** — stop here and report why. No PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
 
-9. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
-   diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a
-   tiny change.
+   **A retry lands after the review.** Fixes that only address the named criteria need no second
+   review. A retry that reworks materially more than that has outrun what step 8 read — say so, and
+   re-review the increment before the gate. Judgement, not a mandatory second loop.
 
-   **Then the built-in `/security-review`, but only when the change touches a security surface.**
-   Grep for that *here*, over `git diff <base>` and both sides of each hunk (removing a guard shows
-   only as a `-` line) — nothing earlier in the flow has grepped the actual code. Run it on the
-   auth / permission / secret / endpoint tokens, or where the diff adds a sink the review is built
-   for: SQL or a shell command built from input, `innerHTML` / `{@html}`, `eval`, deserialisation, a
-   path or URL from request data, session / cookie / CORS / crypto config. **Unsure → run it** — a false fire costs time and nothing else.
-   It takes no arguments and scopes itself to `git diff origin/HEAD...`, a range the flow can't
-   override, so check `git rev-parse --verify origin/HEAD` first: where that ref doesn't resolve
-   (local-only repo, remote not named `origin`) it reviews an empty diff and finds nothing, which is
-   **not run, never clean** — report it that way. No artifact, no new pause: findings ride to the
-   REVIEW gate beside the code review.
+   **When the verdict is `couldn't-verify` because a test is unsatisfiable, lead with *Amend*, not
+   *Retry the build*.** The verifier has said the code is not implicated; offering the builder a fix
+   task first sends it to rebuild something that already works, and the red survives the round. Put
+   the finding in the question — the test, and the demonstration that no conforming build passes it —
+   so the choice is about the test rather than about the change.
+
+   **On an amendment, `base` does not move — this is the one that bites.** Re-recording `base` to the
+   amendment commit folds every build commit before it *into* the base, so `git diff <base>` no longer
+   contains the build: the tamper check and the falsification both go quiet while appearing to pass.
+   (Step 6's pre-build strengthening *does* re-record `base`, and is safe for the opposite reason —
+   no build exists yet.) Amending also **costs the criterion its oracle**: the feature exists now, so
+   red-at-base can never be re-measured for that test and `/verify-build` ranks it with the weakest.
+   An amendment is a human overriding the bar they set, so it should read like one in the manifest —
+   never a quiet edit that happens to be allowed.
 
 10. **⏸ REVIEW gate — always human (hard stop).** A human sanity-check before the PR. This gate is
    never skipped and never auto-approved. This is what keeps "every diff is seen before it leaves the
@@ -266,10 +363,14 @@ them, which is what the classifier already turned out to be.
    2. **The verdict, and what to look at first.** When `.dev-flow/<task>/VERIFICATION.md` exists: its
       verdict, then the head of its **`## Attention order`** — the weakest-oracle, widest-reach criteria,
       **named**, with what to check on each — then any unresolved criterion, so a "proceed with the gap
-      noted" choice from step 8 is actually seen here rather than silently dropped. Carry that order
+      noted" choice from step 9 is actually seen here rather than silently dropped. Carry that order
       across as written; don't re-sort it into ticket order or flatten it back to counts (`N adequate /
       N weak` tells a reviewer nothing about *where* to look).
-   3. **Findings** — the code review, and any `/security-review` findings beside it.
+   3. **Findings, and what was done about each.** Step 8 resolved them, so the gate meets decisions
+      rather than a raw list: what was **fixed** (with the commit), what was **dismissed** as a
+      false positive and why, and what was **declined** at the needs-decision checkpoint with the
+      conflict named. Anything still open rides here as open. A reviewer who only sees the fixed
+      ones cannot tell whether a finding was answered or ignored.
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
    5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
@@ -280,9 +381,12 @@ them, which is what the classifier already turned out to be.
 
 ## Guards
 - **Thin orchestration.** Every step delegates to the existing skill, unchanged. The flow's own logic
-  is deliberately confined to three things: the front-of-flow scaffolding (the readiness scan), the
+  is deliberately confined to four things: the front-of-flow scaffolding (the readiness scan), the
   two test-integrity checkpoints (the audit-gap pause before the build, the verify-build-failure pause
-  after it), and the one condition that fires `/security-review` at step 9. Everything else
+  after it), the review loop's triage and its needs-decision pause (step 8), and the one condition
+  that fires `/security-review` at step 8. It was three until the review loop earned its place: the
+  findings were being acted on anyway, by hand, every run — the flow was just declining to say so,
+  which left the fix cycle unbounded and the verification stale. Everything else
   parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them. When
   something new wants to live here, that list is the bar it has to clear — the auto-path classifier
   that used to sit alongside it grew to a quarter of this file before it was cut for never being used.
@@ -291,7 +395,7 @@ them, which is what the classifier already turned out to be.
   Each one exists to buy a **fresh context the build can't see** — that independence *is* the product,
   and it's what separates them from the self-checking a current model already does unprompted and
   doesn't need to be told to do. So don't add ad-hoc ones: no subagent to re-check your own work, no
-  reviewer beyond `/code-review` and step 9's conditional `/security-review`, and one where one will
+  reviewer beyond `/code-review` and step 8's conditional `/security-review`, and one where one will
   do. (Removing any of the three is a different thing entirely — that's a safety regression, not a
   saving.)
 - **Opt-in.** The flow runs *only* when `/dev-flow` is invoked (or the steps are run by hand).
@@ -300,8 +404,8 @@ them, which is what the classifier already turned out to be.
   follow-up at the end. The PLAN gate is the contract.
 - **The guarantee binds to the sequence.** "Nothing reaches a remote unreviewed" holds only when the
   flow runs as a whole; invoking `/pr` directly (or any caller that skips step 10) bypasses the REVIEW
-  gate. Step 8 is the backstop that keeps every diff seen before it leaves the repo, so never route
-  around it.
+  gate. **Step 10** is the backstop that keeps every diff seen before it leaves the repo, so never
+  route around it.
 - **Spend the words at the gates.** One line before a step that will take a while, one when a
   checkpoint fires or the path changes, and nothing much in between. At each gate, **lead with the
   outcome** — what happened and what it means for the decision now in front of the reader — with the

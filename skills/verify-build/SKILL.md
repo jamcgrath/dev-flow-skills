@@ -1,6 +1,6 @@
 ---
 name: verify-build
-description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow after each build attempt, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
+description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow once the code-review loop has settled, on the diff that will actually ship, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
 ---
 
 # verify-build
@@ -25,7 +25,12 @@ accumulates the builder's state is just the self-grading this skill exists to re
    acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the approved
    `.dev-flow/<task>/PLAN.md` / task description), the protected acceptance-test paths (same
    manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
-   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now.
+   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now. Read its
+   **`## Unsatisfiable tests`** — a test the audit proved no conforming build can pass is not
+   evidence about this build, and a red from one does not falsify the change. Read its
+   **`## Test-quality defects`** too: a named mutation survivor or false-fail guard means the oracle
+   is thinner than its verdict alone implies, so it belongs in the attention order **even on a
+   criterion that passes**.
 
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
@@ -46,6 +51,25 @@ accumulates the builder's state is just the self-grading this skill exists to re
      `ACCEPTANCE_TESTS.md`. The builder must *satisfy* these, not edit them. (Committing them as the
      base is what makes this a one-line check; on the hash-fallback, compare against the recorded hash.)
    Any of the three → a **flagged breach** (a breach makes the verdict `falsified`, step 4).
+
+   **The one exception: `## Approved test amendment (post-build)`**, if the manifest carries one. A
+   human can decide at the verify checkpoint that the *test* was wrong rather than the build, and
+   authorise an edit to a protected path. **Reconcile, don't rubber-stamp** — an approval is a
+   description to check the diff against, not a blanket pass:
+   - the edits must be confined to the **named commit(s)** and the **named paths**; anything to a
+     protected path outside them is a breach, approval or no approval;
+   - the diff must **match the `Changes ONLY:` description**. An edit the description doesn't cover
+     is a breach — that is the whole safety of the mechanism, and the reason the description has to
+     be specific enough to fail against;
+   - `base` must be **unchanged** from what the manifest recorded before the amendment. If `base`
+     moved forward to swallow the amendment, say so and treat the whole check as compromised: a
+     `base` at or after the builder's commits hides the build itself from `git diff <base>`, so
+     neither the tamper check nor the falsification is measuring what it claims to.
+   Reconciled cleanly → **not a breach**; record it under `## Test integrity` as an authorised
+   amendment naming the commit, so the verdict still shows a protected file changed and why.
+   An amended test also **loses its adequacy verdict** — it can never be re-audited, since the
+   feature now exists and red-at-base is unmeasurable — so its criterion's oracle is `none` for
+   ranking (step 4), no matter what `TEST_AUDIT.md` said about it before the amendment.
 
 4. **Write the structured verdict** to `.dev-flow/<task>/VERIFICATION.md`:
    ```
@@ -85,8 +109,26 @@ accumulates the builder's state is just the self-grading this skill exists to re
    - **verified** — every *testable* criterion passes on an **adequate** test AND no tamper breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), or a criterion is unverifiable-by-nature
-     (subjective). **Fail closed → this, never a false `verified`.**
+     unavailable, DB or dependent service unreachable), a criterion is unverifiable-by-nature
+     (subjective), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
+     this, never a false `verified`.**
+
+   **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
+   red that no conforming build could avoid must not produce one — that labels a sound change broken,
+   points the human at "retry the build", which cannot work, and leads the REVIEW gate with a verdict
+   about the wrong thing. Where **every** failing criterion traces to an unsatisfiable test and
+   nothing else fails and there is no tamper breach, the verdict is **`couldn't-verify`**, and the
+   one-line reason says plainly that the build is not implicated. Mix in one genuine failure or one
+   breach and it is `falsified` again — fail closed.
+
+   **The bar is the audit's, and it is on you when the audit did not name it.** A test is
+   unsatisfiable only on a demonstration in its own terms that *no* conforming build passes it —
+   arithmetic, or evidence like driving the live page to show the matcher itself is malformed. If it
+   fails only *this* build, it is the build. You are the skill whose honesty the gate rests on, and
+   this is the single finding that excuses a red without implicating the code, so reach for it only
+   with the proof in hand: an unexplained red is `falsified`, not unsatisfiable. Record which it is
+   under `## Criteria` either way, and **never edit the test** — the amendment is the human's call at
+   `/dev-flow`'s checkpoint, not yours.
 
    **Then rank the criteria — weakest oracle first, widest reach breaks the tie.** The verdict says
    whether the change holds; the rank says where a human should look *first* if they only look once.
@@ -96,7 +138,14 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. Then **adequate**, last.
+     `weak`. A criterion whose only oracle is **unsatisfiable** ranks with `none` — nothing is
+     checking it, and the red it produces says nothing about the code. A criterion whose test was
+     changed under an **approved post-build amendment** ranks with
+     `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
+     last. A **named quality defect** from `TEST_AUDIT.md` ranks its
+     criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
+     survivor is not an adequate oracle — and carry the defect's own wording across, since the audit
+     already said what the hole is.
    - **Reach**, from `git diff -M --numstat --name-status <base>`: the files and directories that
      criterion's surface actually touches. Where the project exposes an import/dependency graph (an MCP
      server, usage indexer, or LSP), **measure the changed files' fan-in** rather than eyeballing it — a
@@ -121,7 +170,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
    over and you are read-only; report the route the change already has, including when that route is
    "revert the commits, and the migration stays."
 
-5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to code review.
+5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
    `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
    to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
    `base` is **not** re-captured — the builder's fix lands as new commits, and the re-spawned verifier

@@ -20,30 +20,41 @@ flowchart TD
     AT["author-acceptance-tests<br/>write + commit tests (= base)"]:::testint --> AUD
     AUD["audit-tests · FRESH subagent<br/>red-before-green adequacy"]:::testint --> AGCHK
 
-    AGCHK{"any <i>inadequate</i><br/>(vacuous-at-base) test?"}:::testint
-    AGCHK -->|"inadequate found"| AESC
-    AGCHK -->|"clean or weak-only<br/>(weak rides forward)"| BUILD
+    AGCHK{"a test that cannot do its job?<br/><i>inadequate</i> (always green) or<br/><i>unsatisfiable</i> (never green)"}:::testint
+    AGCHK -->|"inadequate / unsatisfiable"| AESC
+    AGCHK -->|"clean, or weak / quality<br/>defects only (both ride forward)"| BUILD
 
-    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen tests first"]:::human
-    AESC -->|strengthen| AT
+    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen (inadequate)<br/>rewrite or retire (unsatisfiable)"]:::human
+    AESC -->|"strengthen / rewrite"| AT
     AESC -->|"proceed anyway"| BUILD
 
-    BUILD["Build + commit each change"]:::always --> VB
+    BUILD["Build + commit each change"]:::always --> CR
 
-    VB["verify-build · FRESH subagent<br/>strong model · tries to falsify the change"]:::testint --> VCHK
+    CR["Code review the diff<br/>round 1: whole diff · round 2+: the increment"]:::always --> TRI
+
+    TRI{"triage each finding"}:::always
+    TRI -->|"actionable → fix + commit"| CR
+    TRI -->|"needs-decision"| RESC
+    TRI -->|"nothing actionable left<br/>(false-positives ride forward)"| SEC
+
+    RESC["⏸ ask — HUMAN<br/>the fix contradicts the agreed bar<br/>take it + amend the test / keep the agreed behaviour / narrow it"]:::human
+    RESC --> CR
+
+    SEC["+ security review<br/>once the loop settles, if the diff<br/>touches a security surface"]:::always --> VB
+
+    VB["verify-build · FRESH subagent · strong model<br/>tries to falsify the SETTLED diff"]:::testint --> VCHK
 
     VCHK{"verified?"}:::testint
-    VCHK -->|yes| CR
+    VCHK -->|yes| RG
     VCHK -->|"falsified / couldn't-verify"| VESC
 
-    VESC["⏸ ask — HUMAN<br/>retry build / proceed with gap noted / abandon"]:::human
+    VESC["⏸ ask — HUMAN<br/>retry build / amend the test / proceed with gap noted / abandon"]:::human
     VESC -->|retry| BUILD
-    VESC -->|"proceed with gap noted"| CR
+    VESC -->|"amend the test<br/>(base held still)"| VB
+    VESC -->|"proceed with gap noted"| RG
     VESC -->|abandon| STOP
 
-    STOP(["stop · report why<br/>no code review, no PR"]):::human
-
-    CR["Code review<br/>+ security review if the diff<br/>touches a security surface"]:::always --> RG
+    STOP(["stop · report why<br/>no PR"]):::human
 
     RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>verdict + weakest-oracle criteria + rollback route first, diff last"]:::human --> PR
 
