@@ -1,0 +1,25 @@
+name: Lint
+
+# The structural lint only. The behavioural evals under evals/ spend tokens and
+# need a working claude CLI, so they stay on-demand — see evals/README.md.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-skills:
+    name: Validate skills and cross-references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test the lint rules
+        run: node --test scripts/lib/skill-lint-test.js
+
+      - name: Validate skills and cross-references
+        run: node scripts/validate-skills.js
