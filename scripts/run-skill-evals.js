@@ -36,7 +36,7 @@ const FIXTURES_DIR= path.join(ROOT, 'evals', 'fixtures');
 const RESULTS_DIR = path.join(ROOT, 'evals', 'results');
 
 const EXECUTOR_TIMEOUT_MS = 20 * 60 * 1000;
-const GRADER_TIMEOUT_MS   = 10 * 60 * 1000;
+const GRADER_TIMEOUT_MS   = 20 * 60 * 1000;
 
 // Edit and Write are granted on purpose. Both skills claim a read-only
 // discipline (audit-tests never edits a test; verify-build touches nothing but
@@ -172,6 +172,13 @@ function runEval(skillName, ev, opts) {
     ? fs.readFileSync(artifactPath, 'utf8')
     : `(the skill did not write ${ev.artifact})`;
 
+  // Save the executor's output before grading: the run is the expensive half, and
+  // a grader timeout should not throw it away.
+  fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
+  fs.writeFileSync(`${base}.trace.jsonl`, trace);
+  fs.writeFileSync(`${base}.artifact.md`, artifact);
+
   const graderPrompt = [
     'You are grading an agent run against explicit expectations.',
     'You are given three blocks of evidence: the artifact the skill was asked to write, the post-run git state of its workspace, and the full stream-json execution trace including every tool call and result.',
@@ -194,13 +201,9 @@ function runEval(skillName, ev, opts) {
     });
   } catch (err) {
     console.log(`  ✗  eval ${ev.id}: grader failed — ${err.message.split('\n')[0]}`);
-    return { failed: ev.expectations.length, total: ev.expectations.length, workspace };
+    console.log(`       the run itself is kept: ${path.relative(ROOT, base)}.{trace.jsonl,artifact.md}`);
+    return { failed: ev.expectations.length, total: ev.expectations.length, workspace, graderFailed: true };
   }
-
-  fs.mkdirSync(RESULTS_DIR, { recursive: true });
-  const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
-  fs.writeFileSync(`${base}.trace.jsonl`, trace);
-  fs.writeFileSync(`${base}.artifact.md`, artifact);
 
   const grading = parseGrading(raw, ev.expectations);
   if (!grading) {
