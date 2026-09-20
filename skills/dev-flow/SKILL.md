@@ -241,10 +241,26 @@ them, which is what the classifier already turned out to be.
    > "verify-build could not confirm the change: `<one-line reason>`. How do you want to proceed?"
    > - **Retry the build** — hand the named failing/unverifiable criteria back to the builder as a fix
    >   task (same `base`, not re-captured), then re-run `/verify-build` as a **new** fresh subagent.
+   > - **Amend the test** — *only* when the defect is in the **test**, not the build: a bad regex, an
+   >   assertion pinned to a value this task legitimately changes, a prior task's protected test that
+   >   this change contradicts. No amount of building satisfies a test that is wrong, and the builder
+   >   is barred from touching it, so the call is yours. Commit the fix, then record
+   >   `## Approved test amendment (post-build)` in `ACCEPTANCE_TESTS.md` — sha, paths, who approved,
+   >   and `Changes ONLY:` enumerating each edit precisely enough that `/verify-build` can fail the
+   >   diff *against* it. Then re-run `/verify-build` fresh.
    > - **Proceed to review with the gap noted** — continue to code review and the REVIEW gate, carrying
    >   the verdict forward.
    > - **Abandon** — stop here and report why. No code review, no PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
+
+   **On an amendment, `base` does not move — this is the one that bites.** Re-recording `base` to the
+   amendment commit folds every build commit before it *into* the base, so `git diff <base>` no longer
+   contains the build: the tamper check and the falsification both go quiet while appearing to pass.
+   (Step 6's pre-build strengthening *does* re-record `base`, and is safe for the opposite reason —
+   no build exists yet.) Amending also **costs the criterion its oracle**: the feature exists now, so
+   red-at-base can never be re-measured for that test and `/verify-build` ranks it with the weakest.
+   An amendment is a human overriding the bar they set, so it should read like one in the manifest —
+   never a quiet edit that happens to be allowed.
 
 9. **Code review.** Built-in `/code-review` on the diff — pass an effort level **proportional to the
    diff** (small / mechanical → low–medium; large / risky → high+), so it doesn't default heavy on a

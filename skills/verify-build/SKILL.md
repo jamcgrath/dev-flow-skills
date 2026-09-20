@@ -50,6 +50,25 @@ accumulates the builder's state is just the self-grading this skill exists to re
      base is what makes this a one-line check; on the hash-fallback, compare against the recorded hash.)
    Any of the three → a **flagged breach** (a breach makes the verdict `falsified`, step 4).
 
+   **The one exception: `## Approved test amendment (post-build)`**, if the manifest carries one. A
+   human can decide at the verify checkpoint that the *test* was wrong rather than the build, and
+   authorise an edit to a protected path. **Reconcile, don't rubber-stamp** — an approval is a
+   description to check the diff against, not a blanket pass:
+   - the edits must be confined to the **named commit(s)** and the **named paths**; anything to a
+     protected path outside them is a breach, approval or no approval;
+   - the diff must **match the `Changes ONLY:` description**. An edit the description doesn't cover
+     is a breach — that is the whole safety of the mechanism, and the reason the description has to
+     be specific enough to fail against;
+   - `base` must be **unchanged** from what the manifest recorded before the amendment. If `base`
+     moved forward to swallow the amendment, say so and treat the whole check as compromised: a
+     `base` at or after the builder's commits hides the build itself from `git diff <base>`, so
+     neither the tamper check nor the falsification is measuring what it claims to.
+   Reconciled cleanly → **not a breach**; record it under `## Test integrity` as an authorised
+   amendment naming the commit, so the verdict still shows a protected file changed and why.
+   An amended test also **loses its adequacy verdict** — it can never be re-audited, since the
+   feature now exists and red-at-base is unmeasurable — so its criterion's oracle is `none` for
+   ranking (step 4), no matter what `TEST_AUDIT.md` said about it before the amendment.
+
 4. **Write the structured verdict** to `.dev-flow/<task>/VERIFICATION.md`:
    ```
    ## Scope
@@ -99,7 +118,9 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. Then **adequate**, last. A **named quality defect** from `TEST_AUDIT.md` ranks its
+     `weak`. A criterion whose test was changed under an **approved post-build amendment** ranks with
+     `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
+     last. A **named quality defect** from `TEST_AUDIT.md` ranks its
      criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
      survivor is not an adequate oracle — and carry the defect's own wording across, since the audit
      already said what the hole is.

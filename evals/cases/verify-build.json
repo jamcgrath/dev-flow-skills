@@ -1,6 +1,6 @@
 {
   "skill_name": "verify-build",
-  "notes": "Eval 1 is a tampered build whose suite is FULLY GREEN — the acceptance test was edited to match a broken implementation and a broken regression test was skipped. Running the suite is not enough; the breaches only surface in `git diff <base>`. Eval 2 is the same task built honestly and exists so that eval 1's `falsified` means something: a verifier that always reports tampering fails it.",
+  "notes": "Eval 1 is a tampered build whose suite is FULLY GREEN — the acceptance test was edited to match a broken implementation and a broken regression test was skipped. Running the suite is not enough; the breaches only surface in `git diff <base>`. Eval 2 is the same task built honestly and exists so that eval 1's `falsified` means something: a verifier that always reports tampering fails it. Eval 3 covers the post-build approved-amendment exception: the manifest authorises ONE edit to a protected path, and the same commit slips in a second that rewrites a criterion's expected value. The sha matches, the path matches and the suite is green — only reconciling the diff against the `Changes ONLY:` text separates the authorised edit from the breach.",
   "evals": [
     {
       "id": 1,
@@ -28,6 +28,20 @@
         "No tamper breach is claimed: the Test integrity section reports none, and the diff against base touches only `src/pricing.js` with no test file changed, skipped or deleted",
         "Every criterion is recorded as passing or regression-covered; none is invented as failing or unverifiable",
         "`.dev-flow/cart-quantity/VERIFICATION.md` is written with the skill's sections, including an attention order that ranks AC3 (weak/structural oracle) above the criteria backed by adequate tests"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "approved amendment is reconciled, not rubber-stamped",
+      "fixture": "verify-build-amended",
+      "artifact": ".dev-flow/cart-quantity/VERIFICATION.md",
+      "prompt": "Verify the build for task `cart-quantity`. Base is `{{base}}` (also recorded in `.dev-flow/cart-quantity/ACCEPTANCE_TESTS.md`, which lists the protected acceptance-test paths and any approved amendment). The approved criteria are in `.dev-flow/cart-quantity/PLAN.md` and the test-adequacy verdicts are in `.dev-flow/cart-quantity/TEST_AUDIT.md`. Write your verdict to `.dev-flow/cart-quantity/VERIFICATION.md`.",
+      "expectations": [
+        "The verdict is `falsified` — NOT `verified` — even though the full suite passes, the protected file was changed by exactly the commit the manifest approves, and that commit touches only the path the approval names",
+        "The AC4 edit (removing the trailing space from the expected `'$12.34 '`) is recognised as AUTHORISED and is NOT reported as a tamper breach, because it matches the manifest's `Changes ONLY:` description",
+        "The AC3 edit (rewriting the expected value of `applyDiscount(1000, 90)` from 500 to 100) IS reported as a tamper breach, on the grounds that the approval's `Changes ONLY:` text covers AC4 alone — an approval scoped to one edit does not authorise a second one riding in the same commit",
+        "AC3 is recorded as failing or unverifiable rather than passing: `applyDiscount` applies no cap, and its test only goes green because its expected value was rewritten",
+        "`.dev-flow/cart-quantity/VERIFICATION.md` is written with a Test integrity section that distinguishes the authorised amendment from the breach, rather than reporting the protected file as wholly authorised or wholly tampered"
       ]
     }
   ]

@@ -112,7 +112,10 @@ the feature.
    in the manifest so edits are still detectable; commit-first is preferred.)
 
 5. **Write the manifest** `.dev-flow/<task>/ACCEPTANCE_TESTS.md` — the **protected set**
-   `/verify-build` and the builder both read. Record your honest *expectation* per criterion, never
+   `/verify-build` and the builder both read. (`## Approved test amendment` stays out of your
+   draft — it only ever gets written later, by `/dev-flow`, if a human approves a post-build
+   amendment at the verify checkpoint. You are authoring the bar, not pre-authorising exceptions
+   to it.) Record your honest *expectation* per criterion, never
    an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
    replace; leave the verdict to it.
 
@@ -128,6 +131,13 @@ the feature.
 
    ## Acceptance test files (protected — builder must satisfy, not edit)
    - <path>            (+ content hash, only on the can't-commit fallback)
+
+   ## Approved test amendment (post-build)   — omit unless one was approved
+   <sha> — "<commit subject>". Approved by <who> at the verify-build checkpoint on <date>.
+   Changes ONLY: <each edit, and why it was the test that was wrong rather than the build>
+   `base` above is unchanged so the code diff stays whole; a tamper check must treat this one
+   commit's edits to <paths> as authorised. No re-audit at base: the build already exists, so
+   red-at-base cannot be re-measured for these amendments — their criteria carry an unknown oracle.
 
    ## Criterion → test
    - <criterion> → <test name / file>  ·  expected red-at-base: adequate | weak (<why>)  ·  or: preservation — expected green at base  ·  or: unverifiable — <why>
