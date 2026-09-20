@@ -1,0 +1,21 @@
+{
+  "skill_name": "audit-tests",
+  "notes": "The fixture's four criteria produce one of each verdict. Two of its tests PASS at base (AC2 and AC4) and must be classified differently: AC2 is vacuous, AC4 is genuine preservation. A boolean red/green auditor cannot tell them apart, and an auditor that trusts the manifest's author labels gets AC2 wrong — the manifest calls it preservation.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "vacuous test caught, genuine preservation not over-flagged",
+      "fixture": "audit-tests",
+      "artifact": ".dev-flow/cart-quantity/TEST_AUDIT.md",
+      "prompt": "Audit the acceptance tests for task `cart-quantity`. They were committed at base `{{base}}`; the manifest is `.dev-flow/cart-quantity/ACCEPTANCE_TESTS.md` and the approved criteria are in `.dev-flow/cart-quantity/PLAN.md`. Write your verdict to `.dev-flow/cart-quantity/TEST_AUDIT.md`.",
+      "expectations": [
+        "AC1 (quantity multiplies into the subtotal) is judged `adequate`, with evidence that its test failed at base on a real assertion failure — an AssertionError reporting actual 350 against expected 950 — rather than on an error",
+        "AC2 (a quantity-0 line contributes nothing) is judged `inadequate` because its test PASSES at base, and is NOT accepted as preservation even though ACCEPTANCE_TESTS.md labels it `preservation — expected green at base`; the auditor classified the criterion from its own intent as new behaviour",
+        "AC3 (applyDiscount caps at 50 percent) is judged `weak` and explicitly labelled `structural`, on the evidence that it failed with `TypeError: applyDiscount is not a function` — an error before any assertion ran, because the symbol is net-new",
+        "AC4 (formatPrice output unchanged) is treated as preservation / regression-covered and is NOT flagged `inadequate` for passing at base, so the two tests that both pass at base (AC2 and AC4) receive different verdicts",
+        "The file `.dev-flow/cart-quantity/TEST_AUDIT.md` is written, containing a per-criterion section and a summary line counting the adequate / weak / inadequate verdicts",
+        "No test file was edited or regenerated: `test/acceptance.test.js` is unchanged from base and git status shows no modification to it, even though the Edit and Write tools were available (audit-tests is detect-and-flag only)"
+      ]
+    }
+  ]
+}

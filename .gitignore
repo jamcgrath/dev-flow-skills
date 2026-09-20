@@ -18,3 +18,12 @@
 
 # Flow scratch — the skills write context files under .dev-flow/<task>/; never commit them
 .dev-flow/
+
+# ...except the eval fixtures', which are test inputs the skills read, not scratch.
+# The directory itself has to be re-included: git will not descend into an
+# excluded directory to find a negated file inside it.
+!evals/fixtures/*/.dev-flow/
+!evals/fixtures/*/.dev-flow/**
+
+# Eval run output: traces, artifacts and grading JSON
+evals/results/
