@@ -189,7 +189,16 @@ them, which is what the classifier already turned out to be.
      the rest. Then proceed. (Manufactured-weak is a fixable author slip, but the softened verify +
      REVIEW gate still catch it — escalate it to a pause only if the surface-only treatment proves to
      miss them.)
-   - Only `adequate` verdicts (or a mix of `adequate` and `weak`) → proceed without a pause.
+   - **test-quality defects** (a mutation survivor, a guard that could reject a correct build, a
+     wired-untested path — an assertion hole on a test whose *verdict* is otherwise fine) → **do not
+     pause.** These are not adequacy gaps: the test still reds at `base` for the right reason, its
+     assertion just has a named hole, and closing it is a build-time or review-time call rather than
+     anything the human can action at this checkpoint. Same handling as `weak` — announce in one
+     line, **name them**, and ride them forward for `/verify-build` to rank and the REVIEW gate to
+     lead with. An audit that reports these is doing its job, not reporting a failure; treating them
+     as a gate is what turns a clean run into a question with no answer behind it.
+   - Only `adequate` verdicts (or a mix of `adequate` and `weak`, with or without quality defects) →
+     proceed without a pause.
 
 7. **Build — survey, then commit as you go.** For each plan item, search for what already exists to
    reuse — props, components, renderers, hooks, utilities, conventions — and record the result as a

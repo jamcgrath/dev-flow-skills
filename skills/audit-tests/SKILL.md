@@ -1,6 +1,6 @@
 ---
 name: audit-tests
-description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green" — a genuine test for new behaviour must FAIL at base, and one that passes there is vacuous. Spawned as a FRESH subagent, because the author must not grade its own tests. Returns a THREE-valued per-test verdict (adequate / weak / inadequate) and writes TEST_AUDIT.md; detect-and-flag only, it never edits a test. Invoked by /dev-flow between the acceptance-test commit and the build. Non-interactive.
+description: Audit the just-authored acceptance tests for ADEQUACY before the build, via "red before green" — a genuine test for new behaviour must FAIL at base, and one that passes there is vacuous. Spawned as a FRESH subagent, because the author must not grade its own tests. Returns a THREE-valued per-test verdict (adequate / weak / inadequate), plus any test-quality defects mutation turns up — assertion holes on tests whose verdict is otherwise fine, which ride forward as named review items and never pause the flow. Writes TEST_AUDIT.md; detect-and-flag only, it never edits a test. Invoked by /dev-flow between the acceptance-test commit and the build. Non-interactive.
 ---
 
 # audit-tests
@@ -48,23 +48,44 @@ only — `/dev-flow` decides what happens with a gap it finds).
      verdict is `weak` either way; the label tells the flow whether the author erred or it was just hard.
    - **inadequate** — **passed at `base`.** Vacuous — it doesn't exercise the new behaviour at all.
 
-4. **Write `.dev-flow/<task>/TEST_AUDIT.md`** — the per-criterion result the rest of the flow reads:
+4. **Note test-quality defects — a second axis, not a fourth verdict.** Red-at-base says a test
+   *depends on* the new behaviour. It does not say the assertion would **catch a wrong
+   implementation**. Where checking that is cheap, check it: mutate what the test covers and see
+   whether it goes red. What survives is a **test-quality defect** — and so is a guard that would
+   reject a *correct* build (a false-fail), or a path the test wires up but never exercises.
+
+   This is orthogonal to the verdict, not another value of it. An `adequate` test with a survivor is
+   still `adequate`; its assertion just has a named hole. Say which tests you did **not** mutate
+   rather than letting a partial sweep read as a whole-suite guarantee.
+
+   These are **review items, not gaps** — they never change a verdict and never pause the flow (see
+   the guards). Name each one so `/verify-build` can carry it into its attention order and the REVIEW
+   gate can lead with it; an unnamed defect is one nobody ever sees.
+
+5. **Write `.dev-flow/<task>/TEST_AUDIT.md`** — the per-criterion result the rest of the flow reads:
    ```
    ## Per criterion
    - <criterion> · new · test <name> · adequate | weak (structural|manufactured) | inadequate — <evidence>
    - <criterion> · preserved · regression-covered (no red-at-base test expected)
 
+   ## Test-quality defects (assertion holes — review items, never a pause; omit if none)
+   - <test> · mutation survivor | false-fail risk | wired-untested — <the hole, in a line>
+   - not mutated: <tests or areas the sweep did not cover>
+
    ## Summary
-   adequate: N · weak: N · inadequate: N · criteria with no adequate test: <list>
+   adequate: N · weak: N · inadequate: N · quality defects: N
+   criteria with no adequate test: <list>
    ```
 
-5. **Detect-and-flag — don't fix.** Hand the result forward; never edit or regenerate a test.
+6. **Detect-and-flag — don't fix.** Hand the result forward; never edit or regenerate a test.
    - **inadequate** → the criterion has **no trustworthy test**; downstream treats it as
      **unverifiable** even if it later "passes" (a vacuous pass is not a pass). `/dev-flow` pauses and
      asks the human whether to proceed anyway or strengthen the tests first.
    - **weak** → a **softer verified** — surfaced in the review as red-by-absence-only, not
      assertion-proven.
    - **adequate** → trustworthy.
+   - **a quality defect on any of the above** → rides forward **named**, on whatever verdict the test
+     already has. It is review material, never a gate.
 
 ## Guards
 - **Fresh + independent.** The author of the tests cannot audit them — that's self-grading.
@@ -77,7 +98,12 @@ only — `/dev-flow` decides what happens with a gap it finds).
   optimizes a gameable proxy (a spurious assertion bolted onto a missing symbol manufactures a *weak*
   red). Flag and move on — `/dev-flow`'s audit-gap checkpoint is where strengthening gets decided,
   grounded in a human's call, not this skill's.
-- **Necessary, not sufficient.** Red-before-green (even assertion-red) proves a test *depends on* the new
-  behaviour, not that its assertion is *complete*. Mutation testing is the *sufficient* check — deferred,
-  not implemented here.
+- **Necessary, not sufficient — and mutation is where the rest comes from.** Red-before-green (even
+  assertion-red) proves a test *depends on* the new behaviour, not that its assertion is *complete*.
+  Mutation is the sufficient check: run it where it is cheap, record what survives as a quality
+  defect, and name what you skipped. A partial sweep reported as a clean one is worse than no sweep.
+- **A quality defect never pauses, and never changes a verdict.** It is a named review item that
+  rides forward — same disposition as `weak`, for the same reason: strengthening is a build-time or
+  review-time call, so a pause here offers the human no action they can take *yet*. `inadequate` is
+  the only finding in this skill that justifies stopping the flow.
 - **Non-interactive.** Never pause for input; `/dev-flow` owns the checkpoint this audit feeds.

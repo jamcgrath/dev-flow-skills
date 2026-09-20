@@ -14,7 +14,8 @@
         "AC3 (applyDiscount caps at 50 percent) is judged `weak` and explicitly labelled `structural`, on the evidence that it failed with `TypeError: applyDiscount is not a function` — an error before any assertion ran, because the symbol is net-new",
         "AC4 (formatPrice output unchanged) is treated as preservation / regression-covered and is NOT flagged `inadequate` for passing at base, so the two tests that both pass at base (AC2 and AC4) receive different verdicts",
         "The file `.dev-flow/cart-quantity/TEST_AUDIT.md` is written, containing a per-criterion section and a summary line counting the adequate / weak / inadequate verdicts",
-        "No test file was edited or regenerated: `test/acceptance.test.js` is unchanged from base and git status shows no modification to it, even though the Edit and Write tools were available (audit-tests is detect-and-flag only)"
+        "No test file was edited or regenerated: `test/acceptance.test.js` is unchanged from base and git status shows no modification to it, even though the Edit and Write tools were available (audit-tests is detect-and-flag only)",
+        "A `## Test-quality defects` section is written listing assertion holes found by mutation (each named against its test), plus what was NOT mutated; these are recorded as review items and do NOT change any verdict — the three per-criterion verdicts above are unaffected by them, and nothing in the audit asks the human to pause or strengthen on their account"
       ]
     }
   ]

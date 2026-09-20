@@ -25,7 +25,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
    acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the approved
    `.dev-flow/<task>/PLAN.md` / task description), the protected acceptance-test paths (same
    manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
-   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now.
+   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now. Read its
+   **`## Test-quality defects`** too: a named mutation survivor or false-fail guard means the oracle
+   is thinner than its verdict alone implies, so it belongs in the attention order **even on a
+   criterion that passes**.
 
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
@@ -96,7 +99,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. Then **adequate**, last.
+     `weak`. Then **adequate**, last. A **named quality defect** from `TEST_AUDIT.md` ranks its
+     criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
+     survivor is not an adequate oracle — and carry the defect's own wording across, since the audit
+     already said what the hole is.
    - **Reach**, from `git diff -M --numstat --name-status <base>`: the files and directories that
      criterion's surface actually touches. Where the project exposes an import/dependency graph (an MCP
      server, usage indexer, or LSP), **measure the changed files' fan-in** rather than eyeballing it — a
