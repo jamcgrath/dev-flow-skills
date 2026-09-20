@@ -47,11 +47,13 @@ precisely because removing a gate isn't a setting — it changes the safety mode
                                   or *unsatisfiable*/never-green; weak + quality defects ride
                                   forward): proceed anyway / strengthen / rewrite or retire
   → build + /commit each change
-  → /verify-build (fresh subagent, strong model, tries to falsify the change)
+  → /code-review (built-in) → triage → fix + /commit → re-review until nothing actionable is left
+       → ⏸ needs-decision checkpoint: a fix that contradicts the agreed bar —
+                                       take it + amend the test / keep the agreed behaviour / narrow it
+  → [/security-review]  (built-in)  once the loop settles, when the diff touches a security surface
+  → /verify-build on the SETTLED diff (fresh subagent, strong model, tries to falsify the change)
        → ⏸ verify-build-failure checkpoint: retry build / amend the test (base held still) /
                                              proceed with gap noted / abandon
-  → /code-review        (Claude Code built-in)
-  → [/security-review]  (built-in)  only when the diff touches a security surface
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human, never auto-approved;
        leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
   → /pr                 (bots/CI after → /pr-fix)

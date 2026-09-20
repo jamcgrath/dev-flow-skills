@@ -1,6 +1,6 @@
 ---
 name: verify-build
-description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow after each build attempt, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
+description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow once the code-review loop has settled, on the diff that will actually ship, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
 ---
 
 # verify-build
@@ -170,7 +170,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
    over and you are read-only; report the route the change already has, including when that route is
    "revert the commits, and the migration stays."
 
-5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to code review.
+5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
    `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
    to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
    `base` is **not** re-captured — the builder's fix lands as new commits, and the re-spawned verifier
