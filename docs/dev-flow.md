@@ -20,12 +20,12 @@ flowchart TD
     AT["author-acceptance-tests<br/>write + commit tests (= base)"]:::testint --> AUD
     AUD["audit-tests · FRESH subagent<br/>red-before-green adequacy"]:::testint --> AGCHK
 
-    AGCHK{"any <i>inadequate</i><br/>(vacuous-at-base) test?"}:::testint
-    AGCHK -->|"inadequate found"| AESC
-    AGCHK -->|"clean or weak-only<br/>(weak rides forward)"| BUILD
+    AGCHK{"a test that cannot do its job?<br/><i>inadequate</i> (always green) or<br/><i>unsatisfiable</i> (never green)"}:::testint
+    AGCHK -->|"inadequate / unsatisfiable"| AESC
+    AGCHK -->|"clean, or weak / quality<br/>defects only (both ride forward)"| BUILD
 
-    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen tests first"]:::human
-    AESC -->|strengthen| AT
+    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen (inadequate)<br/>rewrite or retire (unsatisfiable)"]:::human
+    AESC -->|"strengthen / rewrite"| AT
     AESC -->|"proceed anyway"| BUILD
 
     BUILD["Build + commit each change"]:::always --> VB
@@ -36,8 +36,9 @@ flowchart TD
     VCHK -->|yes| CR
     VCHK -->|"falsified / couldn't-verify"| VESC
 
-    VESC["⏸ ask — HUMAN<br/>retry build / proceed with gap noted / abandon"]:::human
+    VESC["⏸ ask — HUMAN<br/>retry build / amend the test / proceed with gap noted / abandon"]:::human
     VESC -->|retry| BUILD
+    VESC -->|"amend the test<br/>(base held still)"| VB
     VESC -->|"proceed with gap noted"| CR
     VESC -->|abandon| STOP
 

@@ -43,11 +43,13 @@ precisely because removing a gate isn't a setting — it changes the safety mode
        → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
   → branch off default (if needed)
   → /author-acceptance-tests → /commit (= base) → /audit-tests
-       → ⏸ audit-gap checkpoint (only an *inadequate*/vacuous-at-base test; weak/red-by-absence
-                                  rides forward): proceed anyway / strengthen tests first
+       → ⏸ audit-gap checkpoint (only a test that cannot do its job — *inadequate*/always-green
+                                  or *unsatisfiable*/never-green; weak + quality defects ride
+                                  forward): proceed anyway / strengthen / rewrite or retire
   → build + /commit each change
   → /verify-build (fresh subagent, strong model, tries to falsify the change)
-       → ⏸ verify-build-failure checkpoint: retry build / proceed with gap noted / abandon
+       → ⏸ verify-build-failure checkpoint: retry build / amend the test (base held still) /
+                                             proceed with gap noted / abandon
   → /code-review        (Claude Code built-in)
   → [/security-review]  (built-in)  only when the diff touches a security surface
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human, never auto-approved;

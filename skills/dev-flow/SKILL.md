@@ -34,11 +34,13 @@ them, which is what the classifier already turned out to be.
                        present plan, WAIT FOR APPROVAL
   → branch off default (if needed) · persist PLAN.md
   → author-acceptance-tests → commit (= base) → audit-tests
-       → ⏸ audit-gap checkpoint (any *inadequate*/vacuous-at-base test? weak/red-by-absence rides
-                                  forward as a softer verified): proceed / strengthen
+       → ⏸ audit-gap checkpoint (a test that cannot do its job — *inadequate*/always-green or
+                                  *unsatisfiable*/never-green? weak + quality defects ride forward):
+                                  proceed / strengthen / rewrite-or-retire
   → build + commit each change
   → verify-build (fresh subagent, strong model, tries to falsify the change)
        → ⏸ verify-build-failure checkpoint (falsified / couldn't-verify?): retry build /
+                                             amend the test (base held still) /
                                              proceed with gap noted / abandon
   → code-review  · + security-review when the diff touches a security surface (auth / permission /
                    secret / endpoint tokens, or an injection sink)
