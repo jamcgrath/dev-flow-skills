@@ -162,8 +162,8 @@ them, which is what the classifier already turned out to be.
      each test's red-at-base adequacy → `.dev-flow/<task>/TEST_AUDIT.md`.
 
    **⏸ Checkpoint — audit gap.** Key the pause off the failure *kind* the audit records, **not** a
-   blanket "no adequate test" — the three verdicts mean different things and only one is an actionable
-   gap a human can fix here:
+   blanket "no adequate test" — the findings mean different things, and only the two where the test
+   **cannot do its job at all** are actionable gaps a human can fix here:
    - **`inadequate`** (a test that *passes vacuously at `base`* — it doesn't exercise the new behaviour
      at all) → **stop and ask** via `AskUserQuestion`; a vacuous pass is genuinely misleading and
      strengthening is a real remedy:
@@ -176,6 +176,23 @@ them, which is what the classifier already turned out to be.
      >   them and **re-records the new sha as `base`** in `ACCEPTANCE_TESTS.md` — without that, the
      >   strengthened tests land as edits to protected paths in `git diff <base>` and `/verify-build`
      >   reads them as tampering. Then re-run `/audit-tests` as a **new** fresh subagent.
+   - **`unsatisfiable`** (a test **no conforming build can pass** — an assertion contradicting
+     something this change never touches, a malformed matcher, a threshold the codebase already
+     exceeds) → **stop and ask**, for the opposite reason to `inadequate`: never green rather than
+     always green. Building against it spends a whole build to reach a red nobody can clear, and the
+     builder cannot edit it, so it dead-ends unless it is settled here.
+     > "The test audit proved `<N>` acceptance tests cannot be satisfied by any correct build:
+     > `<list, each with the demonstration>`. How do you want to proceed?"
+     > - **Rewrite them first** — hand the flagged tests back to `/author-acceptance-tests` to
+     >   re-express the criterion in a form a conforming build can meet. Same mechanic as
+     >   strengthening: it **re-commits** and **re-records the new sha as `base`**, then
+     >   `/audit-tests` runs again as a **new** fresh subagent. **Strengthening is the wrong move
+     >   here** — it makes an already-impossible test harder, not possible.
+     > - **Retire the test and carry the criterion unverified** — drop it from the protected set and
+     >   record the criterion as having no executable oracle, so the REVIEW gate meets it as a known
+     >   hole rather than a red.
+     > - **Proceed anyway** — build against it knowing the red is unclearable; `/verify-build` will
+     >   return `couldn't-verify` for that criterion rather than `falsified`.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
      bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
@@ -252,6 +269,12 @@ them, which is what the classifier already turned out to be.
    >   the verdict forward.
    > - **Abandon** — stop here and report why. No code review, no PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
+
+   **When the verdict is `couldn't-verify` because a test is unsatisfiable, lead with *Amend*, not
+   *Retry the build*.** The verifier has said the code is not implicated; offering the builder a fix
+   task first sends it to rebuild something that already works, and the red survives the round. Put
+   the finding in the question — the test, and the demonstration that no conforming build passes it —
+   so the choice is about the test rather than about the change.
 
    **On an amendment, `base` does not move — this is the one that bites.** Re-recording `base` to the
    amendment commit folds every build commit before it *into* the base, so `git diff <base>` no longer

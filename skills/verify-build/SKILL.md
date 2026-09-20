@@ -26,6 +26,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
    `.dev-flow/<task>/PLAN.md` / task description), the protected acceptance-test paths (same
    manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
    test was judged `inadequate` is **not** verifiable by that test, no matter what it does now. Read its
+   **`## Unsatisfiable tests`** — a test the audit proved no conforming build can pass is not
+   evidence about this build, and a red from one does not falsify the change. Read its
    **`## Test-quality defects`** too: a named mutation survivor or false-fail guard means the oracle
    is thinner than its verdict alone implies, so it belongs in the attention order **even on a
    criterion that passes**.
@@ -107,8 +109,26 @@ accumulates the builder's state is just the self-grading this skill exists to re
    - **verified** — every *testable* criterion passes on an **adequate** test AND no tamper breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), or a criterion is unverifiable-by-nature
-     (subjective). **Fail closed → this, never a false `verified`.**
+     unavailable, DB or dependent service unreachable), a criterion is unverifiable-by-nature
+     (subjective), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
+     this, never a false `verified`.**
+
+   **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
+   red that no conforming build could avoid must not produce one — that labels a sound change broken,
+   points the human at "retry the build", which cannot work, and leads the REVIEW gate with a verdict
+   about the wrong thing. Where **every** failing criterion traces to an unsatisfiable test and
+   nothing else fails and there is no tamper breach, the verdict is **`couldn't-verify`**, and the
+   one-line reason says plainly that the build is not implicated. Mix in one genuine failure or one
+   breach and it is `falsified` again — fail closed.
+
+   **The bar is the audit's, and it is on you when the audit did not name it.** A test is
+   unsatisfiable only on a demonstration in its own terms that *no* conforming build passes it —
+   arithmetic, or evidence like driving the live page to show the matcher itself is malformed. If it
+   fails only *this* build, it is the build. You are the skill whose honesty the gate rests on, and
+   this is the single finding that excuses a red without implicating the code, so reach for it only
+   with the proof in hand: an unexplained red is `falsified`, not unsatisfiable. Record which it is
+   under `## Criteria` either way, and **never edit the test** — the amendment is the human's call at
+   `/dev-flow`'s checkpoint, not yours.
 
    **Then rank the criteria — weakest oracle first, widest reach breaks the tie.** The verdict says
    whether the change holds; the rank says where a human should look *first* if they only look once.
@@ -118,7 +138,9 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. A criterion whose test was changed under an **approved post-build amendment** ranks with
+     `weak`. A criterion whose only oracle is **unsatisfiable** ranks with `none` — nothing is
+     checking it, and the red it produces says nothing about the code. A criterion whose test was
+     changed under an **approved post-build amendment** ranks with
      `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
      last. A **named quality defect** from `TEST_AUDIT.md` ranks its
      criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
