@@ -106,6 +106,11 @@ from the list isn't a broken install.
 dev-flow-skills/
   .claude-plugin/marketplace.json   # makes the set installable as a plugin
   skills/<name>/SKILL.md            # one folder per skill — auto-discovered
+  scripts/validate-skills.js        # structural lint — frontmatter + dead cross-references
+  scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
+  evals/                            # eval cases + fixtures (see evals/README.md)
+  docs/                             # the rendered flowchart and the classifier log
+  .github/workflows/lint.yml        # runs the lint and its unit tests on push
 ```
 
 ## Install
@@ -178,7 +183,7 @@ restart the session to pick them up.
 - **Three test-integrity skills defend the tests against the build.** `author-acceptance-tests`,
   `audit-tests`, and `verify-build` turn acceptance criteria into committed tests, audit their
   red-before-green adequacy, and independently try to falsify the finished build — see
-  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 6–8. What that machinery defends is the
+  [skills/dev-flow/SKILL.md](skills/dev-flow/SKILL.md) steps 6, 7 and 9. What that machinery defends is the
   tests' integrity against the *build*; what it can't catch is a build that satisfies them
   **literally** — a hardcoded expected value, a special-cased fixture, a `data-testid` on a stub —
   because nothing has been tampered with and everything goes green. So the build step also points the

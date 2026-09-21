@@ -5,12 +5,12 @@
   },
   "metadata": {
     "description": "A project-agnostic, AI-assisted dev flow for Claude Code, packaged as one installable plugin.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "dev-flow",
-      "description": "Project-agnostic AI-assisted dev flow: route feature vs bug, gather grounded context, gate on a plan (always human-approved), author and audit acceptance tests before the build, build minimally, independently verify the result, commit with intent, always-human review, and open a PR. Bundles the orchestrator (dev-flow) plus verify-ticket, plan-brief, investigate-bug, author-acceptance-tests, audit-tests, verify-build, commit, pr, pr-fix, and debrief — plus the standalone discuss.",
+      "description": "Project-agnostic AI-assisted dev flow: route feature vs bug, gather grounded context, gate on a plan (always human-approved), author and audit acceptance tests before the build, build minimally, review and fix the diff, then independently verify what ships, always-human review, and open a PR. Bundles the orchestrator (dev-flow) plus verify-ticket, plan-brief, investigate-bug, author-acceptance-tests, audit-tests, verify-build, commit, pr, pr-fix, and debrief — plus the standalone discuss.",
       "source": "./",
       "strict": false
     }

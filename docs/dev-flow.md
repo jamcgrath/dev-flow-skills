@@ -76,13 +76,15 @@ flowchart TD
   an auto-approving classifier that could bypass the PLAN gate for trivial changes; it was removed
   after auto-approving exactly one change in three months, and that one synthetic — see
   [`classifier-log.md`](classifier-log.md).
-- **The two amber checkpoints (audit gap, verify-build failure) are conditional escalations, not
-  structural gates.** They fire only when their check finds something (a criterion with an
-  *inadequate* / vacuous-at-base test; a falsified or unverifiable build); a clean run never sees
-  them. Everything that can go wrong funnels to a red node — fail-closed, with no path that resolves
+- **The three conditional escalations (audit gap, a review fix that contradicts the agreed bar,
+  verify-build failure) are escalations, not structural gates.** They fire only when their check
+  finds something — a test that cannot do its job (*inadequate* / always-green, or *unsatisfiable* /
+  never-green); a review finding whose fix collides with a protected test or an accepted conflict; a
+  falsified or unverifiable build. A clean run never sees any of them. Everything that can go wrong funnels to a red node — fail-closed, with no path that resolves
   a doubt in the flow's own favour.
 - **A `weak` (red-by-absence) audit verdict — unavoidable for a net-new pure symbol — does not fire
-  the audit-gap pause.** It rides forward as a softer verified; and because it never stops the flow,
+  the audit-gap pause,** and neither does a test-quality defect such as a mutation survivor. Both
+  ride forward as a softer verified; and because it never stops the flow,
   it is exactly what `verify-build`'s attention order ranks to the top, so the REVIEW gate leads with
   it by name rather than burying it in a count.
 - **The REVIEW gate is the load-bearing one.** It is never skipped and never auto-approved, so
