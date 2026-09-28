@@ -78,7 +78,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `verify-build` | fresh-subagent independent falsifier — replaces builder self-checking at verify |
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
-| `pr-fix` | resolve all open PR review comments (human + bot), reply to each thread, push |
+| `pr-fix` | work through open PR review comments (human + bot): accept or push back, make and `/code-review` the changes, push, reply to each thread |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
@@ -219,9 +219,9 @@ restart the session to pick them up.
   something to clear on a repo with continuous review configured; where none is, `/pr-fix` is for
   the human threads. On a local-only repo `pr` writes a `PR_PREVIEW.md` instead of pushing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
-  contributor — and applies the "actionable" ones as code changes, then pushes. It mitigates this
-  by triaging every comment and showing the triage before big batches (it does **not** blindly
-  apply), but be aware that's the one place the flow ingests external content and takes write
+  contributor — and applies the accepted ones as code changes, then pushes. It mitigates this
+  by triaging every comment and showing the triage before it changes any code (it does **not**
+  blindly apply), but be aware that's the one place the flow ingests external content and takes write
   actions. Review its triage table.
 - **`.dev-flow/` scratch dir.** The recon skills write context files under `.dev-flow/<task>/` in
   whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
