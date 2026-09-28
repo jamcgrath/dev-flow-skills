@@ -260,7 +260,7 @@ them, which is what the classifier already turned out to be.
    doesn't default heavy on a tiny change. **Don't pass `--fix`** — it applies findings straight to
    the working tree and skips the triage below, which is where the judgement lives.
 
-   **Triage every finding** — the same three buckets `/pr-fix` already uses:
+   **Triage every finding** into three buckets:
    - **actionable** — a real defect whose fix sits inside the approved scope. Fix it and `/commit`
      it, one logical change per commit, Decision Log proportional.
    - **false-positive** — the review misread the code. One line on why; it rides to the REVIEW gate
