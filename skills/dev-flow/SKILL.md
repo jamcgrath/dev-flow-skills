@@ -38,7 +38,8 @@ them, which is what the classifier already turned out to be.
                                   *unsatisfiable*/never-green? weak + quality defects ride forward):
                                   proceed / strengthen / rewrite-or-retire
   → build + commit each change
-  → code-review → triage (actionable / false-positive / needs-decision) → fix + commit → re-review
+  → code-review → triage (actionable / false-positive / out-of-scope / needs-decision) → fix + commit
+       → re-review
        → ⏸ needs-decision checkpoint (a fix that contradicts the agreed bar): take it + amend the
                                        test / keep the agreed behaviour / narrow it
      · + security-review once the loop settles, when the diff touches a security surface
@@ -261,21 +262,25 @@ them, which is what the classifier already turned out to be.
    doesn't default heavy on a tiny change. **Don't pass `--fix`** — it applies findings straight to
    the working tree and skips the triage below, which is where the judgement lives.
 
-   **Triage every finding** into three buckets:
+   **Triage every finding** into four buckets:
    - **actionable** — a real defect whose fix sits inside the approved scope. Fix it and `/commit`
      it, one logical change per commit, Decision Log proportional.
    - **false-positive** — the review misread the code. One line on why; it rides to the REVIEW gate
      so the human sees what was dismissed rather than only what was done.
+   - **out-of-scope** — real, but outside what this change touches or introduces, or with no
+     realistic trigger: name the input or sequence that breaks it, or it lands here. Not fixed; one
+     line each to the REVIEW gate.
    - **needs-decision** — the fix collides with something already agreed. ⏸ see the checkpoint below.
 
    **Round 2+ — review the increment, not the whole diff again.** `<last-reviewed sha>..HEAD`. The
    fixes are what changed; re-reading the whole diff each round pays for the same reading twice.
 
    **Stop when nothing actionable is left, not when findings stop appearing.** A finding that is a
-   *consequence of this round's own fixes* gets fixed; a genuine pre-existing one that round 1 missed
-   gets fixed. A round that keeps surfacing consequences of its own fixes is thrash — name what is
-   left and take it to the gate. There is no budget to count down: in practice this settles in one or
-   two rounds, and a loop that will not settle is itself the finding.
+   *consequence of this round's own fixes* gets fixed; a pre-existing one gets fixed only when this
+   change makes it reachable — otherwise it's out-of-scope. A round that keeps surfacing consequences
+   of its own fixes is thrash — name what is left and take it to the gate. There is no budget to
+   count down: in practice this settles in one or two rounds, and a loop that will not settle is
+   itself the finding.
 
    **⏸ Checkpoint — a fix that contradicts the bar.** A `needs-decision` finding means the review is
    right about the code *and* its fix collides with something already agreed — most often a protected
@@ -369,8 +374,8 @@ them, which is what the classifier already turned out to be.
       N weak` tells a reviewer nothing about *where* to look).
    3. **Findings, and what was done about each.** Step 8 resolved them, so the gate meets decisions
       rather than a raw list: what was **fixed** (with the commit), what was **dismissed** as a
-      false positive and why, and what was **declined** at the needs-decision checkpoint with the
-      conflict named. Anything still open rides here as open. A reviewer who only sees the fixed
+      false positive and why, what was **left** as out-of-scope and why, and what was **declined** at
+      the needs-decision checkpoint with the conflict named. Anything still open rides here as open. A reviewer who only sees the fixed
       ones cannot tell whether a finding was answered or ignored.
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.

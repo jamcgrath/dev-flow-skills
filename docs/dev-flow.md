@@ -35,7 +35,7 @@ flowchart TD
     TRI{"triage each finding"}:::always
     TRI -->|"actionable → fix + commit"| CR
     TRI -->|"needs-decision"| RESC
-    TRI -->|"nothing actionable left<br/>(false-positives ride forward)"| SEC
+    TRI -->|"nothing actionable left<br/>(false-positives + out-of-scope ride forward)"| SEC
 
     RESC["⏸ ask — HUMAN<br/>the fix contradicts the agreed bar<br/>take it + amend the test / keep the agreed behaviour / narrow it"]:::human
     RESC --> CR
