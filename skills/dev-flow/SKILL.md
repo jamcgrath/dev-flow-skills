@@ -13,16 +13,13 @@ you already have and pauses at the same human gates as running them by hand.
 **Both gates are human, and neither is skippable.** There is no fast path: a task small enough to want
 one is a task that doesn't need the orchestrator at all — do it conversationally and let the REVIEW
 gate's absence be a deliberate choice rather than a classifier's guess. "Just do it" therefore isn't an
-instruction this skill can honour; if the plan gate is unwanted, don't invoke `/dev-flow`. (An earlier
-version carried an auto-approving classifier for trivial changes. It was removed: in three months of use
-it auto-approved exactly one change, and that was a synthetic test — see `docs/classifier-log.md`.)
+instruction this skill can honour; if the plan gate is unwanted, don't invoke `/dev-flow`.
 
 It takes the task as args so an automation/agent can call it, but **unattended runs are not what this
 skill is for** — that's [`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills), a separate
 plugin that swaps both gates for automated approvers and vendors its own copies of the sub-skills. Two
 plugins rather than a flag is deliberate on both sides: removing a gate isn't a setting, it's a
-different safety model. Keep that split — a fast path added back here would be a third mode between
-them, which is what the classifier already turned out to be.
+different safety model. Keep that split — a fast path here would be a third mode between them.
 
 ```
 /dev-flow <task>
@@ -38,7 +35,8 @@ them, which is what the classifier already turned out to be.
                                   *unsatisfiable*/never-green? weak + quality defects ride forward):
                                   proceed / strengthen / rewrite-or-retire
   → build + commit each change
-  → code-review → triage (actionable / false-positive / needs-decision) → fix + commit → re-review
+  → code-review → triage (actionable / false-positive / out-of-scope / needs-decision) → fix + commit
+       → re-review
        → ⏸ needs-decision checkpoint (a fix that contradicts the agreed bar): take it + amend the
                                        test / keep the agreed behaviour / narrow it
      · + security-review once the loop settles, when the diff touches a security surface
@@ -95,10 +93,11 @@ them, which is what the classifier already turned out to be.
    **First surface the decisive fork(s) as explicit questions** — the one or two choices that most
    change the build (approach, library, in-scope vs deferred) — via AskUserQuestion *before*
    finalising the plan. Don't bury a contested approach as a recommendation the human has to reject
-   to redirect. **Put decisions to them, and only decisions.** Anything you could settle by reading
-   the code, running a command, or checking a tool is a **fact** — go and get it. A gate that spends
-   the human's attention on answerable questions buys nothing and trains them to skim the ones that
-   matter.
+   to redirect. A deferral that would leave what's built with no caller — a scope no page reaches, an
+   export nothing imports — isn't a deferral: put it as build it whole vs don't build it. **Put
+   decisions to them, and only decisions.** Anything you could settle by reading the code, running a
+   command, or checking a tool is a **fact** — go and get it. A gate that spends the human's attention
+   on answerable questions buys nothing and trains them to skim the ones that matter.
 
    **Then name any conflict — separately from the forks.** A fork is a choice you're putting to the
    human; a **conflict** is a constraint the plan *can't* satisfy — two requirements from the
@@ -260,21 +259,25 @@ them, which is what the classifier already turned out to be.
    doesn't default heavy on a tiny change. **Don't pass `--fix`** — it applies findings straight to
    the working tree and skips the triage below, which is where the judgement lives.
 
-   **Triage every finding** into three buckets:
+   **Triage every finding** into four buckets:
    - **actionable** — a real defect whose fix sits inside the approved scope. Fix it and `/commit`
      it, one logical change per commit, Decision Log proportional.
    - **false-positive** — the review misread the code. One line on why; it rides to the REVIEW gate
      so the human sees what was dismissed rather than only what was done.
+   - **out-of-scope** — real, but outside what this change touches or introduces, or with no
+     realistic trigger: name the input or sequence that breaks it, or it lands here. Not fixed; one
+     line each to the REVIEW gate.
    - **needs-decision** — the fix collides with something already agreed. ⏸ see the checkpoint below.
 
    **Round 2+ — review the increment, not the whole diff again.** `<last-reviewed sha>..HEAD`. The
    fixes are what changed; re-reading the whole diff each round pays for the same reading twice.
 
    **Stop when nothing actionable is left, not when findings stop appearing.** A finding that is a
-   *consequence of this round's own fixes* gets fixed; a genuine pre-existing one that round 1 missed
-   gets fixed. A round that keeps surfacing consequences of its own fixes is thrash — name what is
-   left and take it to the gate. There is no budget to count down: in practice this settles in one or
-   two rounds, and a loop that will not settle is itself the finding.
+   *consequence of this round's own fixes* gets fixed; a pre-existing one gets fixed only when this
+   change makes it reachable — otherwise it's out-of-scope. A round that keeps surfacing consequences
+   of its own fixes is thrash — name what is left and take it to the gate. There is no budget to
+   count down: in practice this settles in one or two rounds, and a loop that will not settle is
+   itself the finding.
 
    **⏸ Checkpoint — a fix that contradicts the bar.** A `needs-decision` finding means the review is
    right about the code *and* its fix collides with something already agreed — most often a protected
@@ -368,8 +371,8 @@ them, which is what the classifier already turned out to be.
       N weak` tells a reviewer nothing about *where* to look).
    3. **Findings, and what was done about each.** Step 8 resolved them, so the gate meets decisions
       rather than a raw list: what was **fixed** (with the commit), what was **dismissed** as a
-      false positive and why, and what was **declined** at the needs-decision checkpoint with the
-      conflict named. Anything still open rides here as open. A reviewer who only sees the fixed
+      false positive and why, what was **left** as out-of-scope and why, and what was **declined** at
+      the needs-decision checkpoint with the conflict named. Anything still open rides here as open. A reviewer who only sees the fixed
       ones cannot tell whether a finding was answered or ignored.
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
@@ -384,12 +387,9 @@ them, which is what the classifier already turned out to be.
   is deliberately confined to four things: the front-of-flow scaffolding (the readiness scan), the
   two test-integrity checkpoints (the audit-gap pause before the build, the verify-build-failure pause
   after it), the review loop's triage and its needs-decision pause (step 8), and the one condition
-  that fires `/security-review` at step 8. It was three until the review loop earned its place: the
-  findings were being acted on anyway, by hand, every run — the flow was just declining to say so,
-  which left the fix cycle unbounded and the verification stale. Everything else
-  parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them. When
-  something new wants to live here, that list is the bar it has to clear — the auto-path classifier
-  that used to sit alongside it grew to a quarter of this file before it was cut for never being used.
+  that fires `/security-review` at step 8. Everything else parameterises the skills it calls (e.g.
+  code-review effort), leaving their behaviour to them. When something new wants to live here, that
+  list is the bar it has to clear.
 - **A closed set of subagents.** The flow's sanctioned spawns are exactly three: `Explore` for recon
   (fanned out in proportion to the surface, per `plan-brief`), `/audit-tests`, and `/verify-build`.
   Each one exists to buy a **fresh context the build can't see** — that independence *is* the product,

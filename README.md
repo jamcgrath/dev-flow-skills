@@ -79,6 +79,8 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | work through open PR review comments (human + bot): accept or push back, make and `/code-review` the changes, push, reply to each thread |
+| `pr-status` | *(standalone — not in the flow)* read-only table of every open PR involving you — yours and ones awaiting your review — with the next action on each; built for `/loop` |
+| `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts only on request |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
@@ -105,7 +107,8 @@ from the list isn't a broken install.
 ```
 dev-flow-skills/
   .claude-plugin/marketplace.json   # makes the set installable as a plugin
-  skills/<name>/SKILL.md            # one folder per skill — auto-discovered
+  skills/<name>/SKILL.md            # one folder per skill — auto-discovered; a skill's
+                                    # helper script sits beside it (pr-status/pr_status.py)
   scripts/validate-skills.js        # structural lint — frontmatter + dead cross-references
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
   evals/                            # eval cases + fixtures (see evals/README.md)
@@ -223,14 +226,18 @@ restart the session to pick them up.
   by triaging every comment and showing the triage before it changes any code (it does **not**
   blindly apply), but be aware that's the one place the flow ingests external content and takes write
   actions. Review its triage table.
+- **`review-pr` reads untrusted input too.** It reads a colleague's diff, PR description and ticket,
+  and passes them to `/code-review` and a subagent. It changes no code, and it posts a review only
+  when you ask — check the findings it would post before saying yes.
 - **`.dev-flow/` scratch dir.** The recon skills write context files under `.dev-flow/<task>/` in
   whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
   themselves.
-- **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix` use the `gh` CLI and (for Jira) an
-  Atlassian MCP; `investigate-bug` uses the Chrome DevTools MCP *for UI bugs* (other layers use their
-  own harness — a unit test, `curl`, a seeded query). Each skill stops and says so in
-  one line if its tool isn't available — it won't work around a missing tool.
+- **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix`/`pr-status`/`review-pr` use the `gh` CLI,
+  and `verify-ticket`/`review-pr` (for Jira) an Atlassian MCP; `pr-status` also needs `python3`;
+  `investigate-bug` uses the Chrome DevTools MCP *for UI bugs* (other layers use their own harness —
+  a unit test, `curl`, a seeded query). Each skill stops and says so in one line if its tool isn't
+  available — it won't work around a missing tool.
 
 ## License
 
