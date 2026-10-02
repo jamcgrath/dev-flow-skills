@@ -1,6 +1,6 @@
 ---
 name: pr-fix
-description: Work through a GitHub PR's open review comments — human and bot. Triages each as accept / push back / needs-decision, makes the accepted changes, puts those changes through built-in /code-review, then pushes and replies in every thread with the commit that addressed it or the reason it was declined. Skips resolved and already-answered threads, so it runs once per review round. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR #N", or hands over a PR review to clear.
+description: Work through a GitHub PR's open review comments — human and bot. Triages each as accept / push back / needs-decision, makes the accepted changes, puts those changes through built-in /code-review, then pushes and replies in every thread with the commit that addressed it or the reason it was declined. Skips resolved and already-answered threads, so it runs once per review round — or under /loop, round after round until the PR is approved, merged or needs a decision. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR #N", or hands over a PR review to clear.
 ---
 
 # pr-fix
@@ -74,6 +74,30 @@ push back on, make the accepted changes, review those changes, then answer every
    caught and the PR's current mergeability. Put any needs-decision items to me as one question; once
    I answer, run steps 4–7 for whatever that changes. Then offer — don't do — asking the reviewer for
    another look (`gh pr edit {N} --add-reviewer <login>`, an @mention, or however I'd rather reach them).
+
+## Under `/loop`
+Run as `/loop 20m /pr-fix {N}` in the PR's own session or worktree. Each tick is one round, with
+these changes:
+
+- **Check the stop conditions first** — `gh pr view {N} --json state,reviewDecision`:
+  - merged or closed → end the loop, notify.
+  - approved, and step 2 finds nothing open → notify `#{N} approved, nothing open: ready to merge`,
+    end the loop.
+- **Wait for the round to land.** Act only when a review has been submitted since your last reply,
+  or the newest open comment is 15+ minutes old — a reviewer posting single comments is still going.
+  Otherwise print one line and wait for the next tick.
+- **Nothing open** → one line, `#{N}: nothing new`. No review, no push.
+- **Uncommitted changes** at the start → notify, end the loop, ask. **A needs-decision item** →
+  finish the round's accepted changes (push and reply) first, then notify, end the loop and put it
+  to me; I restart the loop once it's answered. Don't keep ticking past a question.
+- **A nit-level round** — every comment was style, naming or an edge case with no realistic
+  trigger — handle it as usual, then notify `#{N}: round was nit-level; consider asking for
+  approval`. Asking is my call.
+- Step 8's summary is printed, not offered: the loop doesn't wait on an answer.
+
+**Ending the loop:** a fixed-interval loop is a session cron job — `CronList`, then `CronDelete` the
+one whose prompt is this command. A self-paced loop — `ScheduleWakeup` with `stop: true`.
+**Notify** with the PushNotification tool when it's available, one line leading with the PR.
 
 ## Notes
 - Bot threads get the same treatment as human ones — reply even when it's a push back.
