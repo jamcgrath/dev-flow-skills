@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "A project-agnostic, AI-assisted dev flow for Claude Code, packaged as one installable plugin.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "plugins": [
     {
