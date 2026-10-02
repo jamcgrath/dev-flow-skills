@@ -70,6 +70,10 @@ the feature.
    bar: **the tests define the contract, the builder implements to it** — the *contract*, note, not
    the fixtures: the builder has to generalize past whatever values these tests happen to assert.
 
+   **Mock only at the system's edges** — the network, third-party services, the clock. The repo's own
+   code runs for real; where a test must stub it, the stub returns what the real signature returns,
+   and the test never asserts how often it was called — that pins internal structure, not the contract.
+
    **Write so the red-before-green failure is a real assertion, not mere absence.** A fresh auditor
    (`/audit-tests`) grades each test on *how* it fails at `base`: an **assertion** failure (the code
    ran and produced a wrong value) is *adequate*; failing only because a symbol / route / `data-testid` is
