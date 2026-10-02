@@ -78,9 +78,9 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `verify-build` | fresh-subagent independent falsifier — replaces builder self-checking at verify |
 | `commit` | commit with a proportional Decision Log (intent that the diff can't recover) |
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
-| `pr-fix` | work through open PR review comments (human + bot): accept or push back, make and `/code-review` the changes, push, reply to each thread |
+| `pr-fix` | work through open PR review comments (human + bot): accept or push back, make and `/code-review` the changes, push, reply to each thread; under `/loop`, round after round until approved, merged or a decision is needed |
 | `pr-status` | *(standalone — not in the flow)* read-only table of every open PR involving you — yours and ones awaiting your review — with the next action on each; built for `/loop` |
-| `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round's findings, approves only on request |
+| `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round with a rule-based verdict, approves only on request; under `/loop`, re-reviews each push until it recommends approval |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
@@ -101,6 +101,18 @@ standing up infrastructure or choosing a tool. Invoke it deliberately or not at 
 `disable-model-invocation`, so it will never start an interrogation on its own — which also means it
 won't appear in Claude's skill list even when correctly installed. Reach it as `/discuss`; absence
 from the list isn't a broken install.
+
+**Review loops.** `pr-status`, `pr-fix` and `review-pr` are built to run under `/loop`, each in its own
+session that you leave open:
+
+| Session | Command | Each tick | Notifies and stops |
+|---|---|---|---|
+| anywhere | `/loop 20m /pr-status` | one GitHub call; a line if nothing changed | notifies when a PR's next action changes; runs until you stop it |
+| your PR's worktree | `/loop 20m /pr-fix <N>` | a round once a review has landed, else one line | approved with nothing open, merged/closed, or a decision for you (after pushing the round); a nit-level round notifies without stopping |
+| a clone of their repo | `/loop 20m /review-pr <N>` | a full review first, then only new commits, each round posted to the PR | when the verdict reaches approve — approving is yours |
+
+A loop lives only as long as its session, fires only while the session is idle, and expires after
+seven days. After answering a decision `pr-fix` stopped on, restart it with the same command.
 
 ## Layout
 
@@ -225,7 +237,8 @@ restart the session to pick them up.
   contributor — and applies the accepted ones as code changes, then pushes. It mitigates this
   by triaging every comment and showing the triage before it changes any code (it does **not**
   blindly apply), but be aware that's the one place the flow ingests external content and takes write
-  actions. Review its triage table.
+  actions. Review its triage table — under `/loop` nobody is watching it, so only a needs-decision
+  item stops the round.
 - **`review-pr` reads untrusted input and posts.** It reads a colleague's diff, PR description and
   ticket, and passes them to `/code-review` and a subagent. It changes no code, but it posts each
   round's filtered findings to the PR as a review without asking; only an approval waits for you.
