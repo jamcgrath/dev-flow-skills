@@ -128,9 +128,13 @@ def review_row(pr, me, requested):
     return quiet, [link(pr), login(pr) or "?", pr["headRefName"], age(pr), action]
 
 
-def age(pr):
+def days_since_update(pr):
     then = datetime.fromisoformat(pr["updatedAt"].replace("Z", "+00:00"))
-    days = (datetime.now(timezone.utc) - then).days
+    return (datetime.now(timezone.utc) - then).days
+
+
+def age(pr):
+    days = days_since_update(pr)
     return f"{days}d" if days < 60 else f"{days // 30}mo"
 
 
@@ -139,6 +143,7 @@ def link(pr):
     return f"[{pr['repository']['nameWithOwner']}#{pr['number']}]({pr['url']}) {title}"
 
 
+STALE_DAYS = 14      # one sprint; review requests untouched longer are hidden, mine never are
 QUIET = ("waiting on review", "draft", "nothing new", "waiting on author")
 
 
@@ -160,12 +165,16 @@ def main():
 
     newest = lambda prs: sorted(prs, key=lambda p: p["updatedAt"], reverse=True)
     mine = [my_pr_row(p, me) for p in newest(nodes(data["mine"]))]
-    theirs = [review_row(p, me, p["url"] in requested) for p in newest(others.values())]
+    live = [p for p in others.values() if days_since_update(p) < STALE_DAYS]
+    stale = len(others) - len(live)
+    theirs = [review_row(p, me, p["url"] in requested) for p in newest(live)]
 
     print(f"## Your PRs ({len(mine)})")
     print(table(["PR", "Branch", "Updated", "Review", "CI", "Next"], mine) if mine else "None open.")
     print(f"\n## To review ({len(theirs)})")
     print(table(["PR", "Author", "Branch", "Updated", "Next"], theirs) if theirs else "Nothing requested or in progress.")
+    if stale:
+        print(f"\n+{stale} not updated in {STALE_DAYS}+ days, hidden.")
 
 
 if __name__ == "__main__":

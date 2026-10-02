@@ -38,5 +38,6 @@ PR's own session: `/pr-fix` for your PRs, `/review-pr <PR#>` for someone else's.
   posted after your last top-level comment. An approval's body doesn't count, nor do top-level
   comments from bot accounts (deploy previews); bot reviews and threads do.
 - **To review** covers PRs requesting your review plus open PRs you've already reviewed. A PR you
-  only commented on, without being asked or reviewing, isn't listed.
+  only commented on, without being asked or reviewing, isn't listed. One not updated in a sprint
+  (14 days, `STALE_DAYS`) is hidden and counted in a closing line; your own PRs show at any age.
 - Each list caps at 30 PRs.
