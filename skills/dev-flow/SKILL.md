@@ -13,16 +13,13 @@ you already have and pauses at the same human gates as running them by hand.
 **Both gates are human, and neither is skippable.** There is no fast path: a task small enough to want
 one is a task that doesn't need the orchestrator at all — do it conversationally and let the REVIEW
 gate's absence be a deliberate choice rather than a classifier's guess. "Just do it" therefore isn't an
-instruction this skill can honour; if the plan gate is unwanted, don't invoke `/dev-flow`. (An earlier
-version carried an auto-approving classifier for trivial changes. It was removed: in three months of use
-it auto-approved exactly one change, and that was a synthetic test — see `docs/classifier-log.md`.)
+instruction this skill can honour; if the plan gate is unwanted, don't invoke `/dev-flow`.
 
 It takes the task as args so an automation/agent can call it, but **unattended runs are not what this
 skill is for** — that's [`auto-flow-skills`](https://github.com/jamcgrath/auto-flow-skills), a separate
 plugin that swaps both gates for automated approvers and vendors its own copies of the sub-skills. Two
 plugins rather than a flag is deliberate on both sides: removing a gate isn't a setting, it's a
-different safety model. Keep that split — a fast path added back here would be a third mode between
-them, which is what the classifier already turned out to be.
+different safety model. Keep that split — a fast path here would be a third mode between them.
 
 ```
 /dev-flow <task>
@@ -390,12 +387,9 @@ them, which is what the classifier already turned out to be.
   is deliberately confined to four things: the front-of-flow scaffolding (the readiness scan), the
   two test-integrity checkpoints (the audit-gap pause before the build, the verify-build-failure pause
   after it), the review loop's triage and its needs-decision pause (step 8), and the one condition
-  that fires `/security-review` at step 8. It was three until the review loop earned its place: the
-  findings were being acted on anyway, by hand, every run — the flow was just declining to say so,
-  which left the fix cycle unbounded and the verification stale. Everything else
-  parameterises the skills it calls (e.g. code-review effort), leaving their behaviour to them. When
-  something new wants to live here, that list is the bar it has to clear — the auto-path classifier
-  that used to sit alongside it grew to a quarter of this file before it was cut for never being used.
+  that fires `/security-review` at step 8. Everything else parameterises the skills it calls (e.g.
+  code-review effort), leaving their behaviour to them. When something new wants to live here, that
+  list is the bar it has to clear.
 - **A closed set of subagents.** The flow's sanctioned spawns are exactly three: `Explore` for recon
   (fanned out in proportion to the surface, per `plan-brief`), `/audit-tests`, and `/verify-build`.
   Each one exists to buy a **fresh context the build can't see** — that independence *is* the product,
