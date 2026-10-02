@@ -80,7 +80,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `pr` | open a PR whose body synthesises the branch's Decision Logs |
 | `pr-fix` | work through open PR review comments (human + bot): accept or push back, make and `/code-review` the changes, push, reply to each thread |
 | `pr-status` | *(standalone — not in the flow)* read-only table of every open PR involving you — yours and ones awaiting your review — with the next action on each; built for `/loop` |
-| `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts only on request |
+| `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round's findings, approves only on request |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
@@ -226,9 +226,9 @@ restart the session to pick them up.
   by triaging every comment and showing the triage before it changes any code (it does **not**
   blindly apply), but be aware that's the one place the flow ingests external content and takes write
   actions. Review its triage table.
-- **`review-pr` reads untrusted input too.** It reads a colleague's diff, PR description and ticket,
-  and passes them to `/code-review` and a subagent. It changes no code, and it posts a review only
-  when you ask — check the findings it would post before saying yes.
+- **`review-pr` reads untrusted input and posts.** It reads a colleague's diff, PR description and
+  ticket, and passes them to `/code-review` and a subagent. It changes no code, but it posts each
+  round's filtered findings to the PR as a review without asking; only an approval waits for you.
 - **`.dev-flow/` scratch dir.** The recon skills write context files under `.dev-flow/<task>/` in
   whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
