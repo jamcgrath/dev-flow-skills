@@ -95,10 +95,11 @@ them, which is what the classifier already turned out to be.
    **First surface the decisive fork(s) as explicit questions** — the one or two choices that most
    change the build (approach, library, in-scope vs deferred) — via AskUserQuestion *before*
    finalising the plan. Don't bury a contested approach as a recommendation the human has to reject
-   to redirect. **Put decisions to them, and only decisions.** Anything you could settle by reading
-   the code, running a command, or checking a tool is a **fact** — go and get it. A gate that spends
-   the human's attention on answerable questions buys nothing and trains them to skim the ones that
-   matter.
+   to redirect. A deferral that would leave what's built with no caller — a scope no page reaches, an
+   export nothing imports — isn't a deferral: put it as build it whole vs don't build it. **Put
+   decisions to them, and only decisions.** Anything you could settle by reading the code, running a
+   command, or checking a tool is a **fact** — go and get it. A gate that spends the human's attention
+   on answerable questions buys nothing and trains them to skim the ones that matter.
 
    **Then name any conflict — separately from the forks.** A fork is a choice you're putting to the
    human; a **conflict** is a constraint the plan *can't* satisfy — two requirements from the
