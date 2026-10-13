@@ -92,7 +92,16 @@ the feature.
    as an executable assertion → record it as **unverifiable**. Do **not** fake a tautological test
    (`expect(true)`) to make a number go up — honesty here feeds `/verify-build`; a fake poisons it.
 
-4. **Commit the tests immediately — this is the mechanism, not bookkeeping.** `git add` *only* the new
+4. **Before committing, check each new test is red for the right reason.** Run the new tests against
+   the current tree (what this commit will make `base`). Each should fail on an assertion about the
+   value its criterion names, or by step 2's honest absence of a net-new symbol / route / `data-testid`.
+   Any other red (a 500, a thrown error, a status or redirect the existing code returns first, an
+   assertion on some other field) means the test never reached the behaviour. So does a fixture the
+   real code path wouldn't produce, even when it fails on the right assertion. Fix the fixture or
+   request, never the criterion's assertion. Preservation tests are out of scope. This only checks that
+   a test isn't broken; adequate vs weak stays `/audit-tests`' verdict.
+
+   **Then commit the tests immediately — this is the mechanism, not bookkeeping.** `git add` *only* the new
    test files and commit `Add acceptance tests for <task>` with a Decision Log body proportional to the
    change (the repo's commit convention — Intent: seed the build's test bar; Approach: name the
    criteria/layers covered and note it's intentionally red). This commit becomes the **build's base**,
@@ -108,10 +117,10 @@ the feature.
    - **Record the commit's sha as `base` in the manifest** (step 5) — `/verify-build` runs in a
      fresh context and cannot recompute it.
    - **Re-invoked to strengthen flagged tests** (dev-flow's audit-gap "strengthen the tests first"):
-     revise those files in place, then commit them the same way — `Strengthen acceptance tests for
-     <task>` — and **overwrite `base` in the manifest with the new sha**. The revision must be its own
-     commit and the new sha must become `base`, or the strengthened tests read as edits to protected
-     paths in `git diff <base>` and `/verify-build` scores them as tampering.
+     revise those files in place, run the check above, then commit them the same way — `Strengthen
+     acceptance tests for <task>` — and **overwrite `base` in the manifest with the new sha**. The
+     revision must be its own commit and the new sha must become `base`, or the strengthened tests read
+     as edits to protected paths in `git diff <base>` and `/verify-build` scores them as tampering.
    (Unborn branch / can't commit → fall back to recording each authored file's path **and content hash**
    in the manifest so edits are still detectable; commit-first is preferred.)
 
@@ -172,7 +181,8 @@ the feature.
   than letting green read as "accessible".
 - **Don't manufacture an adequate-looking red, and don't grade your own.** A bolted-on existence assertion
   on a missing symbol is still red-by-absence; a net-new pure symbol is *structurally* weak. Author for a
-  genuine assertion — the fresh auditor decides adequacy, never you.
+  genuine assertion — the fresh auditor decides adequacy, never you. Checking a red isn't *broken*
+  (step 4) is yours; grading it is not.
 - **Commit-first is the integrity mechanism.** Skipping the commit (without the hash fallback) silently
   disables the acceptance-test tamper check downstream.
 - **Fail closed.** If the criteria are too thin to derive any test, record them all as `unverifiable`
