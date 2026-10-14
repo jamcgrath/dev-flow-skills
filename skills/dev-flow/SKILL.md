@@ -134,10 +134,11 @@ different safety model. Keep that split — a fast path here would be a third mo
 
 5. **Branch, and persist the approved plan.** On approval, before any code change:
    - **Get on a task branch.** If you're on the repo's default branch (`main` / `master`), create one
-     — `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one
-     (e.g. `PROJ-1234-short-slug`; a kebab slug when there's no key). That key in the branch name is
-     what lets `/pr` (step 11) detect it and open the PR off a feature branch; already on a
-     non-default branch → use it, don't nest.
+     — `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one,
+     and prefixed by the step-2 route: `feature/` for the feature path, `fix/` for the bug path
+     (e.g. `feature/PROJ-1234-short-slug`; `fix/` + a kebab slug when there's no key). That key in
+     the branch name is what lets `/pr` (step 11) detect it and open the PR off a feature branch;
+     already on a non-default branch → use it, don't nest.
    - **Write `.dev-flow/<task>/PLAN.md`** — the recon was persisted but the plan wasn't. You still
      have the approved plan in context, so write **that**: same scope, same length, **no expansion**.
      When there's no ticket this file *is* the acceptance criteria downstream

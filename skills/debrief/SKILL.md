@@ -21,12 +21,13 @@ on the page, not a task it starts.
 1. **Locate the run.** Resolve `<task>` in this order — `.dev-flow/` is git-ignored and never cleaned,
    so a real repo has **many** run directories by the time anyone runs this: the first
    `[A-Z][A-Z0-9]+-[0-9]+` match in the branch name (as `/pr` does); else the `.dev-flow/*` dir whose
-   name matches the branch slug — `/dev-flow` names the branch *from* `<task>`, so on a keyless task
-   they are the same string; else the sole `.dev-flow/*` dir; else **ask which run to debrief** rather
-   than guessing, since debriefing the wrong task is worse than a question. **No `.dev-flow/<task>/`
-   at all → stop and say so** — this is a dev-flow epilogue, and recon always runs, so the directory
-   exists after any real run. Then resolve `base`: the base commit recorded in
-   `.dev-flow/<task>/ACCEPTANCE_TESTS.md`, else `git merge-base` against the default branch.
+   name matches the branch slug with its `feature/` or `fix/` prefix stripped — `/dev-flow` names the
+   branch *from* `<task>`, so on a keyless task the rest is the same string; else the sole
+   `.dev-flow/*` dir; else **ask which run to debrief** rather than guessing, since debriefing the
+   wrong task is worse than a question. **No `.dev-flow/<task>/` at all → stop and say so** — this
+   is a dev-flow epilogue, and recon always runs, so the directory exists after any real run. Then
+   resolve `base`: the base commit recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`, else
+   `git merge-base` against the default branch.
 
 2. **Gather the evidence — read-only, and nothing from memory.** Everything the page says must trace
    to one of these:
