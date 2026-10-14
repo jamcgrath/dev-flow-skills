@@ -135,7 +135,9 @@ different safety model. Keep that split — a fast path here would be a third mo
 5. **Branch, and persist the approved plan.** On approval, before any code change:
    - **Get on a task branch.** If you're on the repo's default branch (`main` / `master`), create one
      — `git switch -c <branch>`, named from `<task>` so it carries the ticket key when there is one,
-     and prefixed by the step-2 route: `feature/` for the feature path, `fix/` for the bug path
+     and prefixed by the kind of change the approved plan makes. Bug path → `fix/` (`hotfix/` when
+     the user calls it a hotfix). Feature path → `feature/` for new behaviour, or `refactor/`,
+     `perf/`, `test/`, `docs/`, `chore/` or `ci/` when the plan is only that
      (e.g. `feature/PROJ-1234-short-slug`; `fix/` + a kebab slug when there's no key). That key in
      the branch name is what lets `/pr` (step 11) detect it and open the PR off a feature branch;
      already on a non-default branch → use it, don't nest.
