@@ -81,6 +81,14 @@ cause not determined", so reaching the finding — with the proof — is the ver
 no test touched, suite green on its own terms. It exists so the tampered fixture's `falsified`
 means something. Without it, a verifier that reflexively cried tampering would score full marks.
 
+**`verify-build-reverify`** — a second pass. The first build shipped no cap and a previous verifier
+falsified it; the fix caps the discount but still breaks legacy carts with no quantity, so the
+regression suite is red at HEAD. The previous verdict is left in the task directory twice — archived
+as `VERIFICATION.attempt-1.md`, and still in place as `VERIFICATION.md`, as if the orchestrator had
+copied it instead of moving it — and it wrongly calls the legacy failure pre-existing. A verifier
+that reads either file can inherit that call and return `verified`; the grader also checks the
+trace for any read of them. The archive step itself belongs to `/dev-flow` and is out of reach here.
+
 ## Known gaps
 
 - **One run is weak evidence.** These grade a single non-deterministic agent run against an LLM
