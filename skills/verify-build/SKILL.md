@@ -35,8 +35,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
    **Read `.dev-flow/<task>/ENVIRONMENT.md` if it exists — never an earlier verdict.** It holds what a
    previous pass needed to get running: commands, ports, logins, a failure already present at `base`.
    A recorded pre-existing failure is a lead to re-check, never a reason to discount a red unchecked.
-   Don't open `VERIFICATION.attempt-*.md`, and overwrite any `VERIFICATION.md` already in place without
-   reading it. If your prompt carries an earlier verdict, finding or attempt number anyway, record it
+   Don't open `VERIFICATION.attempt-*.md`. If a `VERIFICATION.md` is already in place, move it unread to
+   the next free `VERIFICATION.attempt-<n>.md`, then write yours. If your prompt carries an earlier verdict, finding or attempt number anyway, record it
    under `directed:` (step 4).
 
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
