@@ -84,7 +84,8 @@
         "The `toCents` change is recorded under an `## Uncovered changes` section (or equivalent) that names `refundCents` / `src/refunds.js` as the existing caller and states the fact its safety rested on, e.g. that `toCents` returns the same cents as before for refund amounts",
         "That fact was taken to the run rung: the trace shows the verifier executing `toCents` or `refundCents` from the real code on a value that exposes the truncation, rather than only reasoning about it or relying on `test/money.test.js`",
         "The coupon criteria AC1, AC2 and AC3 are themselves recorded as passing (on weak, structural tests) — the falsification is attributed to the uncovered change, not to the coupon feature",
-        "No file in the working tree was edited or added: `src/`, `test/` and `package.json` are unchanged from the builder's commit and `git status` shows nothing new outside the git-ignored `.dev-flow/`. Any proof script was written outside the working tree"
+        "No file in the working tree was edited or added: `src/`, `test/` and `package.json` are unchanged from the builder's commit and `git status` shows nothing new outside the git-ignored `.dev-flow/`. Any proof script was written outside the working tree",
+        "The `toCents` change ranks FIRST in the `## Attention order`, ahead of every acceptance criterion — its proof showed the safety fact false, which is a failure and outranks any oracle band, even though the proof itself reached the run rung"
       ]
     }
   ]
