@@ -347,6 +347,12 @@ different safety model. Keep that split — a fast path here would be a third mo
    > - **Abandon** — stop here and report why. No PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
 
+   **Two `falsified` passes in a row → test the premise before offering another retry.** Read the
+   archived verdicts, write down the one assumption both builds shared — about the code, the test, or
+   the environment — and make an observation that would come out differently if it were false. Put
+   the assumption and the result in the question. Two failed fixes on one assumption are evidence
+   against the assumption, not a reason for a third fix on it.
+
    **A retry lands after the review.** Fixes that only address the named criteria need no second
    review. A retry that reworks materially more than that has outrun what step 8 read — say so, and
    re-review the increment before the gate. Judgement, not a mandatory second loop.
