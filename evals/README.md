@@ -89,6 +89,13 @@ copied it instead of moving it — and it wrongly calls the legacy failure pre-e
 that reads either file can inherit that call and return `verified`; the grader also checks the
 trace for any read of them. The archive step itself belongs to `/dev-flow` and is out of reach here.
 
+**`verify-build-uncovered`** — a separate coupon-codes project. The feature is built correctly, but
+on the side it "refactors" the shared `toCents` helper to read `$`-prefixed values and swaps
+`Math.round` for `Math.trunc`. The existing caller `refundCents` now turns 19.99 into 1998 cents. No
+criterion is about refunds and nothing tests them, so the suite is green and every criterion passes.
+Only the uncovered-change check — naming the fact the refactor is safe because of and running it
+against the real code — finds the regression.
+
 ## Known gaps
 
 - **One run is weak evidence.** These grade a single non-deterministic agent run against an LLM
