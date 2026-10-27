@@ -57,6 +57,7 @@ flowchart TD
     STOP(["stop · report why<br/>no PR"]):::human
 
     RG["🛑 REVIEW gate — ALWAYS HUMAN<br/>hard stop · nothing pushes until approved<br/>verdict + weakest-oracle criteria + rollback route first, diff last"]:::human --> PR
+    RG -->|"change requested:<br/>commit → review the increment"| CR
 
     PR([/pr · push + PR]):::start
 

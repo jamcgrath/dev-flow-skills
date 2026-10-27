@@ -47,6 +47,7 @@ different safety model. Keep that split — a fast path here would be a third mo
                                              proceed with gap noted / abandon
   → ⏸ REVIEW gate — human sanity-check before PR (leads with the verdict + the weakest-oracle
        criteria + the rollback route, diff last)
+       → change requested? commit → review the increment → verify-build again → back to this gate
   → pr
 ```
 
@@ -389,6 +390,11 @@ different safety model. Keep that split — a fast path here would be a third mo
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
    5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
+
+   **A change asked for at the gate goes back through review and verification.** Commit it, review the
+   increment (`<last-reviewed sha>..HEAD`, step 8's later-round rule), spawn `/verify-build` the way
+   step 9 spawns every pass, and present this gate again. Without that, `VERIFICATION.md` — which `/pr`
+   leads with — describes a diff that no longer ships.
 
 11. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
