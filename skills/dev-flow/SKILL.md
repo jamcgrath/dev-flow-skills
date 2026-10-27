@@ -320,6 +320,15 @@ different safety model. Keep that split — a fast path here would be a third mo
    suite, adversarially reviews `git diff <base>` for tamper, and writes
    `.dev-flow/<task>/VERIFICATION.md`.
 
+   **Spawn it the same way on every pass.** The prompt carries `base`, the criteria, the protected test
+   paths and the adequacy verdicts — nothing else. No earlier verdict, no finding from a previous pass,
+   no attempt number, in any phrasing ("read it for context" included). Before every pass after the
+   first, move the existing `VERIFICATION.md` to `VERIFICATION.attempt-<n>.md`: left in place, it hands
+   the new verifier the previous verdict at the path it writes to. What a previous pass needed just to
+   get running — a dev-server port, a login, a failure already present at `base` — belongs in
+   `.dev-flow/<task>/ENVIRONMENT.md`, which the verifier may read. Add a fact the human gives you there
+   too. Nothing that judges a criterion goes in it.
+
    **⏸ Checkpoint — verify-build failure.** `verified` → proceed to the REVIEW gate. `falsified` or
    `couldn't-verify` → stop and ask via `AskUserQuestion`:
    > "verify-build could not confirm the change: `<one-line reason>`. How do you want to proceed?"

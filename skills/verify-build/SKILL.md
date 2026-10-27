@@ -32,6 +32,13 @@ accumulates the builder's state is just the self-grading this skill exists to re
    is thinner than its verdict alone implies, so it belongs in the attention order **even on a
    criterion that passes**.
 
+   **Read `.dev-flow/<task>/ENVIRONMENT.md` if it exists — never an earlier verdict.** It holds what a
+   previous pass needed to get running: commands, ports, logins, a failure already present at `base`.
+   A recorded pre-existing failure is a lead to re-check, never a reason to discount a red unchecked.
+   Don't open `VERIFICATION.attempt-*.md`, and overwrite any `VERIFICATION.md` already in place without
+   reading it. If your prompt carries an earlier verdict, finding or attempt number anyway, record it
+   under `directed:` (step 4).
+
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
    inventory in `.dev-flow/<task>/PLAN_BRIEF.md`, or in `.dev-flow/<task>/BUG_CONTEXT.md` on the bug
@@ -170,6 +177,11 @@ accumulates the builder's state is just the self-grading this skill exists to re
    over and you are read-only; report the route the change already has, including when that route is
    "revert the commits, and the migration stays."
 
+   **Leave the next pass what it needs to get running, in `ENVIRONMENT.md`** — the commands, ports,
+   logins and setup steps that worked, and any failure you saw at `base`, with the sha you saw it at.
+   Facts only: nothing about whether a criterion passes or how good the change is. Replace a line that
+   no longer holds rather than appending one that contradicts it.
+
 5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
    `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
    to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
@@ -193,7 +205,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
   verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
   criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
   promote one to `fail` because it ranked high.
-- **Read-only except `VERIFICATION.md`.** Never touches the source (the builder fixes, on the human's
+- **Read-only except `VERIFICATION.md` and `ENVIRONMENT.md`.** Never touches the source (the builder fixes, on the human's
   retry choice) and never edits tests.
 - **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this
   skill or its caller counts down.
