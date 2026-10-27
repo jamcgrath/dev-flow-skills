@@ -195,7 +195,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
 
    **Leave the next pass what it needs to get running, in `ENVIRONMENT.md`** — the commands, ports,
    logins and setup steps that worked, and any failure you saw at `base`, with the sha you saw it at.
-   Facts only: nothing about whether a criterion passes or how good the change is. Replace a line that
+   Facts only, and test results from `base` only: no suite result or failure seen at HEAD, nothing
+   about whether a criterion passes or how good the change is. Replace a line that
    no longer holds rather than appending one that contradicts it.
 
 5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.

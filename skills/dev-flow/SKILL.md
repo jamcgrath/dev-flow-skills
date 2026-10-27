@@ -328,7 +328,7 @@ different safety model. Keep that split — a fast path here would be a third mo
    the new verifier the previous verdict at the path it writes to. What a previous pass needed just to
    get running — a dev-server port, a login, a failure already present at `base` — belongs in
    `.dev-flow/<task>/ENVIRONMENT.md`, which the verifier may read. Add a fact the human gives you there
-   too. Nothing that judges a criterion goes in it.
+   too. Nothing that judges a criterion or reports a test result at HEAD goes in it.
 
    **⏸ Checkpoint — verify-build failure.** `verified` → proceed to the REVIEW gate. `falsified` or
    `couldn't-verify` → stop and ask via `AskUserQuestion`:
