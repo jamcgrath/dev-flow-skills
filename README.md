@@ -56,6 +56,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
                                              proceed with gap noted / abandon
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human, never auto-approved;
        leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
+       → change requested? commit → review the increment → /verify-build again → back to the gate
   → /pr                 (bots/CI after → /pr-fix)
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
