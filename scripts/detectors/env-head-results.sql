@@ -6,7 +6,8 @@ WHERE kind = 'tool_use'
   AND (
        (tool IN ('Write', 'Edit') AND input ->> '$.file_path' LIKE '%/ENVIRONMENT.md'
         AND coalesce(input ->> '$.content', input ->> '$.new_string', '') GLOB '*HEAD*')
-    OR (tool = 'Bash' AND input ->> '$.command' LIKE '%ENVIRONMENT.md%'
-        AND input ->> '$.command' GLOB '*HEAD*' AND input ->> '$.command' LIKE '%>%')
+    -- Bash counts only when ENVIRONMENT.md is the redirect or tee target, not merely read.
+    OR (tool = 'Bash' AND input ->> '$.command' GLOB '*HEAD*'
+        AND (input ->> '$.command' LIKE '%>%ENVIRONMENT.md%' OR input ->> '$.command' LIKE '%tee %ENVIRONMENT.md%'))
   )
 ORDER BY ts;

@@ -75,6 +75,34 @@ const MIGRATIONS = [
     size   INTEGER NOT NULL
   );
   `,
+  `
+  -- Every session a record appears in. events keeps a copied record once, under the first
+  -- file indexed; this keeps a resumed session's history in order with its own turns.
+  CREATE TABLE event_sessions (
+    event_id   INTEGER NOT NULL,
+    session_id TEXT NOT NULL,
+    PRIMARY KEY (event_id, session_id)
+  ) WITHOUT ROWID;
+  CREATE INDEX event_sessions_session ON event_sessions (session_id);
+  CREATE INDEX events_tool_use ON events (tool_use_id);
+  CREATE VIEW session_events AS
+    WITH member (event_id, session_id) AS (
+      SELECT event_id, session_id FROM event_sessions
+      UNION
+      -- A subagent's events also belong to every session holding the call that spawned it.
+      SELECT e.id, m.session_id
+      FROM events e
+      JOIN agents a         ON a.id = e.agent_id
+      JOIN events spawn     ON spawn.tool_use_id = a.tool_use_id AND spawn.agent_id IS NULL
+      JOIN event_sessions m ON m.event_id = spawn.id
+    )
+    SELECT e.id, m.session_id, e.agent_id, e.ts, e.kind, e.tool, e.tool_use_id, e.input, e.text,
+           e.uuid, e.source, e.line, e.block
+    FROM member m JOIN events e ON e.id = m.event_id;
+  INSERT INTO event_sessions SELECT id, session_id FROM events;
+  -- Re-read every transcript once, so copied history already skipped gains its membership.
+  DELETE FROM ingested;
+  `,
 ];
 
 // ─── Database ────────────────────────────────────────────────────────────────
@@ -162,6 +190,8 @@ function completeLines(buf) {
 }
 
 function ingestTranscript(db, t) {
+  // Metadata can land after the transcript stops growing, so it is read every run.
+  if (t.agentId) ingestAgentMeta(db, t);
   const size = fs.statSync(t.file).size;
   const seen = db.prepare('SELECT lines, size FROM ingested WHERE source = ?').get(t.file);
   if (seen && seen.size === size) return 0;
@@ -169,6 +199,7 @@ function ingestTranscript(db, t) {
   let from = seen ? seen.lines : 0;
   if (seen && size < seen.size) {
     // Rewritten rather than appended to: start this file over.
+    db.prepare('DELETE FROM event_sessions WHERE event_id IN (SELECT id FROM events WHERE source = ?)').run(t.file);
     db.prepare('DELETE FROM events WHERE source = ?').run(t.file);
     from = 0;
   }
@@ -178,12 +209,15 @@ function ingestTranscript(db, t) {
     INSERT OR IGNORE INTO events
       (session_id, agent_id, ts, kind, tool, tool_use_id, input, text, uuid, source, line, block)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const byRecord = db.prepare('SELECT id FROM events WHERE uuid = ? AND block = ?');
+  const byLine   = db.prepare('SELECT id FROM events WHERE source = ? AND line = ? AND block = ?');
+  const link     = db.prepare('INSERT OR IGNORE INTO event_sessions (event_id, session_id) VALUES (?, ?)');
   const session = db.prepare(`
     INSERT INTO sessions (id, project, cwd, first_ts, last_ts, source) VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       cwd      = coalesce(sessions.cwd, excluded.cwd),
-      first_ts = min(coalesce(sessions.first_ts, excluded.first_ts), excluded.first_ts),
-      last_ts  = max(coalesce(sessions.last_ts, excluded.last_ts), excluded.last_ts)`);
+      first_ts = coalesce(min(sessions.first_ts, excluded.first_ts), sessions.first_ts, excluded.first_ts),
+      last_ts  = coalesce(max(sessions.last_ts, excluded.last_ts), sessions.last_ts, excluded.last_ts)`);
 
   let added = 0, cwd = null, first = null, last = null;
   db.exec('BEGIN');
@@ -194,12 +228,15 @@ function ingestTranscript(db, t) {
     if (ts) { first = first && first < ts ? first : ts; last = last && last > ts ? last : ts; }
     if (!cwd && record.cwd) cwd = record.cwd;
     eventsOf(record).forEach((e, block) => {
-      added += Number(insert.run(t.sessionId, t.agentId, ts, e.kind, e.tool ?? null, e.toolUseId ?? null,
-        e.input ?? null, e.text ?? null, record.uuid ?? null, t.file, i, block).changes);
+      const r = insert.run(t.sessionId, t.agentId, ts, e.kind, e.tool ?? null, e.toolUseId ?? null,
+        e.input ?? null, e.text ?? null, record.uuid ?? null, t.file, i, block);
+      added += Number(r.changes);
+      const id = r.changes ? r.lastInsertRowid
+        : (record.uuid ? byRecord.get(record.uuid, block) : byLine.get(t.file, i, block))?.id;
+      if (id != null) link.run(id, t.sessionId);
     });
   }
   if (!t.agentId) session.run(t.sessionId, t.project, cwd, first, last, t.file);
-  else ingestAgentMeta(db, t);
   db.prepare(`INSERT INTO ingested (source, lines, size) VALUES (?, ?, ?)
               ON CONFLICT (source) DO UPDATE SET lines = excluded.lines, size = excluded.size`)
     .run(t.file, lines.length, size);
@@ -251,9 +288,13 @@ function ingestArtifacts(db) {
     const root = devFlowFor(cwd);
     if (root) roots.add(root);
   }
-  const insert = db.prepare(`INSERT OR IGNORE INTO artifacts (repo, task, file, sha, mtime, content)
-                             VALUES (?, ?, ?, ?, ?, ?)`);
-  let added = 0;
+  // Content seen again keeps one row but takes the newer mtime, so A → B → A ends on A.
+  const insert = db.prepare(`INSERT INTO artifacts (repo, task, file, sha, mtime, content)
+                             VALUES (?, ?, ?, ?, ?, ?)
+                             ON CONFLICT (repo, task, file, sha) DO UPDATE SET mtime = excluded.mtime
+                             WHERE excluded.mtime > artifacts.mtime`);
+  const count = () => db.prepare('SELECT count(*) AS n FROM artifacts').get().n;
+  const before = count();
   db.exec('BEGIN');
   for (const root of roots) {
     // A worktree's .dev-flow belongs to the repo it was cut from, not to the worktree's name.
@@ -267,13 +308,13 @@ function ingestArtifacts(db) {
         const buf = fs.readFileSync(file);
         if (buf.includes(0)) continue; // binary
         const sha = crypto.createHash('sha256').update(buf).digest('hex');
-        added += Number(insert.run(repo, task.name, path.relative(path.join(root, task.name), file), sha,
-          stat.mtime.toISOString(), buf.toString('utf8')).changes);
+        insert.run(repo, task.name, path.relative(path.join(root, task.name), file), sha,
+          stat.mtime.toISOString(), buf.toString('utf8'));
       }
     }
   }
   db.exec('COMMIT');
-  return added;
+  return count() - before;
 }
 
 // ─── Entry points ────────────────────────────────────────────────────────────
@@ -291,7 +332,9 @@ function indexConfig(configDir) {
 function runDetectors(db, detectorDir) {
   return fs.readdirSync(detectorDir).filter(f => f.endsWith('.sql')).sort().map(f => {
     const sql = fs.readFileSync(path.join(detectorDir, f), 'utf8');
-    const description = sql.split('\n').filter(l => l.startsWith('--')).map(l => l.slice(2).trim()).join(' ');
+    const lines = sql.split('\n');
+    const end = lines.findIndex(l => !l.startsWith('--'));
+    const description = lines.slice(0, end < 0 ? lines.length : end).map(l => l.slice(2).trim()).join(' ');
     return { name: f.slice(0, -4), description, rows: db.prepare(sql).all() };
   });
 }
