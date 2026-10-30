@@ -92,8 +92,8 @@ function lintSkillContent(dirName, content) {
   if (!fm.name) {
     errors.push('frontmatter has no `name`');
   } else if (fm.name !== dirName) {
-    // Claude Code routes on the directory; a mismatched name silently
-    // misrepresents the skill everywhere it is quoted.
+    // Claude Code routes on the frontmatter name, but this lint resolves `/name`
+    // cross-references against directory names, so the two must agree.
     errors.push(`frontmatter name "${fm.name}" does not match directory "${dirName}"`);
   }
 

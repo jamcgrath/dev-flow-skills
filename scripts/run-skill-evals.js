@@ -17,6 +17,7 @@
  *   node scripts/run-skill-evals.js --list
  *   node scripts/run-skill-evals.js --skill audit-tests --dry-run
  *   node scripts/run-skill-evals.js --skill audit-tests
+ *   node scripts/run-skill-evals.js --skill verify-build --eval 1
  *   node scripts/run-skill-evals.js --skill verify-build --model claude-opus-4-1
  *
  * Exit codes: 0 = every expectation passed, 1 = at least one failed or errored.
@@ -243,7 +244,7 @@ function main() {
 
   const skillIdx = args.indexOf('--skill');
   if (skillIdx === -1 || !args[skillIdx + 1]) {
-    console.error('usage: node scripts/run-skill-evals.js --skill <name> [--dry-run] [--model <model>]');
+    console.error('usage: node scripts/run-skill-evals.js --skill <name> [--eval <id>] [--dry-run] [--model <model>]');
     console.error('       node scripts/run-skill-evals.js --list');
     process.exit(1);
   }

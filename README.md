@@ -4,9 +4,8 @@ A project-agnostic, AI-assisted **dev flow** for [Claude Code](https://claude.co
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
 structured flow with two human gates — fire it off, approve the plan, review before the PR.
 
-The flow adds **almost no behaviour of its own** — beyond the persisted plan (`PLAN.md`) at the PLAN
-gate, the condition that fires a security review before the REVIEW gate, and two test-integrity
-checkpoints before and after the build, `/dev-flow <task>` is a thin orchestrator that routes feature
+The flow adds **almost no behaviour of its own** (the short list is under Guards, "Thin orchestration",
+in `skills/dev-flow/SKILL.md`) — `/dev-flow <task>` is a thin orchestrator that routes feature
 vs bug and runs the chain below. Outside it, work stays conversational — nothing fires unless you
 invoke it. There's no fast path: a change small enough to want one doesn't need the orchestrator, so
 just ask for it conversationally instead.
@@ -37,12 +36,12 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 ```
 /dev-flow <task>
   → route: feature or bug? · ticket or none? · readiness scan
-  → [verify-ticket]   only if there's an external ticket / issue / brief to reconcile
+  → [verify-ticket]   feature path, only if there's an external ticket / issue / brief to reconcile
   → plan-brief (feature)  |  investigate-bug (bug)
   → plan the approach
        → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
   → branch off default (if needed)
-  → /author-acceptance-tests → /commit (= base) → /audit-tests
+  → /author-acceptance-tests (commits the tests = base) → /audit-tests
        → ⏸ audit-gap checkpoint (only a test that cannot do its job — *inadequate*/always-green
                                   or *unsatisfiable*/never-green; weak + quality defects ride
                                   forward): proceed anyway / strengthen / rewrite or retire
@@ -112,8 +111,8 @@ session that you leave open:
 | your PR's worktree | `/loop 20m /pr-fix <N>` | a round once a review has landed, else one line | approved with nothing open, merged/closed, or a decision for you (after pushing the round); a nit-level round notifies without stopping |
 | a clone of their repo | `/loop 20m /review-pr <N>` | a full review first, then only new commits, each round posted to the PR | when the verdict reaches approve — approving is yours |
 
-A loop lives only as long as its session, fires only while the session is idle, and expires after
-seven days. After answering a decision `pr-fix` stopped on, restart it with the same command.
+A loop lives with its session (a fixed-interval one comes back on `--resume`), fires only while the
+session is idle, and expires after seven days. After answering a decision `pr-fix` stopped on, restart it with the same command.
 
 ## Layout
 
@@ -160,8 +159,7 @@ until you restart Claude Code. To see what's installed (and toggle things), open
 "latest commit", not a tagged release.
 
 Prefer it hands-off? Turn on auto-update for this marketplace — `/plugin` → **Marketplaces** →
-enable auto-update on `dev-flow-skills` (or set `"autoUpdate": true` for it in
-`.claude/settings.json`) — and new pushes flow in at startup (you'll just get a `/reload-plugins`
+enable auto-update on `dev-flow-skills` — and new pushes flow in at startup (you'll just get a `/reload-plugins`
 nudge).
 
 ### For development (live edits)
@@ -264,7 +262,7 @@ guards.
   whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`
   themselves.
-- **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix`/`pr-status`/`review-pr` use the `gh` CLI,
+- **Tooling assumptions.** `verify-ticket`/`pr`/`pr-fix`/`pr-status`/`review-pr`/`debrief` use the `gh` CLI,
   and `verify-ticket`/`review-pr` (for Jira) an Atlassian MCP; `pr-status` also needs `python3`;
   `investigate-bug` uses the Chrome DevTools MCP *for UI bugs* (other layers use their own harness —
   a unit test, `curl`, a seeded query). Each skill stops and says so in one line if its tool isn't
