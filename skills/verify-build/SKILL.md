@@ -32,6 +32,13 @@ accumulates the builder's state is just the self-grading this skill exists to re
    is thinner than its verdict alone implies, so it belongs in the attention order **even on a
    criterion that passes**.
 
+   **Read `.dev-flow/<task>/ENVIRONMENT.md` if it exists — never an earlier verdict.** It holds what a
+   previous pass needed to get running: commands, ports, logins, a failure already present at `base`.
+   A recorded pre-existing failure is a lead to re-check, never a reason to discount a red unchecked.
+   Don't open `VERIFICATION.attempt-*.md`. If a `VERIFICATION.md` is already in place, move it unread to
+   the next free `VERIFICATION.attempt-<n>.md`, then write yours. If your prompt carries an earlier verdict, finding or attempt number anyway, record it
+   under `directed:` (step 4).
+
 2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
    tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
    inventory in `.dev-flow/<task>/PLAN_BRIEF.md`, or in `.dev-flow/<task>/BUG_CONTEXT.md` on the bug
@@ -41,7 +48,17 @@ accumulates the builder's state is just the self-grading this skill exists to re
    for data — and actively try to make it **fail** (edge/error inputs, not just the happy path).
    Playwright is one stream, **not** the default. The **criteria are the spec**, not the builder's
    claims. A change with **no new observable behaviour** (a refactor) is verified by the **full suite
-   staying green** — there's no new criterion, so a missing acceptance test is expected, not a failure.
+   staying green** plus the uncovered-change check below — there's no new criterion, so a missing
+   acceptance test is expected, not a failure.
+
+   **Then check what no criterion covers.** Where the diff changes code no criterion is about — a
+   refactor inside the change, a helper other callers share, a config or permission shift on the side
+   — name the one fact its safety rests on ("the extractor returns the same URLs for every existing
+   caller") and take it as far up this ladder as is cheap: **asserted** → **cited** (a `file:line`) →
+   **reasoned** (the bad case walked through and shown not to reach) → **run** (a test or script that
+   calls the real code and fails loud if the fact is wrong) → **reproduced** in the running app. A
+   regression test counts as run only for the callers it actually exercises. Keep any script you write
+   outside the working tree. A proof that runs and shows the fact false is a regression → `falsified`.
 
 3. **Adversarially review the test diff — three tamper classes:**
    - **Weakened OLD tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
@@ -90,6 +107,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
 
    ## Criteria
    - <criterion> → pass | fail | unverifiable   (+ adequacy from TEST_AUDIT.md + evidence)
+
+   ## Uncovered changes   (changed code no criterion covers)
+   - <surface> — safe because: <the one fact> — proven: asserted | cited | reasoned | run | reproduced
+     (+ evidence)
 
    ## Test integrity
    - tests added / changed / removed: <counts>
@@ -145,7 +166,9 @@ accumulates the builder's state is just the self-grading this skill exists to re
      last. A **named quality defect** from `TEST_AUDIT.md` ranks its
      criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
      survivor is not an adequate oracle — and carry the defect's own wording across, since the audit
-     already said what the hole is.
+     already said what the hole is. An **uncovered change** ranks by the rung its fact reached:
+     asserted or cited with `none`, reasoned with `weak`, run or reproduced with `adequate` — unless
+     the proof showed the fact false. That is a failure, not an oracle strength, and it ranks first.
    - **Reach**, from `git diff -M --numstat --name-status <base>`: the files and directories that
      criterion's surface actually touches. Where the project exposes an import/dependency graph (an MCP
      server, usage indexer, or LSP), **measure the changed files' fan-in** rather than eyeballing it — a
@@ -170,6 +193,12 @@ accumulates the builder's state is just the self-grading this skill exists to re
    over and you are read-only; report the route the change already has, including when that route is
    "revert the commits, and the migration stays."
 
+   **Leave the next pass what it needs to get running, in `ENVIRONMENT.md`** — the commands, ports,
+   logins and setup steps that worked, and any failure you saw at `base`, with the sha you saw it at.
+   Facts only, and test results from `base` only: no suite result or failure seen at HEAD, nothing
+   about whether a criterion passes or how good the change is. Replace a line that
+   no longer holds rather than appending one that contradicts it.
+
 5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
    `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
    to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
@@ -193,7 +222,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
   verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
   criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
   promote one to `fail` because it ranked high.
-- **Read-only except `VERIFICATION.md`.** Never touches the source (the builder fixes, on the human's
+- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md` and scratch scripts outside the working
+  tree.** Never touches the source (the builder fixes, on the human's
   retry choice) and never edits tests.
 - **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this
   skill or its caller counts down.

@@ -56,6 +56,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
                                              proceed with gap noted / abandon
   → ⏸ REVIEW gate — human sanity-check before the PR  (ALWAYS human, never auto-approved;
        leads with the verdict + the weakest-oracle criteria + the rollback route, diff last)
+       → change requested? commit → review the increment → /verify-build again → back to the gate
   → /pr                 (bots/CI after → /pr-fix)
   → [debrief]           optional epilogue — an interactive HTML page of what the run did
 ```
@@ -128,6 +129,8 @@ dev-flow-skills/
                                     # .dev-flow files; --detect runs scripts/detectors/*.sql
   scripts/index-on-session-end.js   # the plugin's SessionEnd hook: keeps that index current once
                                     # /dev-flow-setup has made it
+  scripts/check-private-terms.js    # blocks private names in commits and PR text (see below)
+  .githooks/                        # the hooks that run it
   evals/                            # eval cases + fixtures (see evals/README.md)
   docs/                             # the rendered flowchart and the classifier log
   .github/workflows/lint.yml        # runs the lint and its unit tests on push
@@ -186,6 +189,21 @@ done
 Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that already
 exists and isn't one — a real directory or a regular file. New symlinks register at startup, so
 restart the session to pick them up.
+
+### Keeping private names out (contributors)
+
+This repo is public. If you also use these skills at work, list the names that must not land here
+(your employer's org, its repo names, its ticket prefix) one per line in
+`~/.config/dev-flow/private-terms`, then point git and `/pr` at the check:
+
+```sh
+git config core.hooksPath .githooks
+git config dev-flow.prBodyCheck 'node scripts/check-private-terms.js --stdin'
+```
+
+Commits whose added lines, paths or message contain a term are rejected, and `/pr` stops before
+sending a PR title or body that does. The list stays outside the repo because it names what it
+guards.
 
 ## Conventions & things to know before you adopt these
 

@@ -47,6 +47,7 @@ different safety model. Keep that split — a fast path here would be a third mo
                                              proceed with gap noted / abandon
   → ⏸ REVIEW gate — human sanity-check before PR (leads with the verdict + the weakest-oracle
        criteria + the rollback route, diff last)
+       → change requested? commit → review the increment → verify-build again → back to this gate
   → pr
 ```
 
@@ -320,6 +321,15 @@ different safety model. Keep that split — a fast path here would be a third mo
    suite, adversarially reviews `git diff <base>` for tamper, and writes
    `.dev-flow/<task>/VERIFICATION.md`.
 
+   **Spawn it the same way on every pass.** The prompt carries `base`, the criteria, the protected test
+   paths and the adequacy verdicts — nothing else. No earlier verdict, no finding from a previous pass,
+   no attempt number, in any phrasing ("read it for context" included). Before every pass after the
+   first, move the existing `VERIFICATION.md` to `VERIFICATION.attempt-<n>.md`: left in place, it hands
+   the new verifier the previous verdict at the path it writes to. What a previous pass needed just to
+   get running — a dev-server port, a login, a failure already present at `base` — belongs in
+   `.dev-flow/<task>/ENVIRONMENT.md`, which the verifier may read. Add a fact the human gives you there
+   too. Nothing that judges a criterion or reports a test result at HEAD goes in it.
+
    **⏸ Checkpoint — verify-build failure.** `verified` → proceed to the REVIEW gate. `falsified` or
    `couldn't-verify` → stop and ask via `AskUserQuestion`:
    > "verify-build could not confirm the change: `<one-line reason>`. How do you want to proceed?"
@@ -336,6 +346,12 @@ different safety model. Keep that split — a fast path here would be a third mo
    >   stands. The code review is already done and rides forward beside it.
    > - **Abandon** — stop here and report why. No PR.
    No auto-retry budget — each retry is a human choice, not a loop this flow counts down.
+
+   **Two `falsified` passes in a row → test the premise before offering another retry.** Read the
+   archived verdicts, write down the one assumption both builds shared — about the code, the test, or
+   the environment — and make an observation that would come out differently if it were false. Put
+   the assumption and the result in the question. Two failed fixes on one assumption are evidence
+   against the assumption, not a reason for a third fix on it.
 
    **A retry lands after the review.** Fixes that only address the named criteria need no second
    review. A retry that reworks materially more than that has outrun what step 8 read — say so, and
@@ -380,6 +396,11 @@ different safety model. Keep that split — a fast path here would be a third mo
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
    5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
+
+   **A change asked for at the gate goes back through review and verification.** Commit it, review the
+   increment (`<last-reviewed sha>..HEAD`, step 8's later-round rule), spawn `/verify-build` the way
+   step 9 spawns every pass, and present this gate again. Without that, `VERIFICATION.md` — which `/pr`
+   leads with — describes a diff that no longer ships.
 
 11. **PR.** `/pr` — synthesises the Decision Log; includes a task key only if the branch carries one.
    (Bots/CI comments after → `/pr-fix`. Want to *see* what the run did — an interactive page of the
