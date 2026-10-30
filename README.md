@@ -84,6 +84,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round with a rule-based verdict, approves only on request; under `/loop`, re-reviews each push until it recommends approval |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
 | `dev-flow-setup` | *(optional, one-time)* build a local SQLite index of your runs, kept current after each session by the plugin's `SessionEnd` hook, and run the detectors over it |
+| `reflect` | *(standalone — not in the flow)* reads one config dir's run index for failures that recur across runs and proposes skill changes, cheapest to enforce first; writes a local report and applies nothing |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
 `/code-review` and `/security-review` are Claude Code built-ins used by the flow but aren't bundled here
