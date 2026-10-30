@@ -83,6 +83,7 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `pr-status` | *(standalone — not in the flow)* read-only table of every open PR involving you — yours and ones awaiting your review — with the next action on each; built for `/loop` |
 | `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round with a rule-based verdict, approves only on request; under `/loop`, re-reviews each push until it recommends approval |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
+| `dev-flow-setup` | *(optional, one-time)* build a local SQLite index of your runs, kept current after each session by the plugin's `SessionEnd` hook, and run the detectors over it |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
 `/code-review` and `/security-review` are Claude Code built-ins used by the flow but aren't bundled here
@@ -126,6 +127,8 @@ dev-flow-skills/
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
   scripts/index-runs.js             # local SQLite index of one config dir's transcripts and
                                     # .dev-flow files; --detect runs scripts/detectors/*.sql
+  scripts/index-on-session-end.js   # the plugin's SessionEnd hook: keeps that index current once
+                                    # /dev-flow-setup has made it
   scripts/check-private-terms.js    # blocks private names in commits and PR text (see below)
   .githooks/                        # the hooks that run it
   evals/                            # eval cases + fixtures (see evals/README.md)
