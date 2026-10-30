@@ -124,6 +124,8 @@ dev-flow-skills/
                                     # helper script sits beside it (pr-status/pr_status.py)
   scripts/validate-skills.js        # structural lint — frontmatter + dead cross-references
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
+  scripts/index-runs.js             # local SQLite index of one config dir's transcripts and
+                                    # .dev-flow files; --detect runs scripts/detectors/*.sql
   scripts/check-private-terms.js    # blocks private names in commits and PR text (see below)
   .githooks/                        # the hooks that run it
   evals/                            # eval cases + fixtures (see evals/README.md)
