@@ -35,7 +35,7 @@ the tools would enforce that rather than test it.
 
 ## The fixtures and their traps
 
-All three share one tiny `node --test` project: a cart-pricing module with no dependencies, so the
+All but `verify-build-uncovered` share one tiny `node --test` project: a cart-pricing module with no dependencies, so the
 suite runs offline.
 
 **`audit-tests`** — four criteria producing one of each verdict. The trap is that **two of its

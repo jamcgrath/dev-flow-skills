@@ -22,20 +22,18 @@ rolls them up (see global CLAUDE.md).
 
 3. **Synthesise — don't concatenate.** If this branch came through `/dev-flow`, first read the flow's
    evidence — `.dev-flow/<task>/VERIFICATION.md` (verify-build's verdict) and
-   `.dev-flow/<task>/TEST_AUDIT.md` (test adequacy), where `<task>` is the key from step 2 or the sole
-   `.dev-flow/*` dir for this branch — so the body can **lead with the verification** a downstream
+   `.dev-flow/<task>/TEST_AUDIT.md` (test adequacy), where `<task>` is the key from step 2, else the
+   `.dev-flow/*` dir named for the branch slug with its type prefix stripped, else the sole
+   `.dev-flow/*` dir, else ask — so the body can **lead with the verification** a downstream
    reviewer needs. **Carry `VERIFICATION.md`'s `## Attention order` across, don't recompute or flatten
    it**: it is already sorted weakest-oracle-first over widest reach, and a reviewer who reads one line
    of this PR should get the criterion most likely to be wrong — which `N adequate / N weak / N
    inadequate` cannot tell them. Name the criteria; keep the counts as the supporting line beneath.
 
    **Check the verdict still covers HEAD.** `VERIFICATION.md`'s `## Scope` records the `base..HEAD` it
-   was computed over. If that HEAD isn't the current one — a fix landed after the verdict, usually at
-   the REVIEW gate — say so on the Verdict line (`verified as of <sha>; N later commit(s) not
-   covered`) instead of publishing it flat. Don't re-run anything and don't re-verify: the builder
-   already self-checks a fix it was asked for, and a second `/verify-build` for a one-line nit is the
-   duplicate work `/dev-flow`'s subagent guard rules out. Just never state a verdict as covering
-   commits it never saw.
+   was computed over. If that HEAD isn't the current one, say so on the Verdict line (`verified as of
+   <sha>; N later commit(s) not covered`) instead of publishing it flat. Never state a verdict as
+   covering commits it never saw.
 
    Then, from the commits' Decision Logs, write one PR body:
 
@@ -75,12 +73,14 @@ rolls them up (see global CLAUDE.md).
    `<KEY>: <title>` if a key was detected, otherwise just `<title>`.
 
 5. **Create or preview:**
+   - Write the title and body to a file outside the repo; the body goes to `gh` from that file.
    - **Body check, if the repo sets one.** When `git config --get dev-flow.prBodyCheck` prints a command,
-     pipe the title and body through it from the repo root before creating or editing the PR. A
+     pipe that file through it from the repo root before creating or editing the PR. A
      non-zero exit stops here: show its output and fix the text, never pass the check by editing it.
      A public repo uses this to keep private names out of PR text, which no git hook sees.
-   - **Remote exists** (`git remote` non-empty): push the branch if needed (`git push -u origin HEAD`),
-     then `gh pr create --title '<title>' --body '<body>'` (`--draft` if the user asked).
+   - **Remote exists** (`git remote` non-empty): push the branch if needed (`git push -u <remote>
+     HEAD`, where `<remote>` is the branch's upstream remote, else the sole remote, else ask), then
+     `gh pr create --title '<title>' --body-file <file>` (`--draft` if the user asked).
    - **No remote** (local-only repo): **preview** — print the title + body and write it to
      `PR_PREVIEW.md`. Say clearly it's a preview, not a real PR.
 

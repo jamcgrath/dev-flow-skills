@@ -117,8 +117,8 @@ on the page, not a task it starts.
      there without it.
 
 5. **Look at it, then hand off.** Open the file with the platform opener (`open` on macOS, `xdg-open`
-   on Linux, `start` on Windows); if none is available, print the path instead. **Actually check it
-   rendered.** This page's characteristic failures are invisible in the source and obvious on screen:
+   on Linux, `start` on Windows); if none is available, print the path instead. **Check it rendered**
+   with a browser tool if you have one; otherwise say it is unchecked. This page's characteristic failures are invisible in the source and obvious on screen:
    a proportion silently wrong, a connector implying a relationship absent from the diff, a claim
    outliving the layout that made it true. A page you never looked at is not a debrief. Then
    confirm in **three lines at most**: the path, which views fired, and anything the evidence couldn't

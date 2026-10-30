@@ -102,8 +102,7 @@ the arbiter** (steps 1, 4–6 and Guards).
    (Reality: *"ticket says … / note says …"*), never silently resolved.
 
 7. **Hand off — don't wait.** Confirm `TICKET_CONTEXT.md` is written, summarise the Flags out loud,
-   then **continue without pausing for answers**: `/plan-brief`, or straight into `/plan` mode
-   referencing the file. **Don't turn a Flag into a question and stop** — open forks travel forward to
+   then **continue without pausing for answers** into `/plan-brief`. **Don't turn a Flag into a question and stop** — open forks travel forward to
    the **PLAN gate** (carried in `plan-brief`'s Open Questions); run standalone, with no PLAN gate,
    they wait in `TICKET_CONTEXT.md` for you. The one exception is a **confabulation** (step 5): don't
    hand off — surface the evidence doc and let the human override-and-proceed or kill it (Guards).

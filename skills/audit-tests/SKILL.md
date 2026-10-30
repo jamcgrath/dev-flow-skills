@@ -18,14 +18,14 @@ only — `/dev-flow` decides what happens with a gap it finds).
 
 ## Steps
 
-1. **Gather.** Acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the
-   approved `.dev-flow/<task>/PLAN.md` / task description); the acceptance-test paths +
+1. **Gather.** Acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
+   `.dev-flow/<task>/PLAN.md`, else `PLAN.md` / task description; anything under `PLAN.md`'s
+   `## Accepted conflicts — not criteria` is an exemption, not a criterion); the acceptance-test paths +
    the `base` commit (`.dev-flow/<task>/ACCEPTANCE_TESTS.md`); and the **test-tooling inventory**
    (`.dev-flow/<task>/PLAN_BRIEF.md`, or `.dev-flow/<task>/BUG_CONTEXT.md` on the bug path — it
    carries the same section, since a bug run writes no `PLAN_BRIEF.md`) — you need it to know **how
-   each runner reports an assertion failure vs an error**, which the whole audit turns on. If neither
-   file is there or neither names the runner's failure format, **don't guess it** — say so and grade
-   only what you can actually discriminate.
+   each runner reports an assertion failure vs an error**, which the whole audit turns on. Where the
+   inventory doesn't say, read it from the runner's own output when you run the tests at `base`.
 
 2. **Classify each criterion yourself — new/changed vs preservation.** Don't trust an author label
    (gameable). From the criterion's *intent*:
@@ -130,12 +130,12 @@ only — `/dev-flow` decides what happens with a gap it finds).
   defect, and name what you skipped. A partial sweep reported as a clean one is worse than no sweep.
 - **A quality defect never pauses, and never changes a verdict.** It is a named review item that
   rides forward — same disposition as `weak`, for the same reason: strengthening is a build-time or
-  review-time call, so a pause here offers the human no action they can take *yet*. `inadequate` is
-  the only finding in this skill that justifies stopping the flow.
+  review-time call, so a pause here offers the human no action they can take *yet*. `inadequate` and
+  `unsatisfiable` are the only findings in this skill that justify stopping the flow.
 - **Unsatisfiable is a finding you must prove, not a verdict you may reach for.** It says a test is
   impossible for *every* conforming build, which is the one finding that excuses a red without
   implicating the code — so it carries the highest burden in this skill. Demonstrate it in the test's
-  own terms; where a second reader is available, an independent confirmation is worth having. A red
+  own terms. A red
   you merely cannot explain is not unsatisfiable, it is unexplained, and it rides forward as that.
 - **Catching it here is the cheap case.** Found at audit, an unsatisfiable test costs a rewrite.
   Found at `/verify-build`, it has already cost a whole build against a bar nothing could meet.

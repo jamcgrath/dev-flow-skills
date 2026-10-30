@@ -13,7 +13,7 @@ Run from inside a clone of the PR's repo — no checkout needed.
 
 ## Steps
 
-1. **Read the PR.** `gh pr view {N} --json number,title,url,body,author,headRefName,headRefOid,additions,deletions,changedFiles,files,closingIssuesReferences,isDraft`,
+1. **Read the PR.** `gh pr view {N} --json number,title,url,body,author,headRefName,headRefOid,additions,deletions,changedFiles,files,closingIssuesReferences,isDraft,mergeable,statusCheckRollup`,
    and capture `owner/repo` from `gh repo view --json nameWithOwner`. On a re-review, also find your
    last review's commit (`gh api repos/{owner}/{repo}/pulls/{N}/reviews`, your latest non-pending one)
    and the files changed since it (`gh api repos/{owner}/{repo}/compare/{oid}...{headRefOid}`).

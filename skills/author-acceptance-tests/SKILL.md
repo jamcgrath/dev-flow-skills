@@ -18,8 +18,9 @@ the feature.
 ## Steps
 
 1. **Read the criteria + the repo's test tooling, then classify each by layer.** Acceptance criteria
-   from `.dev-flow/<task>/TICKET_CONTEXT.md` if it exists; otherwise from the task description / the
-   approved `.dev-flow/<task>/PLAN.md` / `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal. Read `PLAN.md` for
+   from `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved `.dev-flow/<task>/PLAN.md`;
+   otherwise from the task description / `PLAN.md` / `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal. Anything
+   under `PLAN.md`'s `## Accepted conflicts — not criteria` is an exemption, not a criterion. Read `PLAN.md` for
    the intended surface *and* its build steps — they can diverge, and the build steps name surfaces
    a suggested test list may under-name. Read the **Test Tooling inventory** from
    `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the bug path, from `.dev-flow/<task>/BUG_CONTEXT.md`,
@@ -116,9 +117,10 @@ the feature.
      *different* reason (lint, format, a type error) is a real problem — fix it, don't bypass it.
    - **Record the commit's sha as `base` in the manifest** (step 5) — `/verify-build` runs in a
      fresh context and cannot recompute it.
-   - **Re-invoked to strengthen flagged tests** (dev-flow's audit-gap "strengthen the tests first"):
-     revise those files in place, run the check above, then commit them the same way — `Strengthen
-     acceptance tests for <task>` — and **overwrite `base` in the manifest with the new sha**. The
+   - **Re-invoked to strengthen, rewrite or retire flagged tests** (dev-flow's audit-gap options):
+     revise those files in place — or delete a retired one, drop it from the protected list and record
+     its criterion `unverifiable — retired at audit` — run the check above, then commit the same way
+     — `Strengthen acceptance tests for <task>` — and **overwrite `base` in the manifest with the new sha**. The
      revision must be its own commit and the new sha must become `base`, or the strengthened tests read
      as edits to protected paths in `git diff <base>` and `/verify-build` scores them as tampering.
    (Unborn branch / can't commit → fall back to recording each authored file's path **and content hash**
@@ -127,7 +129,7 @@ the feature.
 5. **Write the manifest** `.dev-flow/<task>/ACCEPTANCE_TESTS.md` — the **protected set**
    `/verify-build` and the builder both read. (`## Approved test amendment` stays out of your
    draft — it only ever gets written later, by `/dev-flow`, if a human approves a post-build
-   amendment at the verify checkpoint. You are authoring the bar, not pre-authorising exceptions
+   amendment at a post-build checkpoint. You are authoring the bar, not pre-authorising exceptions
    to it.) Record your honest *expectation* per criterion, never
    an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
    replace; leave the verdict to it.
@@ -146,7 +148,7 @@ the feature.
    - <path>            (+ content hash, only on the can't-commit fallback)
 
    ## Approved test amendment (post-build)   — omit unless one was approved
-   <sha> — "<commit subject>". Approved by <who> at the verify-build checkpoint on <date>.
+   <sha> — "<commit subject>". Approved by <who> at the <needs-decision | verify-build> checkpoint on <date>.
    Changes ONLY: <each edit, and why it was the test that was wrong rather than the build>
    `base` above is unchanged so the code diff stays whole; a tamper check must treat this one
    commit's edits to <paths> as authorised. No re-audit at base: the build already exists, so

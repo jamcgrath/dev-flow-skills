@@ -20,7 +20,7 @@
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 
-const { termsFile, loadTerms, findTerms, addedLines, messageText } = require('./lib/private-terms');
+const { termsFile, loadTerms, findTerms, addedLines } = require('./lib/private-terms');
 
 function usage(message) {
   console.error(`check-private-terms: ${message}`);
@@ -43,7 +43,8 @@ if (mode === '--staged') {
       .flatMap(a => findTerms(a.text, terms).map(h => ({ where: `${a.file}:${a.line}`, term: h.term }))),
   ];
 } else if (mode === '--message' && arg) {
-  hits = findTerms(messageText(fs.readFileSync(arg, 'utf8')), terms)
+  // `#` lines are checked too: `git commit -m` and `-F` keep them in the stored message.
+  hits = findTerms(fs.readFileSync(arg, 'utf8'), terms)
     .map(h => ({ where: `commit message:${h.line}`, term: h.term }));
 } else if (mode === '--stdin') {
   hits = findTerms(fs.readFileSync(0, 'utf8'), terms).map(h => ({ where: `stdin:${h.line}`, term: h.term }));

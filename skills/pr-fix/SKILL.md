@@ -12,7 +12,7 @@ push back on, make the accepted changes, review those changes, then answer every
 
 ## Steps
 
-1. **Identify the PR.** Use the number the user gave, else `gh pr view --json number,headRefName,url`.
+1. **Identify the PR.** Use the number the user gave, else `gh pr view --json number,headRefName,baseRefName,url`.
    Capture `owner/repo` from `gh repo view --json nameWithOwner`. Confirm the repo with `git status`;
    uncommitted changes → stop and ask, since they'd ride into the fix commits. Not on the PR's branch
    → `gh pr checkout {N}`. Then `git pull`, so step 6's push isn't rejected, and record

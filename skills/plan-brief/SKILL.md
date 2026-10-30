@@ -12,7 +12,8 @@ mode's job, behind your approval gate.
 
 Second step of the feature path **when there's a ticket** (`verify-ticket` → **`plan-brief`** →
 `/plan`); the **first** step when there isn't. Either way it's the portable funnel into plan mode
-— no tracker required. A trivial, already-clear fix can skip straight to plan mode.
+— no tracker required. Outside `/dev-flow`, a trivial, already-clear fix can skip straight to plan
+mode; under it this step always runs, since later steps read its Test Tooling inventory.
 
 ## Steps
 
@@ -104,8 +105,7 @@ Second step of the feature path **when there's a ticket** (`verify-ticket` → *
 - **Gather, don't design.** No approach decisions, no edits — if you're tempted to pick a
   solution, that belongs in `/plan` mode. Surface the choice as an Open Question instead.
 - **Don't duplicate `TICKET_CONTEXT`.** It already captured the intent, conventions, and flags —
-  build on them. If `plan-brief` would mostly restate it, the ticket was simple enough to skip
-  straight to `/plan` mode. **One deliberate exception:** carry its **unresolved open forks** into
+  build on them. **One deliberate exception:** carry its **unresolved open forks** into
   Open Questions (step 3) — those must reach the PLAN gate, and this is the only channel that takes
   them there.
 - Keep it a first pass: enough to ground plan mode, not an exhaustive audit.
