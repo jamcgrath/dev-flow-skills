@@ -1,0 +1,3 @@
+#!/bin/sh
+# Block added lines or paths that contain a private term (scripts/check-private-terms.js).
+exec node scripts/check-private-terms.js --staged

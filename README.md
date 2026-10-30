@@ -126,6 +126,8 @@ dev-flow-skills/
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
   scripts/index-runs.js             # local SQLite index of one config dir's transcripts and
                                     # .dev-flow files; --detect runs scripts/detectors/*.sql
+  scripts/check-private-terms.js    # blocks private names in commits and PR text (see below)
+  .githooks/                        # the hooks that run it
   evals/                            # eval cases + fixtures (see evals/README.md)
   docs/                             # the rendered flowchart and the classifier log
   .github/workflows/lint.yml        # runs the lint and its unit tests on push
@@ -184,6 +186,21 @@ done
 Safe to re-run: it replaces its own symlinks, and refuses to touch a destination that already
 exists and isn't one — a real directory or a regular file. New symlinks register at startup, so
 restart the session to pick them up.
+
+### Keeping private names out (contributors)
+
+This repo is public. If you also use these skills at work, list the names that must not land here
+(your employer's org, its repo names, its ticket prefix) one per line in
+`~/.config/dev-flow/private-terms`, then point git and `/pr` at the check:
+
+```sh
+git config core.hooksPath .githooks
+git config dev-flow.prBodyCheck 'node scripts/check-private-terms.js --stdin'
+```
+
+Commits whose added lines, paths or message contain a term are rejected, and `/pr` stops before
+sending a PR title or body that does. The list stays outside the repo because it names what it
+guards.
 
 ## Conventions & things to know before you adopt these
 
