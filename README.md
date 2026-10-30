@@ -206,6 +206,25 @@ Commits whose added lines, paths or message contain a term are rejected, and `/p
 sending a PR title or body that does. The list stays outside the repo because it names what it
 guards.
 
+## Run index and /reflect (optional)
+
+A local SQLite index of your runs, so you can see which failures keep recurring and whether a fix
+held. It needs Node 22.13 or later (for `node:sqlite`). Nothing leaves your machine.
+
+1. **Build it once per Claude config dir.** Run `/dev-flow-setup` in a session of that config. It
+   builds `<config>/dev-flow-index.db`, offers to raise `cleanupPeriodDays` so transcripts last
+   long enough to be indexed, and runs the detectors once. A second config, such as a separate work
+   one, gets its own index from a session started under it; the two never mix.
+2. **It stays current by itself.** The plugin's `SessionEnd` hook updates the index in the
+   background after every session and logs its last run to `<config>/dev-flow-index.log`. The
+   hook comes with the plugin install, not the symlinked one: with symlinks, re-run
+   `node scripts/index-runs.js --config <dir>` by hand. Deleting the database switches the hook off.
+3. **Reflect after a batch of runs.** `/reflect --config <dir>` finds failures that recur across
+   sessions, works out why, and proposes skill changes with the detector that proves each one. It
+   writes `<config>/reflect/<date>.md` and applies nothing.
+
+To check the detectors alone: `node scripts/index-runs.js --config <dir> --detect`.
+
 ## Conventions & things to know before you adopt these
 
 - **`commit` and `pr` embed a "Decision Log" commit convention** (Intent / Approach / Alternatives
