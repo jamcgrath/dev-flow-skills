@@ -207,6 +207,26 @@ test('.dev-flow files are indexed, and a changed file adds a version', () => {
   r.db.close();
 });
 
+test('two indexers started together on a fresh database both succeed', async () => {
+  const { config, repo, project } = tempConfig();
+  for (let n = 0; n < 40; n++) {
+    fs.writeFileSync(path.join(project, `s${n}.jsonl`), lines([user(`go ${n}`, repo), tool('Read', { file_path: `/f${n}` })]));
+  }
+  const cli = path.join(__dirname, '..', 'index-runs.js');
+  const runOnce = () => new Promise(resolve => {
+    const child = require('child_process').spawn(process.execPath, [cli, '--config', config], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', d => { stderr += d; });
+    child.on('close', code => resolve({ code, stderr }));
+  });
+
+  const results = await Promise.all([runOnce(), runOnce()]);
+  assert.deepEqual(results.map(r => r.code), [0, 0], results.map(r => r.stderr).join('\n'));
+  const { db } = indexConfig(config);
+  assert.equal(db.prepare('SELECT count(*) AS n FROM events').get().n, 80);
+  db.close();
+});
+
 // ─── Detectors ───────────────────────────────────────────────────────────────
 
 test('detectors flag the failures they encode, and stay quiet on clean runs', () => {
