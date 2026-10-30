@@ -57,9 +57,4 @@ function addedLines(diff) {
   return out;
 }
 
-/** git's own comment lines in a commit message file are dropped before it is stored. */
-function messageText(raw) {
-  return raw.split('\n').map(l => (l.startsWith('#') ? '' : l)).join('\n');
-}
-
-module.exports = { DEFAULT_TERMS_FILE, termsFile, loadTerms, findTerms, addedLines, messageText };
+module.exports = { DEFAULT_TERMS_FILE, termsFile, loadTerms, findTerms, addedLines };

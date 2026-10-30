@@ -7,7 +7,7 @@ const os     = require('os');
 const path   = require('path');
 const { execFileSync, spawnSync } = require('child_process');
 
-const { loadTerms, findTerms, addedLines, messageText } = require('./private-terms');
+const { loadTerms, findTerms, addedLines } = require('./private-terms');
 
 const CLI = path.join(__dirname, '..', 'check-private-terms.js');
 
@@ -58,10 +58,6 @@ test('only added lines of a diff are returned, numbered in the new file', () => 
   ]);
 });
 
-test("git's comment lines in a message file are ignored", () => {
-  assert.equal(messageText('Subject\n# On branch qqq-1\nbody'), 'Subject\n\nbody');
-});
-
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 
 test('--staged blocks a term in an added line or path, and passes one only in a removed line', () => {
@@ -91,6 +87,8 @@ test('--message and --stdin block a term and pass clean text', () => {
   const msg = path.join(dir, 'MSG');
   fs.writeFileSync(msg, 'Fix the thing\n\nIntent: from QQQ-42\n');
   assert.equal(run(['--message', msg], { terms }).status, 1);
+  fs.writeFileSync(msg, 'Fix the thing\n\n# Notes on QQQ-42\n');
+  assert.equal(run(['--message', msg], { terms }).status, 1, '-m and -F keep # lines');
   fs.writeFileSync(msg, 'Fix the thing\n\nIntent: a clean reason\n');
   assert.equal(run(['--message', msg], { terms }).status, 0);
   assert.equal(run(['--stdin'], { terms, input: 'PR body naming zzzcorp' }).status, 1);
