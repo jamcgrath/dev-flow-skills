@@ -83,8 +83,6 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 | `pr-status` | *(standalone — not in the flow)* read-only table of every open PR involving you — yours and ones awaiting your review — with the next action on each; built for `/loop` |
 | `review-pr` | *(standalone — not in the flow)* review someone else's PR on two axes — bugs via `/code-review` at a size/risk-picked level, spec against the linked ticket — dropping findings outside the PR's scope or without a realistic trigger; posts each round with a rule-based verdict, approves only on request; under `/loop`, re-reviews each push until it recommends approval |
 | `debrief` | *(optional)* epilogue for you, not the reviewer — one interactive HTML page of what the run did, linking the artifacts |
-| `dev-flow-setup` | *(optional, one-time)* build a local SQLite index of your runs, kept current after each session by the plugin's `SessionEnd` hook, and run the detectors over it |
-| `reflect` | *(standalone — not in the flow)* reads one config dir's run index for failures that recur across runs and proposes skill changes, cheapest to enforce first; writes a local report and applies nothing |
 | `discuss` | *(standalone — not in the flow)* one-question-at-a-time interview that settles a decision and records why, in `DISCUSSION.md`; works with or without a codebase |
 
 `/code-review` and `/security-review` are Claude Code built-ins used by the flow but aren't bundled here
@@ -126,10 +124,6 @@ dev-flow-skills/
                                     # helper script sits beside it (pr-status/pr_status.py)
   scripts/validate-skills.js        # structural lint — frontmatter + dead cross-references
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
-  scripts/index-runs.js             # local SQLite index of one config dir's transcripts and
-                                    # .dev-flow files; --detect runs scripts/detectors/*.sql
-  scripts/index-on-session-end.js   # the plugin's SessionEnd hook: keeps that index current once
-                                    # /dev-flow-setup has made it
   scripts/check-private-terms.js    # blocks private names in commits and PR text (see below)
   .githooks/                        # the hooks that run it
   evals/                            # eval cases + fixtures (see evals/README.md)
@@ -205,25 +199,6 @@ git config dev-flow.prBodyCheck 'node scripts/check-private-terms.js --stdin'
 Commits whose added lines, paths or message contain a term are rejected, and `/pr` stops before
 sending a PR title or body that does. The list stays outside the repo because it names what it
 guards.
-
-## Run index and /reflect (optional)
-
-A local SQLite index of your runs, so you can see which failures keep recurring and whether a fix
-held. It needs Node 22.13 or later (for `node:sqlite`). Nothing leaves your machine.
-
-1. **Build it once per Claude config dir.** Run `/dev-flow-setup` in a session of that config. It
-   builds `<config>/dev-flow-index.db`, offers to raise `cleanupPeriodDays` so transcripts last
-   long enough to be indexed, and runs the detectors once. A second config, such as a separate work
-   one, gets its own index from a session started under it; the two never mix.
-2. **It stays current by itself.** The plugin's `SessionEnd` hook updates the index in the
-   background after every session and logs its last run to `<config>/dev-flow-index.log`. The
-   hook comes with the plugin install, not the symlinked one: with symlinks, re-run
-   `node scripts/index-runs.js --config <dir>` by hand. Deleting the database switches the hook off.
-3. **Reflect after a batch of runs.** `/reflect --config <dir>` finds failures that recur across
-   sessions, works out why, and proposes skill changes with the detector that proves each one. It
-   writes `<config>/reflect/<date>.md` and applies nothing.
-
-To check the detectors alone: `node scripts/index-runs.js --config <dir> --detect`.
 
 ## Conventions & things to know before you adopt these
 

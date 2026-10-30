@@ -127,13 +127,12 @@ accumulates the builder's state is just the self-grading this skill exists to re
    count as verified even if it now passes — a vacuous pass is not a pass → `unverifiable` for that
    criterion. A `weak` test counts as a pass but is **flagged** (red-by-absence only). Only `adequate`
    tests give a clean pass. Then the verdict rules:
-   - **verified** — every *testable* criterion passes, on an **adequate** test or a flagged **weak**
-     one, AND no tamper breach. The attention order below puts the weak ones ahead of the adequate.
+   - **verified** — every *testable* criterion passes on an **adequate** test AND no tamper breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
      unavailable, DB or dependent service unreachable), a criterion is unverifiable-by-nature
      (subjective), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
-     this, never a false `verified`.** A weak test is never by itself a reason for this verdict.
+     this, never a false `verified`.**
 
    **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
    red that no conforming build could avoid must not produce one — that labels a sound change broken,
