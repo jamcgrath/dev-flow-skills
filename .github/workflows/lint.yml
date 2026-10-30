@@ -22,7 +22,7 @@ jobs:
         run: node --test scripts/lib/skill-lint-test.js
 
       - name: Test the run index and its detectors
-        run: node --test scripts/lib/run-index-test.js
+        run: node --test scripts/lib/run-index-test.js scripts/lib/index-on-session-end-test.js
 
       - name: Validate skills and cross-references
         run: node scripts/validate-skills.js
