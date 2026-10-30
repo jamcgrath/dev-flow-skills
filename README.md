@@ -124,6 +124,8 @@ dev-flow-skills/
                                     # helper script sits beside it (pr-status/pr_status.py)
   scripts/validate-skills.js        # structural lint — frontmatter + dead cross-references
   scripts/run-skill-evals.js        # behavioural evals for audit-tests and verify-build
+  scripts/index-runs.js             # local SQLite index of one config dir's transcripts and
+                                    # .dev-flow files; --detect runs scripts/detectors/*.sql
   evals/                            # eval cases + fixtures (see evals/README.md)
   docs/                             # the rendered flowchart and the classifier log
   .github/workflows/lint.yml        # runs the lint and its unit tests on push
