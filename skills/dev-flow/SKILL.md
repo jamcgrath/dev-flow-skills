@@ -5,10 +5,9 @@ description: Kick off the full AI-assisted dev flow for a task in one command �
 
 # dev-flow
 
-The one explicit way to **kick off the structured flow**. Beyond the condition that fires
-`/security-review` at step 8, two test-integrity checkpoints (steps 6 and 9) and the review loop's
-own needs-decision pause (step 8), it **adds little behaviour of its own** — it sequences the skills
-you already have and pauses at the same human gates as running them by hand.
+The one explicit way to **kick off the structured flow**. It **adds little behaviour of its own** (the
+short list is under Guards, "Thin orchestration") — it sequences the skills you already have and
+pauses at the same human gates as running them by hand.
 
 **Both gates are human, and neither is skippable.** There is no fast path: a task small enough to want
 one is a task that doesn't need the orchestrator at all — do it conversationally and let the REVIEW
@@ -24,7 +23,7 @@ different safety model. Keep that split — a fast path here would be a third mo
 ```
 /dev-flow <task>
   → route: feature or bug? · ticket or none? · readiness scan
-  → [verify-ticket]   only if there's an external ticket/issue/brief
+  → [verify-ticket]   feature path, only if there's an external ticket/issue/brief
   → plan-brief (feature) | investigate-bug (bug)
   → plan the approach
        → ⏸ PLAN gate: surface decisive fork(s) + any unsatisfiable constraint,
@@ -191,14 +190,12 @@ different safety model. Keep that split — a fast path here would be a third mo
      builder cannot edit it, so it dead-ends unless it is settled here.
      > "The test audit proved `<N>` acceptance tests cannot be satisfied by any correct build:
      > `<list, each with the demonstration>`. How do you want to proceed?"
-     > - **Rewrite them first** — hand the flagged tests back to `/author-acceptance-tests` to
-     >   re-express the criterion in a form a conforming build can meet. Same mechanic as
-     >   strengthening: it **re-commits** and **re-records the new sha as `base`**, then
+     > - **Rewrite or retire them first** — hand the flagged tests back to `/author-acceptance-tests`
+     >   to re-express the criterion in a form a conforming build can meet, or to retire the test and
+     >   carry the criterion unverified, a known hole the REVIEW gate meets rather than a red. Same
+     >   mechanic as strengthening: it **re-commits** and **re-records the new sha as `base`**, then
      >   `/audit-tests` runs again as a **new** fresh subagent. **Strengthening is the wrong move
      >   here** — it makes an already-impossible test harder, not possible.
-     > - **Retire the test and carry the criterion unverified** — drop it from the protected set and
-     >   record the criterion as having no executable oracle, so the REVIEW gate meets it as a known
-     >   hole rather than a red.
      > - **Proceed anyway** — build against it knowing the red is unclearable; `/verify-build` will
      >   return `couldn't-verify` for that criterion rather than `falsified`.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a

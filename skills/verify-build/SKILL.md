@@ -1,6 +1,6 @@
 ---
 name: verify-build
-description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow once the code-review loop has settled, on the diff that will actually ship, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not the general-purpose /verify skill (drives the app to observe a change working) or /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
+description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow once the code-review loop has settled, on the diff that will actually ship, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
 ---
 
 # verify-build
@@ -22,8 +22,9 @@ accumulates the builder's state is just the self-grading this skill exists to re
    `base` is the acceptance-test commit sha **recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`** (and
    also passed to you by the orchestrator) — you run fresh and cannot recompute it, so read it. The
    authored tests are *in* that base, so any builder edit to one surfaces in the diff. Also read the
-   acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` if it exists, else the approved
-   `.dev-flow/<task>/PLAN.md` / task description), the protected acceptance-test paths (same
+   acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
+   `.dev-flow/<task>/PLAN.md`, else `PLAN.md` / task description; anything under `PLAN.md`'s
+   `## Accepted conflicts — not criteria` is an exemption, not a criterion), the protected acceptance-test paths (same
    manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
    test was judged `inadequate` is **not** verifiable by that test, no matter what it does now. Read its
    **`## Unsatisfiable tests`** — a test the audit proved no conforming build can pass is not
@@ -70,7 +71,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
    Any of the three → a **flagged breach** (a breach makes the verdict `falsified`, step 4).
 
    **The one exception: `## Approved test amendment (post-build)`**, if the manifest carries one. A
-   human can decide at the verify checkpoint that the *test* was wrong rather than the build, and
+   human can decide at a post-build checkpoint that the *test* was wrong rather than the build, and
    authorise an edit to a protected path. **Reconcile, don't rubber-stamp** — an approval is a
    description to check the diff against, not a blanket pass:
    - the edits must be confined to the **named commit(s)** and the **named paths**; anything to a
@@ -127,11 +128,12 @@ accumulates the builder's state is just the self-grading this skill exists to re
    count as verified even if it now passes — a vacuous pass is not a pass → `unverifiable` for that
    criterion. A `weak` test counts as a pass but is **flagged** (red-by-absence only). Only `adequate`
    tests give a clean pass. Then the verdict rules:
-   - **verified** — every *testable* criterion passes on an **adequate** test AND no tamper breach.
+   - **verified** — every *testable* criterion passes on an **adequate** or **weak** test AND no tamper
+     breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), a criterion is unverifiable-by-nature
-     (subjective), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
+     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, or
+     its only test was `inadequate`), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
      this, never a false `verified`.**
 
    **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
@@ -182,7 +184,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
 
    **Say how the change comes back out — `## Rollback`.** The reviewer is at the last stop before a PR
    and you are the one agent holding the whole diff, so state the route that exists:
-   - **revert** — `clean` when `git revert <base>..HEAD` restores the prior behaviour with nothing
+   - **revert** — `clean` when `git revert <base>^..HEAD` restores the prior behaviour with nothing
      else to do; `not clean` otherwise, naming what blocks it (a migration with no `down`, data already
      written, a regenerated artefact committed outside its package, a consumer that has already read the
      new shape).
@@ -200,8 +202,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
    no longer holds rather than appending one that contradicts it.
 
 5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
-   `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human (retry the build / proceed
-   to review with the gap noted / abandon) rather than looping automatically. On a human-chosen retry,
+   `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human rather than looping
+   automatically. On a human-chosen retry,
    `base` is **not** re-captured — the builder's fix lands as new commits, and the re-spawned verifier
    re-diffs against the same `base`. This skill never loops, never fixes code, never edits tests, and
    owns no retry bookkeeping — that's the orchestrator's job.
@@ -217,7 +219,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
 - **Falsify, don't confirm.** A verifier that only checks the happy path is theatre.
 - **It is LLM judgment in fresh context** — better than self-grading, *not* ground truth. Subjective
   criteria are `unverifiable`, not a guess. Mutation testing — the strong defense against vacuous
-  tests — is deferred, not implemented here.
+  tests — lives in `/audit-tests`, not here.
 - **The rank is presentation, never a second verdict.** A criterion that sorts last is not thereby
   verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
   criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never

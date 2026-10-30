@@ -7,8 +7,7 @@ description: Turn a raw bug report into a systematic investigation — structure
 
 Takes "something's broken" and turns it into a grounded investigation: get it reproducing **red** at
 its own layer, look where that points, trace it to the likely source, and write up context the fix
-can build on. Start of the bug path; the output feeds `/plan` mode (or a direct fix for something
-small).
+can build on. Start of the bug path; the output feeds `/plan` mode.
 
 **The red command is the skill.** Everything after it is mechanical — with a command that fails on
 this bug and passes when it's fixed, elimination finds the cause; without one, no amount of reading
@@ -16,8 +15,8 @@ code will. Spend the effort there.
 
 ## Steps
 
-1. **Get the observation.** Ask the developer for: what they saw, how to reproduce it, and any
-   initial hypothesis. Don't start poking blind.
+1. **Get the observation:** what they saw, how to reproduce it, and any initial hypothesis. Use what
+   the task already gives you; ask the developer only for what's missing. Don't start poking blind.
 
 2. **Structure it** into: **symptom**, **reproduction steps**, **suspected location** in the
    codebase.
@@ -99,7 +98,7 @@ code will. Spend the effort there.
    ```
 
 7. **Hand off.** Summarise the likely cause, then: feed `.dev-flow/<task>/BUG_CONTEXT.md` into `/plan`
-   mode, or go straight to the fix if it's small.
+   mode.
 
 ## Guards
 - **Red before theory.** The repro command comes first; hypothesising before one exists is the
