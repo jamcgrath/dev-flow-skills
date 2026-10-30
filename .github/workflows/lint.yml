@@ -21,5 +21,8 @@ jobs:
       - name: Test the lint rules
         run: node --test scripts/lib/skill-lint-test.js
 
+      - name: Test the private-terms guard
+        run: node --test scripts/lib/private-terms-test.js
+
       - name: Validate skills and cross-references
         run: node scripts/validate-skills.js

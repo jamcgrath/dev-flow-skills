@@ -75,6 +75,10 @@ rolls them up (see global CLAUDE.md).
    `<KEY>: <title>` if a key was detected, otherwise just `<title>`.
 
 5. **Create or preview:**
+   - **Body check, if the repo sets one.** When `git config --get dev-flow.prBodyCheck` prints a command,
+     pipe the title and body through it from the repo root before creating or editing the PR. A
+     non-zero exit stops here: show its output and fix the text, never pass the check by editing it.
+     A public repo uses this to keep private names out of PR text, which no git hook sees.
    - **Remote exists** (`git remote` non-empty): push the branch if needed (`git push -u origin HEAD`),
      then `gh pr create --title '<title>' --body '<body>'` (`--draft` if the user asked).
    - **No remote** (local-only repo): **preview** — print the title + body and write it to
