@@ -44,10 +44,7 @@ mode; under it this step always runs, since later steps read its Test Tooling in
      Note separately whether an **accessibility harness** exists
      (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers) — the UI
      layer's a11y baseline is gated on one. Flag any layer this change touches that has **no** tooling
-     — those criteria will be unverifiable to any test authored for them. Note too **what data each
-     reaches**: whether the dev server, the preview and each suite run against local or seeded data
-     or against live data. Read it from the repo's CLAUDE.md, README and config; when they don't say,
-     write `unknown` rather than assume local is safe.
+     — those criteria will be unverifiable to any test authored for them.
    - constraints **specific to this change** that aren't already in `TICKET_CONTEXT` — read them
      out of the existing code; never assume the stack.
    - **past decisions on those files** — once the files to change are known, read their commit
@@ -95,7 +92,7 @@ mode; under it this step always runs, since later steps read its Test Tooling in
    [The closest existing implementation(s) to copy, named with file + line anchors]
 
    ## Test Tooling
-   [Frameworks present + run command + the layer each covers + the data each reaches (local | live | unknown); whether an a11y harness exists; flag any layer this change touches with NO tooling]
+   [Frameworks present + run command + the layer each covers; whether an a11y harness exists; flag any layer this change touches with NO tooling]
 
    ## Constraints
    [Only rules specific to THIS change and not already in TICKET_CONTEXT — reference it, don't repeat it]

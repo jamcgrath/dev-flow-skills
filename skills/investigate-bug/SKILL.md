@@ -42,6 +42,10 @@ code will. Spend the effort there.
    aim for a *higher reproduction rate*, not a clean one — loop the trigger, parallelise, narrow the
    timing window. A 50%-flake is debuggable; 1% isn't.
 
+   **Live data:** where the repo's CLAUDE.md or README says a run reaches live data, reading a live
+   page to see the bug is fine, but ask before anything that writes (a save, a publish, a mutating
+   request).
+
    **If you genuinely can't build one, stop and say so** — list what you tried and what would unblock
    you (access to an environment that reproduces it, a captured artifact like a HAR or log dump,
    permission to add temporary instrumentation). Reporting that is a real result; a theory you have no

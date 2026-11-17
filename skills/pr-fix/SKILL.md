@@ -49,8 +49,9 @@ push back on, make the accepted changes, review those changes, then answer every
    the PR's diff (`git diff origin/{baseRefName}...HEAD`) in the same commit, and name them in the
    reply. Run the project's lint, typecheck and the tests the change touches, using the commands
    the repo declares (manifest scripts, task runner or CI config) — read them, don't guess a package
-   manager. For a UI change, check it in the browser. Commit with `/commit`, one logical change per
-   commit, so each reply can name its commit. Nothing accepted → skip to step 7.
+   manager. For a UI change, check it in the browser, unless the repo's CLAUDE.md or README says the
+   dev server reaches live data: then name what to check and leave it to me. Commit with `/commit`,
+   one logical change per commit, so each reply can name its commit. Nothing accepted → skip to step 7.
 
 5. **Code-review the changes.** Built-in `/code-review` on `git diff $start..HEAD` — only what this
    pass changed, not the whole PR — at an effort proportional to that diff. Don't pass `--fix`: triage

@@ -43,11 +43,10 @@ the feature.
    `data-testid`s apply **only** to the UI layer — don't force a backend criterion through a UI mould.
    Author each test in the framework the inventory says the repo **actually uses** (e.g. Vitest, not
    Jest) — never introduce a new one; a criterion whose layer has **no tooling** in the repo is
-   **unverifiable (tooling gap)**, not licence to invent a harness. Never author a test that writes
-   through an environment the Test Tooling inventory marks as reaching **live** data, or `unknown`.
-   A criterion that can only be checked there is **unverifiable (no safe environment)**: record the
-   check a human would make by hand. A unit test that mocks the network at the system's edge writes
-   nothing and stays in bounds. A change with **no new observable
+   **unverifiable (tooling gap)**, not licence to invent a harness. Never author or run a test against
+   anything the repo's CLAUDE.md or README says reaches live data. A criterion that can only be
+   checked there is **unverifiable (no safe environment)**: record the check a human would make by
+   hand. A change with **no new observable
    behaviour** (a pure refactor) gets **no acceptance test** — record that its verification is "the full
    suite stays green" (regression-only); don't invent a criterion.
 
