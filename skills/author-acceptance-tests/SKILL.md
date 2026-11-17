@@ -13,9 +13,8 @@ manifest; you don't implement the feature.
 ## Steps
 
 1. **Read the criteria and the repo's test tooling, then classify each criterion by layer.**
-   Criteria come from `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
-   `.dev-flow/<task>/PLAN.md`, else from `PLAN.md`, else `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal.
-   Anything under `PLAN.md`'s `## Accepted conflicts — not criteria` is an exemption, not a criterion.
+   The criteria are `.dev-flow/<task>/PLAN.md`'s numbered `## Acceptance criteria`; anything under
+   its `## Accepted conflicts — not criteria` is an exemption, not a criterion.
    Read `PLAN.md`'s build steps too: they can name surfaces its test list misses. The Test Tooling
    inventory is in `PLAN_BRIEF.md`, or `BUG_CONTEXT.md` on the bug path; there, also read its
    `## Red command`, which already fails on this bug at its layer — build the bug's test from it.

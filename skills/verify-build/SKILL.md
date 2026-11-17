@@ -17,10 +17,9 @@ inline.
    - `git diff <base>` for falsification and tampering, and `git diff -M --numstat --name-status
      <base>` for each file's reach. The authored tests are in `base`, so any edit to one shows in
      the diff.
-   - The acceptance criteria: `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
-     `.dev-flow/<task>/PLAN.md`, else `PLAN.md`. Anything under `PLAN.md`'s `## Accepted conflicts —
-     not criteria` is an exemption, not a criterion; one under `## Checked by hand` is the human's to
-     check.
+   - The acceptance criteria: `.dev-flow/<task>/PLAN.md`'s numbered `## Acceptance criteria`.
+     Anything under its `## Accepted conflicts — not criteria` is an exemption, not a criterion; one
+     under `## Checked by hand` is the human's to check.
    - The protected test paths, any approved amendment, and any `## Accepted at audit` or
      `## Already met at base` from `ACCEPTANCE_TESTS.md`.
    - `.dev-flow/<task>/TEST_AUDIT.md`: each test's adequacy, its `## Unsatisfiable tests` (a red from
@@ -54,6 +53,11 @@ inline.
    a test result: rerun it. One that keeps crashing is a failure to trace like any other; record a
    crash in `ENVIRONMENT.md` only once you've seen it at `base` too.
 
+   **Mutate what the audit couldn't.** For a test `TEST_AUDIT.md` lists as not mutated because its
+   code didn't exist at `base`, where it's cheap, export HEAD outside the working tree (as for `base`
+   below), mutate the built code the test covers, and see whether the test goes red. A survivor is a
+   test-quality defect: list it under `## Test integrity` and rank it as the audit's are.
+
    **Then check what no criterion covers.** Where the diff changes code no criterion is about — a
    refactor inside the change, a helper other callers share, a config or permission shift — name the
    one fact its safety rests on ("the extractor returns the same URLs for every existing caller") and
@@ -72,8 +76,10 @@ inline.
    the rest of the ladder.
 
 3. **Review the test diff for tampering — three classes:**
-   - **Weakened old tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
-     deleted; coverage dropped on touched lines.
+   - **Weakened old tests** — `.skip` / `.only` / `xit` / `todo` added (always a breach); or an
+     assertion loosened or removed, a test deleted, or coverage dropped on touched lines, unless the
+     approved plan changes that behaviour and the commit making the edit says so. Check the reason
+     against `PLAN.md`: an edit with no planned behaviour change behind it is a breach.
    - **Vacuous new tests** — tautologies (`expect(true)`, asserts nothing) padding the count.
    - **Edited acceptance tests** — any hunk in `git diff <base>` touching a path listed in
      `ACCEPTANCE_TESTS.md` (on the hash fallback, compare against the recorded hash).
@@ -119,6 +125,7 @@ inline.
    - tests added / changed / removed: <counts>
    - tamper breaches: <none | the specific weakened/vacuous/edited-acceptance findings>
    - flaky: <none | test — results across runs — cause: the change | pre-existing at base | unknown>
+   - mutation survivors: <none | test — the hole, in a line>
    ```
    **Scope** names what the verdict covers, so a change spanning two repos, verified in one, can't
    read as verified in full. **`directed:`** records anything you were pointed at rather than reached
@@ -158,8 +165,8 @@ inline.
        slip where a real assertion was available). A preservation criterion carried by the regression
        suite alone, or one already met at `base`, ranks here;
      - **adequate** — last.
-     A named test-quality defect moves its criterion one band weaker; carry the defect's wording
-     across. An uncovered change ranks by its rung: asserted or cited with `none`, reasoned with
+     A named test-quality defect, the audit's or your own mutation survivor, moves its criterion one
+     band weaker; carry the defect's wording across. An uncovered change ranks by its rung: asserted or cited with `none`, reasoned with
      `weak`, run or reproduced with `adequate` — unless the proof showed the fact false, which is a
      failure and ranks first.
    - **Reach**, from the `--numstat` diff: the files and directories the criterion's surface touches.
@@ -193,6 +200,6 @@ inline.
 - **The rank is presentation, never a second verdict.** A criterion that sorts last isn't thereby
   verified, and one that sorts first isn't thereby failed. Every criterion stays in `## Criteria`;
   never drop, merge or soften one because it ranked low, or fail one because it ranked high.
-- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md`, and scratch scripts and the `base` export
-  outside the working tree.**
+- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md`, and scratch scripts and the `base` and
+  HEAD exports outside the working tree.**
 - **Non-interactive.** Never pause for input; return the verdict.
