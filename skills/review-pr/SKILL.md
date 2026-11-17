@@ -95,6 +95,10 @@ Run as `/loop 20m /review-pr {N}` from a clone of the repo. Each tick:
 - **Each round is posted** (step 7) before the notification, so the author sees it without me.
 - **Recommend approve → end the loop.** That's the point where further rounds would only be
   suggestions. The approval itself waits for me.
+- **Third round still request changes → end the loop.** Count your posted reviews on this PR. When
+  the third is still request changes, post it as usual, then end the loop and notify
+  `#{N}: 3 rounds, still request changes — ask the author to rethink the approach?` Whether to say
+  that to the author is my call.
 
 **Ending the loop:** a fixed-interval loop is a session cron job — `CronList`, then `CronDelete` the
 one whose prompt is this command. A self-paced loop — `ScheduleWakeup` with `stop: true`.

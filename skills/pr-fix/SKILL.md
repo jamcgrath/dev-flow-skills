@@ -92,6 +92,11 @@ these changes:
 - **Uncommitted changes** at the start → notify, end the loop, ask. **A needs-decision item** →
   finish the round's accepted changes (push and reply) first, then notify, end the loop and put it
   to me; I restart the loop once it's answered. Don't keep ticking past a question.
+- **Three rounds without approval** — once this loop has pushed fixes for three rounds and the PR
+  still isn't approved, finish the round (push and reply), then end the loop and notify
+  `#{N}: 3 rounds of fixes, not approved — rethink the approach?` with what keeps coming back. A
+  reviewer that raises something new every round is a signal about the approach, or about the
+  reviewer, not a reason for a fourth round. Restarting the loop is my call.
 - **A nit-level round** — every comment was style, naming or an edge case with no realistic
   trigger — handle it as usual, then notify `#{N}: round was nit-level; consider asking for
   approval`. Asking is my call.
