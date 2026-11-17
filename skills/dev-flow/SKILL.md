@@ -241,6 +241,10 @@ different safety model. Keep that split — a fast path here would be a third mo
    `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
    nothing it won't. **Stay in scope** — the plan is the contract.
 
+   **A test that fails only sometimes gets its cause found, not a retry.** Don't rerun it until it
+   passes, add a sleep or a wait, raise a timeout, or skip it — each makes it green without telling
+   you anything. A flip caused by your change is a bug to fix; one you can't trace, stop and say so.
+
    **Implement to the criteria, not to the tests.** The acceptance tests are how the bar gets
    *checked*; the criteria **are** the bar. Write the solution that holds for every valid input, not
    just the values a test happens to assert — never hardcode an expected value, special-case a

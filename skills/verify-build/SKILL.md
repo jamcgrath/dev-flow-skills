@@ -52,6 +52,15 @@ accumulates the builder's state is just the self-grading this skill exists to re
    staying green** plus the uncovered-change check below — there's no new criterion, so a missing
    acceptance test is expected, not a failure.
 
+   **A test that flips is not a pass.** When a test fails, rerun it twice more at the same HEAD,
+   unchanged — no added waits, raised timeouts, retries or skips. The same result each time is that
+   result. Results that differ make it **flaky**, and a flaky run is evidence of nothing in either
+   direction, so trace the flip: a race or ordering fault in the change → `falsified`; the same flip
+   at `base` (in the `base` copy below) → pre-existing, recorded in `ENVIRONMENT.md` with the sha;
+   cause not found → the criterion it carries is `unverifiable`. List every flaky test under
+   `## Test integrity`. A runner that crashes before reporting any result is not a test failure:
+   rerun it, and record the crash in `ENVIRONMENT.md` so the next pass expects it.
+
    **Then check what no criterion covers.** Where the diff changes code no criterion is about — a
    refactor inside the change, a helper other callers share, a config or permission shift on the side
    — name the one fact its safety rests on ("the extractor returns the same URLs for every existing
@@ -126,6 +135,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
    ## Test integrity
    - tests added / changed / removed: <counts>
    - tamper breaches: <none | the specific weakened/vacuous/edited-acceptance findings>
+   - flaky: <none | test — results across runs — cause: the change | pre-existing at base | unknown>
    ```
    **Name what the verdict covers.** A verdict that doesn't state its target can't be audited later — a
    change spanning two repositories, verified in one, reads exactly like a change verified in full.
@@ -142,8 +152,9 @@ accumulates the builder's state is just the self-grading this skill exists to re
      breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, or
-     its only test was `inadequate`), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
+     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, its
+     only test was `inadequate`, or its only test is flaky for a reason not found), **or its only red
+     comes from an `unsatisfiable` test** (below). **Fail closed →
      this, never a false `verified`.**
 
    **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
@@ -171,8 +182,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. A criterion whose only oracle is **unsatisfiable** ranks with `none` — nothing is
-     checking it, and the red it produces says nothing about the code. A criterion whose test was
+     `weak`. A criterion whose only oracle is **unsatisfiable** or **flaky** ranks with `none` —
+     nothing is checking it, and the red it produces says nothing about the code. A criterion whose test was
      changed under an **approved post-build amendment** ranks with
      `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
      last. A **named quality defect** from `TEST_AUDIT.md` ranks its
