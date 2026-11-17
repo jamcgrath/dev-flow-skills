@@ -61,6 +61,16 @@ accumulates the builder's state is just the self-grading this skill exists to re
    regression test counts as run only for the callers it actually exercises. Keep any script you write
    outside the working tree. A proof that runs and shows the fact false is a regression → `falsified`.
 
+   **When the fact is "behaves as before", let `base` be the oracle.** A refactor, a shared helper, a
+   migration or rewrite meant to change nothing: export `base` outside the working tree
+   (`git archive <base> | tar -x -C <dir>`, reusing the installed dependencies when the lockfile is
+   unchanged), run the old and new code on the same inputs — generated ones that reach the edge
+   cases, plus any real samples the repo already holds — and diff the outputs after normalising what
+   doesn't matter (key order, timestamps, whitespace). That is a **run**, and the strongest one for
+   this kind of fact: it checks every input you fed it, not only the ones an existing test thought
+   of. A difference that no criterion asks for is a regression → `falsified`. When `base` can't be
+   run cheaply, say so and take the fact as far as the rest of the ladder goes.
+
 3. **Adversarially review the test diff — three tamper classes:**
    - **Weakened OLD tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
      deleted; coverage dropped on touched lines.
@@ -224,8 +234,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
   verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
   criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
   promote one to `fail` because it ranked high.
-- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md` and scratch scripts outside the working
-  tree.** Never touches the source (the builder fixes, on the human's
+- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md`, and scratch scripts and the `base` export
+  outside the working tree.** Never touches the source (the builder fixes, on the human's
   retry choice) and never edits tests.
 - **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this
   skill or its caller counts down.

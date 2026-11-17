@@ -40,7 +40,8 @@ mode; under it this step always runs, since later steps read its Test Tooling in
      `package.json` scripts/devDeps and config files (`playwright.config`, `vitest.config`,
      `jest.config`, `pytest.ini`, `go test`, …), and note **which layer each covers** (Playwright /
      Cypress → UI/e2e; Vitest / Jest / Mocha → unit/component; supertest / integration runners → API;
-     DB-backed tests → data). Note separately whether an **accessibility harness** exists
+     DB-backed tests → data), and any **property-testing library** (fast-check, Hypothesis, proptest).
+     Note separately whether an **accessibility harness** exists
      (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers) — the UI
      layer's a11y baseline is gated on one. Flag any layer this change touches that has **no** tooling
      — those criteria will be unverifiable to any test authored for them.
