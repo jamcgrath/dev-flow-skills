@@ -262,7 +262,9 @@ different safety model. Keep that split — a fast path here would be a third mo
 
    **Triage every finding** into four buckets:
    - **actionable** — a real defect whose fix sits inside the approved scope. Fix it and `/commit`
-     it, one logical change per commit, Decision Log proportional.
+     it, one logical change per commit, Decision Log proportional. Fix the class, not the line:
+     look through `git diff <base>` for other instances of the same defect and fix them in that
+     commit. Instances outside the diff follow the out-of-scope rule below.
    - **false-positive** — the review misread the code. One line on why; it rides to the REVIEW gate
      so the human sees what was dismissed rather than only what was done.
    - **out-of-scope** — real, but outside what this change touches or introduces, or with no
