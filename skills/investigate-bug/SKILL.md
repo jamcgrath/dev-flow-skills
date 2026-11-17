@@ -16,7 +16,9 @@ code will. Spend the effort there.
 ## Steps
 
 1. **Get the observation:** what they saw, how to reproduce it, and any initial hypothesis. Use what
-   the task already gives you; ask the developer only for what's missing. Don't start poking blind.
+   the task already gives you; given only a ticket key or issue number, fetch it first (the Atlassian
+   Rovo MCP's `getJiraIssue`, or `gh issue view`). Ask the developer only for what's missing. Don't
+   start poking blind.
 
 2. **Structure it** into: **symptom**, **reproduction steps**, **suspected location** in the
    codebase.
@@ -71,11 +73,12 @@ code will. Spend the effort there.
 
    ## Red command
    [The one command that fails on this bug, its layer, and what it asserts — paste the invocation
-    and the failing output. This is what the fix has to turn green, and what /verify-build can re-run.
+    and the failing output. This is what the fix has to turn green, and what
+    /author-acceptance-tests builds the bug's test from.
     If none could be built, say so here and list what would unblock one.]
 
    ## Test Tooling
-   [Frameworks present + run command + the layer each covers, and whether an a11y harness exists
+   [Frameworks present + run command + the layer each covers, any property-testing library (fast-check, Hypothesis, proptest), and whether an a11y harness exists
     (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers — the UI layer's
     a11y baseline is gated on one); flag any layer this bug touches with NO tooling. Note how each
     runner reports an assertion failure vs an error — on the bug path this

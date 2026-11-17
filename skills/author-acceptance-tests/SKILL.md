@@ -25,8 +25,9 @@ the feature.
    a suggested test list may under-name. Read the **Test Tooling inventory** from
    `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the bug path, from `.dev-flow/<task>/BUG_CONTEXT.md`,
    which carries the same section since no `PLAN_BRIEF.md` is written (the frameworks that actually
-   exist + their run commands). This is **general-purpose** — for *each* criterion decide where the
-   behaviour lives, because that picks the test type:
+   exist + their run commands). On the bug path, read its `## Red command` too: it already fails on
+   this bug at its layer, so build the bug's test from it. This is **general-purpose** — for *each*
+   criterion decide where the behaviour lives, because that picks the test type:
    - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s,
      plus the a11y baseline below)
    - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
