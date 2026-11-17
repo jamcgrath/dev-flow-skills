@@ -47,7 +47,11 @@ accumulates the builder's state is just the self-grading this skill exists to re
    Reach each criterion the way its layer demands — **Playwright**
    for UI, the **unit runner** for logic, an **HTTP / contract client** for API/service, a **seeded DB**
    for data — and actively try to make it **fail** (edge/error inputs, not just the happy path).
-   Playwright is one stream, **not** the default. The **criteria are the spec**, not the builder's
+   Playwright is one stream, **not** the default. **Never run anything that reaches live data** —
+   a dev server, a preview, an e2e suite or a script the Test Tooling inventory, the repo's CLAUDE.md
+   or `ENVIRONMENT.md` marks as live; where none of them says, treat a dev server and an e2e suite as
+   live. A criterion that can only be checked there is `unverifiable (no safe environment)`, with the
+   check a human would make named. The **criteria are the spec**, not the builder's
    claims. A change with **no new observable behaviour** (a refactor) is verified by the **full suite
    staying green** plus the uncovered-change check below — there's no new criterion, so a missing
    acceptance test is expected, not a failure.
@@ -153,7 +157,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
      unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, its
-     only test was `inadequate`, or its only test is flaky for a reason not found), **or its only red
+     only test was `inadequate`, its only test is flaky for a reason not found, or it has no safe
+     environment), **or its only red
      comes from an `unsatisfiable` test** (below). **Fail closed →
      this, never a false `verified`.**
 

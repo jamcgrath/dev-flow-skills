@@ -108,6 +108,13 @@ different safety model. Keep that split — a fast path here would be a third mo
    Don't dress a conflict up as a fork with a fabricated option, and don't manufacture one: no
    conflicts, say nothing.
 
+   **When the change writes data, say where it gets tested.** A plan that touches a path which
+   saves, publishes or deletes names the environment its tests and verification will run in, from
+   the brief's Test Tooling. Where that environment reaches live data, nothing in the flow may run
+   the write path: the criterion it carries becomes a check for the human, named in the plan, and
+   is carried to the REVIEW gate. Where the brief says `unknown`, ask — whether a local run reaches
+   live data is a fact only the human may hold.
+
    **Present the plan summary-first** so it can be read at a glance rather than skimmed: a 2–3 line
    TL;DR (what changes, why, blast radius), then two aids each gated on a concrete test — **default
    to omitting both; add one only when it clearly clears its bar** — then the detail below.
