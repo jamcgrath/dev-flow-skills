@@ -108,8 +108,8 @@ session that you leave open:
 | Session | Command | Each tick | Notifies and stops |
 |---|---|---|---|
 | anywhere | `/loop 20m /pr-status` | one GitHub call; a line if nothing changed | notifies when a PR's next action changes; runs until you stop it |
-| your PR's worktree | `/loop 20m /pr-fix <N>` | a round once a review has landed, else one line | approved with nothing open, merged/closed, or a decision for you (after pushing the round); a nit-level round notifies without stopping |
-| a clone of their repo | `/loop 20m /review-pr <N>` | a full review first, then only new commits, each round posted to the PR | when the verdict reaches approve — approving is yours |
+| your PR's worktree | `/loop 20m /pr-fix <N>` | a round once a review has landed, else one line | approved with nothing open, merged/closed, a decision for you (after pushing the round), or three rounds of fixes without approval; a nit-level round notifies without stopping |
+| a clone of their repo | `/loop 20m /review-pr <N>` | a full review first, then only new commits, each round posted to the PR | when the verdict reaches approve — approving is yours — or a third round still requests changes |
 
 A loop lives with its session (a fixed-interval one comes back on `--resume`), fires only while the
 session is idle, and expires after seven days. After answering a decision `pr-fix` stopped on, restart it with the same command.

@@ -45,7 +45,9 @@ push back on, make the accepted changes, review those changes, then answer every
    carry on. Hold needs-decision items for step 8 rather than stalling on them.
 
 4. **Make the accepted changes.** Minimal and in scope — reuse existing patterns, no drive-by
-   refactors. Run the project's lint, typecheck and the tests the change touches, using the commands
+   refactors. When a comment points at one instance of a defect, fix the other instances of it in
+   the PR's diff (`git diff origin/{baseRefName}...HEAD`) in the same commit, and name them in the
+   reply. Run the project's lint, typecheck and the tests the change touches, using the commands
    the repo declares (manifest scripts, task runner or CI config) — read them, don't guess a package
    manager. For a UI change, check it in the browser. Commit with `/commit`, one logical change per
    commit, so each reply can name its commit. Nothing accepted → skip to step 7.
@@ -90,6 +92,11 @@ these changes:
 - **Uncommitted changes** at the start → notify, end the loop, ask. **A needs-decision item** →
   finish the round's accepted changes (push and reply) first, then notify, end the loop and put it
   to me; I restart the loop once it's answered. Don't keep ticking past a question.
+- **Three rounds without approval** — once this loop has pushed fixes for three rounds and the PR
+  still isn't approved, finish the round (push and reply), then end the loop and notify
+  `#{N}: 3 rounds of fixes, not approved — rethink the approach?` with what keeps coming back. A
+  reviewer that raises something new every round is a signal about the approach, or about the
+  reviewer, not a reason for a fourth round. Restarting the loop is my call.
 - **A nit-level round** — every comment was style, naming or an edge case with no realistic
   trigger — handle it as usual, then notify `#{N}: round was nit-level; consider asking for
   approval`. Asking is my call.
