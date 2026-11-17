@@ -108,6 +108,13 @@ different safety model. Keep that split — a fast path here would be a third mo
    Don't dress a conflict up as a fork with a fabricated option, and don't manufacture one: no
    conflicts, say nothing.
 
+   **When the change writes data, say where it gets tested.** A plan that touches a path which
+   saves, publishes or deletes names the environment its tests and verification will run in, from
+   the brief's Test Tooling. Where that environment reaches live data, nothing in the flow may run
+   the write path: the criterion it carries becomes a check for the human, named in the plan, and
+   is carried to the REVIEW gate. Where the brief says `unknown`, ask — whether a local run reaches
+   live data is a fact only the human may hold.
+
    **Present the plan summary-first** so it can be read at a glance rather than skimmed: a 2–3 line
    TL;DR (what changes, why, blast radius), then two aids each gated on a concrete test — **default
    to omitting both; add one only when it clearly clears its bar** — then the detail below.
@@ -240,6 +247,10 @@ different safety model. Keep that split — a fast path here would be a third mo
    convention), while the reasoning is fresh. That bar is deliberately shallow: step 9's
    `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
    nothing it won't. **Stay in scope** — the plan is the contract.
+
+   **A test that fails only sometimes gets its cause found, not a retry.** Don't rerun it until it
+   passes, add a sleep or a wait, raise a timeout, or skip it — each makes it green without telling
+   you anything. A flip caused by your change is a bug to fix; one you can't trace, stop and say so.
 
    **Implement to the criteria, not to the tests.** The acceptance tests are how the bar gets
    *checked*; the criteria **are** the bar. Write the solution that holds for every valid input, not
@@ -394,7 +405,12 @@ different safety model. Keep that split — a fast path here would be a third mo
       ones cannot tell whether a finding was answered or ignored.
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
-   5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
+   5. **Repo facts worth keeping** — lines in `.dev-flow/<task>/ENVIRONMENT.md` that would hold for
+      any task in this repo, not just this one (a command that reaches live data, a test already
+      failing on the default branch, a setup step the docs leave out), and that the repo's CLAUDE.md
+      doesn't already say. Give each as the line you'd add. Omit when there are none. Adding them is
+      the human's call: don't edit CLAUDE.md.
+   6. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
 
    **A change asked for at the gate goes back through review and verification.** Commit it, review the
    increment (`<last-reviewed sha>..HEAD`, step 8's later-round rule), spawn `/verify-build` the way

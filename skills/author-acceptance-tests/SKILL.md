@@ -42,7 +42,11 @@ the feature.
    `data-testid`s apply **only** to the UI layer — don't force a backend criterion through a UI mould.
    Author each test in the framework the inventory says the repo **actually uses** (e.g. Vitest, not
    Jest) — never introduce a new one; a criterion whose layer has **no tooling** in the repo is
-   **unverifiable (tooling gap)**, not licence to invent a harness. A change with **no new observable
+   **unverifiable (tooling gap)**, not licence to invent a harness. Never author a test that writes
+   through an environment the Test Tooling inventory marks as reaching **live** data, or `unknown`.
+   A criterion that can only be checked there is **unverifiable (no safe environment)**: record the
+   check a human would make by hand. A unit test that mocks the network at the system's edge writes
+   nothing and stays in bounds. A change with **no new observable
    behaviour** (a pure refactor) gets **no acceptance test** — record that its verification is "the full
    suite stays green" (regression-only); don't invent a criterion.
 
@@ -70,6 +74,13 @@ the feature.
    error cases, not just the happy path. The tests reference contracts that don't exist yet — that's the
    bar: **the tests define the contract, the builder implements to it** — the *contract*, note, not
    the fixtures: the builder has to generalize past whatever values these tests happen to assert.
+
+   **State a rule as a property when the repo has the library for it.** A criterion that holds over
+   a range of inputs — a round trip (decode of encode gives back the input), an invariant (a balance
+   never goes negative), idempotency (running it twice changes nothing more than once), equivalence
+   with a simpler version — becomes a property test when the Test Tooling inventory lists fast-check,
+   Hypothesis, proptest or the like. The library picks the inputs, so the edge cases aren't chosen by
+   the same reading of the criterion the builder will work from. No library → example cases, as above.
 
    **Mock only at the system's edges** — the network, third-party services, the clock. The repo's own
    code runs for real; where a test must stub it, the stub returns what the real signature returns,

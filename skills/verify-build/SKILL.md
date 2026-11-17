@@ -47,10 +47,23 @@ accumulates the builder's state is just the self-grading this skill exists to re
    Reach each criterion the way its layer demands — **Playwright**
    for UI, the **unit runner** for logic, an **HTTP / contract client** for API/service, a **seeded DB**
    for data — and actively try to make it **fail** (edge/error inputs, not just the happy path).
-   Playwright is one stream, **not** the default. The **criteria are the spec**, not the builder's
+   Playwright is one stream, **not** the default. **Never run anything that reaches live data** —
+   a dev server, a preview, an e2e suite or a script the Test Tooling inventory, the repo's CLAUDE.md
+   or `ENVIRONMENT.md` marks as live; where none of them says, treat a dev server and an e2e suite as
+   live. A criterion that can only be checked there is `unverifiable (no safe environment)`, with the
+   check a human would make named. The **criteria are the spec**, not the builder's
    claims. A change with **no new observable behaviour** (a refactor) is verified by the **full suite
    staying green** plus the uncovered-change check below — there's no new criterion, so a missing
    acceptance test is expected, not a failure.
+
+   **A test that flips is not a pass.** When a test fails, rerun it twice more at the same HEAD,
+   unchanged — no added waits, raised timeouts, retries or skips. The same result each time is that
+   result. Results that differ make it **flaky**, and a flaky run is evidence of nothing in either
+   direction, so trace the flip: a race or ordering fault in the change → `falsified`; the same flip
+   at `base` (in the `base` copy below) → pre-existing, recorded in `ENVIRONMENT.md` with the sha;
+   cause not found → the criterion it carries is `unverifiable`. List every flaky test under
+   `## Test integrity`. A runner that crashes before reporting any result is not a test failure:
+   rerun it, and record the crash in `ENVIRONMENT.md` so the next pass expects it.
 
    **Then check what no criterion covers.** Where the diff changes code no criterion is about — a
    refactor inside the change, a helper other callers share, a config or permission shift on the side
@@ -60,6 +73,16 @@ accumulates the builder's state is just the self-grading this skill exists to re
    calls the real code and fails loud if the fact is wrong) → **reproduced** in the running app. A
    regression test counts as run only for the callers it actually exercises. Keep any script you write
    outside the working tree. A proof that runs and shows the fact false is a regression → `falsified`.
+
+   **When the fact is "behaves as before", let `base` be the oracle.** A refactor, a shared helper, a
+   migration or rewrite meant to change nothing: export `base` outside the working tree
+   (`git archive <base> | tar -x -C <dir>`, reusing the installed dependencies when the lockfile is
+   unchanged), run the old and new code on the same inputs — generated ones that reach the edge
+   cases, plus any real samples the repo already holds — and diff the outputs after normalising what
+   doesn't matter (key order, timestamps, whitespace). That is a **run**, and the strongest one for
+   this kind of fact: it checks every input you fed it, not only the ones an existing test thought
+   of. A difference that no criterion asks for is a regression → `falsified`. When `base` can't be
+   run cheaply, say so and take the fact as far as the rest of the ladder goes.
 
 3. **Adversarially review the test diff — three tamper classes:**
    - **Weakened OLD tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
@@ -116,6 +139,7 @@ accumulates the builder's state is just the self-grading this skill exists to re
    ## Test integrity
    - tests added / changed / removed: <counts>
    - tamper breaches: <none | the specific weakened/vacuous/edited-acceptance findings>
+   - flaky: <none | test — results across runs — cause: the change | pre-existing at base | unknown>
    ```
    **Name what the verdict covers.** A verdict that doesn't state its target can't be audited later — a
    change spanning two repositories, verified in one, reads exactly like a change verified in full.
@@ -132,8 +156,10 @@ accumulates the builder's state is just the self-grading this skill exists to re
      breach.
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, or
-     its only test was `inadequate`), **or its only red comes from an `unsatisfiable` test** (below). **Fail closed →
+     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, its
+     only test was `inadequate`, its only test is flaky for a reason not found, or it has no safe
+     environment), **or its only red
+     comes from an `unsatisfiable` test** (below). **Fail closed →
      this, never a false `verified`.**
 
    **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
@@ -161,8 +187,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
      **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
      is an author slip where a real assertion *was* available; a structural one is the best any test
      could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. A criterion whose only oracle is **unsatisfiable** ranks with `none` — nothing is
-     checking it, and the red it produces says nothing about the code. A criterion whose test was
+     `weak`. A criterion whose only oracle is **unsatisfiable** or **flaky** ranks with `none` —
+     nothing is checking it, and the red it produces says nothing about the code. A criterion whose test was
      changed under an **approved post-build amendment** ranks with
      `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
      last. A **named quality defect** from `TEST_AUDIT.md` ranks its
@@ -224,8 +250,8 @@ accumulates the builder's state is just the self-grading this skill exists to re
   verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
   criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
   promote one to `fail` because it ranked high.
-- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md` and scratch scripts outside the working
-  tree.** Never touches the source (the builder fixes, on the human's
+- **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md`, and scratch scripts and the `base` export
+  outside the working tree.** Never touches the source (the builder fixes, on the human's
   retry choice) and never edits tests.
 - **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this
   skill or its caller counts down.
