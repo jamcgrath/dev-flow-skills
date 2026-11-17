@@ -156,7 +156,10 @@ skill can honour; if the PLAN gate is unwanted, don't invoke `/dev-flow`.
    Build in **logical increments**, **minimally** — the smallest change that satisfies each item, no
    drive-by refactors, extra flags or redundant deriveds. **Stay in scope**: the plan is the
    contract. Satisfy `ACCEPTANCE_TESTS.md`'s tests and contracts, and **never edit** a protected
-   test outside an amendment a human approved at step 8 or 9 (any other edit is a tamper breach). As
+   test outside an amendment a human approved at step 8 or 9 (any other edit is a tamper breach). An
+   existing, unprotected test that the approved plan's behaviour change makes wrong may be updated or
+   removed, in the commit that changes the behaviour, with its Decision Log naming the plan item;
+   never weaken one just to get green, and never `.skip` one. As
    each self-contained change is done, run the repo's **lint + typecheck** (the commands it declares)
    and a cheap smoke check (nothing the repo's CLAUDE.md or README says reaches live data), then
    `/commit` it right away. The bar is shallow on purpose: step 9 runs the full matrix fresh.

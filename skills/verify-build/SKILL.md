@@ -71,8 +71,10 @@ inline.
    the rest of the ladder.
 
 3. **Review the test diff for tampering — three classes:**
-   - **Weakened old tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
-     deleted; coverage dropped on touched lines.
+   - **Weakened old tests** — `.skip` / `.only` / `xit` / `todo` added (always a breach); or an
+     assertion loosened or removed, a test deleted, or coverage dropped on touched lines, unless the
+     approved plan changes that behaviour and the commit making the edit says so. Check the reason
+     against `PLAN.md`: an edit with no planned behaviour change behind it is a breach.
    - **Vacuous new tests** — tautologies (`expect(true)`, asserts nothing) padding the count.
    - **Edited acceptance tests** — any hunk in `git diff <base>` touching a path listed in
      `ACCEPTANCE_TESTS.md` (on the hash fallback, compare against the recorded hash).
