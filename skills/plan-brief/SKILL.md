@@ -46,6 +46,11 @@ mode; under it this step always runs, since later steps read its Test Tooling in
      — those criteria will be unverifiable to any test authored for them.
    - constraints **specific to this change** that aren't already in `TICKET_CONTEXT` — read them
      out of the existing code; never assume the stack.
+   - **past decisions on those files** — once the files to change are known, read their commit
+     history yourself rather than in a subagent:
+     `git log -n 20 --format='%h %ad %s%n%b' --date=short -- <files>`. Keep only what bears on this
+     change: an approach already tried and rejected, an assumption it would break, a trade-off it
+     would reverse. Cite the sha. Nothing relevant → leave the section out.
 
    **Use the best tool available — don't default to grep.** Before text-searching, take stock of
    what this project exposes, including any **project-specific MCP servers** (a component/dependency
@@ -90,6 +95,9 @@ mode; under it this step always runs, since later steps read its Test Tooling in
 
    ## Constraints
    [Only rules specific to THIS change and not already in TICKET_CONTEXT — reference it, don't repeat it]
+
+   ## Prior Decisions
+   [Omit when empty. Past commits on the files to modify whose reasoning bears on this change, each with its sha]
 
    ## Out of Scope
    [What this change should not touch]
