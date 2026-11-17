@@ -26,6 +26,9 @@ only — `/dev-flow` decides what happens with a gap it finds).
    carries the same section, since a bug run writes no `PLAN_BRIEF.md`) — you need it to know **how
    each runner reports an assertion failure vs an error**, which the whole audit turns on. Where the
    inventory doesn't say, read it from the runner's own output when you run the tests at `base`.
+   **Never run anything the repo's CLAUDE.md or README says reaches live data.** A test that would
+   have to run there is not run and gets no verdict: list it as `not run — reaches live data`, and
+   its criterion is unverifiable from here on.
 
 2. **Classify each criterion yourself — new/changed vs preservation.** Don't trust an author label
    (gameable). From the criterion's *intent*:
@@ -84,6 +87,7 @@ only — `/dev-flow` decides what happens with a gap it finds).
    ## Per criterion
    - <criterion> · new · test <name> · adequate | weak (structural|manufactured) | inadequate [· UNSATISFIABLE] — <evidence>
    - <criterion> · preserved · regression-covered (no red-at-base test expected)
+   - <criterion> · new · test <name> · not run — reaches live data
 
    ## Test-quality defects (assertion holes — review items, never a pause; omit if none)
    - <test> · mutation survivor | false-fail risk | wired-untested — <the hole, in a line>
@@ -94,7 +98,7 @@ only — `/dev-flow` decides what happens with a gap it finds).
      decision that made it impossible>
 
    ## Summary
-   adequate: N · weak: N · inadequate: N · unsatisfiable: N · quality defects: N
+   adequate: N · weak: N · inadequate: N · unsatisfiable: N · not run: N · quality defects: N
    criteria with no adequate test: <list>
    ```
 

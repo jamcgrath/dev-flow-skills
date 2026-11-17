@@ -26,8 +26,9 @@ on the page, not a task it starts.
    sole `.dev-flow/*` dir; else **ask which run to debrief** rather than guessing, since debriefing
    the wrong task is worse than a question. **No `.dev-flow/<task>/` at all → stop and say so** —
    this is a dev-flow epilogue, and recon always runs, so the directory exists after any real run.
-   Then resolve `base`: the base commit recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`, else
-   `git merge-base` against the default branch.
+   Then resolve `base` as the branch point, `git merge-base origin/<default branch> HEAD` — not the
+   `base` in `ACCEPTANCE_TESTS.md`, which sits after the acceptance-test commits and would leave them
+   off the page.
 
 2. **Gather the evidence — read-only, and nothing from memory.** Everything the page says must trace
    to one of these:

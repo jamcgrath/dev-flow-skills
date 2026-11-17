@@ -1,6 +1,6 @@
 ---
 name: pr-fix
-description: Work through a GitHub PR's open review comments — human and bot. Triages each as accept / push back / needs-decision, makes the accepted changes, puts those changes through built-in /code-review, then pushes and replies in every thread with the commit that addressed it or the reason it was declined. Skips resolved and already-answered threads, so it runs once per review round — or under /loop, round after round until the PR is approved, merged or needs a decision. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR #N", or hands over a PR review to clear.
+description: Work through a GitHub PR's open review comments — human and bot. Triages each as accept / push back / needs-decision, makes the accepted changes, puts those changes through built-in /code-review, then pushes and replies in every thread with the commit that addressed it or the reason it was declined. Skips resolved and already-answered threads, so it runs once per review round — or under /loop, round after round until the PR is approved, merged or needs a decision. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR 123", or hands over a PR review to clear.
 ---
 
 # pr-fix
@@ -49,8 +49,9 @@ push back on, make the accepted changes, review those changes, then answer every
    the PR's diff (`git diff origin/{baseRefName}...HEAD`) in the same commit, and name them in the
    reply. Run the project's lint, typecheck and the tests the change touches, using the commands
    the repo declares (manifest scripts, task runner or CI config) — read them, don't guess a package
-   manager. For a UI change, check it in the browser. Commit with `/commit`, one logical change per
-   commit, so each reply can name its commit. Nothing accepted → skip to step 7.
+   manager. For a UI change, check it in the browser, unless the repo's CLAUDE.md or README says the
+   dev server reaches live data: then name what to check and leave it to me. Commit with `/commit`,
+   one logical change per commit, so each reply can name its commit. Nothing accepted → skip to step 7.
 
 5. **Code-review the changes.** Built-in `/code-review` on `git diff $start..HEAD` — only what this
    pass changed, not the whole PR — at an effort proportional to that diff. Don't pass `--fix`: triage

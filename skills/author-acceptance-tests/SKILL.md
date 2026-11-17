@@ -25,8 +25,9 @@ the feature.
    a suggested test list may under-name. Read the **Test Tooling inventory** from
    `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the bug path, from `.dev-flow/<task>/BUG_CONTEXT.md`,
    which carries the same section since no `PLAN_BRIEF.md` is written (the frameworks that actually
-   exist + their run commands). This is **general-purpose** — for *each* criterion decide where the
-   behaviour lives, because that picks the test type:
+   exist + their run commands). On the bug path, read its `## Red command` too: it already fails on
+   this bug at its layer, so build the bug's test from it. This is **general-purpose** — for *each*
+   criterion decide where the behaviour lives, because that picks the test type:
    - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s,
      plus the a11y baseline below)
    - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
@@ -42,11 +43,10 @@ the feature.
    `data-testid`s apply **only** to the UI layer — don't force a backend criterion through a UI mould.
    Author each test in the framework the inventory says the repo **actually uses** (e.g. Vitest, not
    Jest) — never introduce a new one; a criterion whose layer has **no tooling** in the repo is
-   **unverifiable (tooling gap)**, not licence to invent a harness. Never author a test that writes
-   through an environment the Test Tooling inventory marks as reaching **live** data, or `unknown`.
-   A criterion that can only be checked there is **unverifiable (no safe environment)**: record the
-   check a human would make by hand. A unit test that mocks the network at the system's edge writes
-   nothing and stays in bounds. A change with **no new observable
+   **unverifiable (tooling gap)**, not licence to invent a harness. Never author or run a test against
+   anything the repo's CLAUDE.md or README says reaches live data. A criterion that can only be
+   checked there is **unverifiable (no safe environment)**: record the check a human would make by
+   hand. A change with **no new observable
    behaviour** (a pure refactor) gets **no acceptance test** — record that its verification is "the full
    suite stays green" (regression-only); don't invent a criterion.
 

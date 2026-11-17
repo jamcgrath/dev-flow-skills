@@ -108,13 +108,6 @@ different safety model. Keep that split — a fast path here would be a third mo
    Don't dress a conflict up as a fork with a fabricated option, and don't manufacture one: no
    conflicts, say nothing.
 
-   **When the change writes data, say where it gets tested.** A plan that touches a path which
-   saves, publishes or deletes names the environment its tests and verification will run in, from
-   the brief's Test Tooling. Where that environment reaches live data, nothing in the flow may run
-   the write path: the criterion it carries becomes a check for the human, named in the plan, and
-   is carried to the REVIEW gate. Where the brief says `unknown`, ask — whether a local run reaches
-   live data is a fact only the human may hold.
-
    **Present the plan summary-first** so it can be read at a glance rather than skimmed: a 2–3 line
    TL;DR (what changes, why, blast radius), then two aids each gated on a concrete test — **default
    to omitting both; add one only when it clearly clears its bar** — then the detail below.
@@ -242,8 +235,8 @@ different safety model. Keep that split — a fast path here would be a third mo
    The build must **satisfy** `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must
    **never edit** a protected acceptance-test file (an edit is what `/verify-build` flags as a tamper
    breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
-   it actually declares, in its manifest scripts or task runner — plus a cheap smoke check, then
-   `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
+   it actually declares, in its manifest scripts or task runner — plus a cheap smoke check (nothing
+   the repo's CLAUDE.md or README says reaches live data), then `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
    convention), while the reasoning is fresh. That bar is deliberately shallow: step 9's
    `/verify-build` runs the full layer matrix from a fresh context, so a fuller pass here proves
    nothing it won't. **Stay in scope** — the plan is the contract.

@@ -97,6 +97,12 @@ function lintSkillContent(dirName, content) {
     errors.push(`frontmatter name "${fm.name}" does not match directory "${dirName}"`);
   }
 
+  // In an unquoted YAML value, ` #` starts a comment: everything after it is dropped.
+  const rawDescription = (content.match(/^description:[ \t]*(.*)$/m) || [])[1] || '';
+  if (!/^['"]/.test(rawDescription) && /(^|\s)#/.test(rawDescription)) {
+    errors.push('description has an unquoted ` #`, which YAML reads as a comment, cutting the description off there; quote the value or drop the `#`');
+  }
+
   if (!fm.description) {
     errors.push('frontmatter has no `description` (it is what the model routes on)');
   } else if (fm.description.length > MAX_DESCRIPTION_LENGTH) {
