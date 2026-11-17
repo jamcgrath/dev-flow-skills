@@ -15,7 +15,7 @@ flowchart TD
 
     D["Plan the approach"]:::always --> GATE
 
-    GATE["⏸ PLAN gate — HUMAN<br/>surface forks + conflicts · wait for approval"]:::human --> AT
+    GATE["⏸ PLAN gate — HUMAN<br/>surface forks + conflicts + hand checks · wait for approval"]:::human --> AT
 
     AT["author-acceptance-tests<br/>write + commit tests (= base)"]:::testint --> AUD
     AUD["audit-tests · FRESH subagent<br/>red-before-green adequacy"]:::testint --> AGCHK
@@ -24,7 +24,7 @@ flowchart TD
     AGCHK -->|"inadequate / unsatisfiable"| AESC
     AGCHK -->|"clean, or weak / quality<br/>defects only (both ride forward)"| BUILD
 
-    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen (inadequate)<br/>rewrite or retire (unsatisfiable)"]:::human
+    AESC["⏸ ask — HUMAN<br/>proceed anyway / strengthen / already met (inadequate)<br/>rewrite or retire (unsatisfiable)"]:::human
     AESC -->|"strengthen / rewrite"| AT
     AESC -->|"proceed anyway"| BUILD
 

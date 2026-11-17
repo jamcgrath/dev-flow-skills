@@ -38,12 +38,14 @@ precisely because removing a gate isn't a setting — it changes the safety mode
   → [verify-ticket]   feature path, only if there's an external ticket / issue / brief to reconcile
   → plan-brief (feature)  |  investigate-bug (bug)
   → plan the approach
-       → ⏸ PLAN gate: forks + conflicts surfaced, plan, WAIT FOR APPROVAL
+       → ⏸ PLAN gate: forks + conflicts + what nothing in the flow can check (provide it, or
+                       accept it as a hand check), plan, WAIT FOR APPROVAL
   → branch off default (if needed)
   → /author-acceptance-tests (commits the tests = base) → /audit-tests
        → ⏸ audit-gap checkpoint (only a test that cannot do its job — *inadequate*/always-green
                                   or *unsatisfiable*/never-green; weak + quality defects ride
-                                  forward): proceed anyway / strengthen / rewrite or retire
+                                  forward): proceed anyway / strengthen / already met /
+                                  rewrite or retire
   → build + /commit each change
   → /code-review (built-in) → triage → fix + /commit → re-review until nothing actionable is left
        → ⏸ needs-decision checkpoint: a fix that contradicts the agreed bar —
@@ -90,8 +92,8 @@ precisely because removing a gate isn't a setting — it changes the safety mode
 `investigate-bug` — also work as standalone one-offs: reality-check a ticket, gather plan context, or
 investigate a bug without committing to the pipeline. Run alone, each writes its context file
 (`TICKET_CONTEXT.md` / `PLAN_BRIEF.md` / `BUG_CONTEXT.md`) and stops there; the orchestration the full
-flow layers on — the PLAN gate and the persisted, visualised `.dev-flow/<task>/PLAN.md` — only
-happens under `/dev-flow`.
+flow layers on — the PLAN gate and the persisted `.dev-flow/<task>/PLAN.md` (with a `PLAN.html` on
+request) — only happens under `/dev-flow`.
 
 `discuss` goes further: it isn't part of the flow at all. `/dev-flow` never invokes it and never reads
 what it writes. Its natural slot is upstream of `/dev-flow` — settle *what* you're doing and why
@@ -235,7 +237,7 @@ guards.
   decided per **criterion**, so it's silent on a backend criterion inside a UI-ish task and still fires
   on the one rendered element inside a backend one. It's **tooling-gated**: with no harness in the repo
   (`@axe-core/*`, `jest-axe`, `pa11y`) the line is recorded `unverifiable (tooling gap)` rather than
-  installing one, so this is a no-op wherever you don't already test a11y. `verify-build` then enforces
+  installing one, so a repo that doesn't test a11y gets a recorded gap, never a new dependency. `verify-build` then enforces
   it for free — the criteria are its spec. (Removing the auto path closed a hole here: a trivial colour
   or font-size tweak used to skip the acceptance-test machinery entirely and so got no a11y check at
   all. Every `/dev-flow` run now authors them. A tweak you *don't* run through the flow is still on you
@@ -244,19 +246,25 @@ guards.
   behaviour the build hasn't added yet), but `author-acceptance-tests` commits normally rather than
   bypassing hooks. If a hook rejects it specifically because of the by-design-red suite, the skill
   pauses and asks rather than silently retrying with `--no-verify`.
-- **`pr` pushes and opens the PR.** When a remote exists it runs `git push -u origin HEAD`, then
-  opens the PR. It requests no reviewer — the flow's "bots comment → `/pr-fix`" step only has
+- **`pr` pushes and opens the PR.** When a remote exists it pushes to the branch's upstream remote
+  (else the sole remote, else it asks), then opens the PR. It requests no reviewer — the flow's "bots comment → `/pr-fix`" step only has
   something to clear on a repo with continuous review configured; where none is, `/pr-fix` is for
   the human threads. On a local-only repo `pr` writes a `PR_PREVIEW.md` instead of pushing.
 - **`pr-fix` acts on untrusted input.** It reads PR comments — including from bots and any
   contributor — and applies the accepted ones as code changes, then pushes. It mitigates this
   by triaging every comment and showing the triage before it changes any code (it does **not**
   blindly apply), but be aware that's the one place the flow ingests external content and takes write
-  actions. Review its triage table — under `/loop` nobody is watching it, so only a needs-decision
-  item stops the round.
+  actions. Review its triage table. Under `/loop` nobody is watching it; it stops only for a
+  needs-decision item (after pushing the round), uncommitted changes, or three rounds without
+  approval.
 - **`review-pr` reads untrusted input and posts.** It reads a colleague's diff, PR description and
   ticket, and passes them to `/code-review` and a subagent. It changes no code, but it posts each
   round's filtered findings to the PR as a review without asking; only an approval waits for you.
+- **Say in each repo's CLAUDE.md what reaches live data.** No skill runs anything a repo's
+  `CLAUDE.md` or README says reaches production data — a dev server wired to prod, an e2e suite
+  that writes — and a criterion that can only be checked there becomes a hand check for you.
+  `investigate-bug` may read a live page but asks before anything that writes. A repo whose docs
+  say nothing gets no protection from the flow, so one line there is worth writing.
 - **`.dev-flow/` scratch dir.** The recon skills write context files under `.dev-flow/<task>/` in
   whatever repo you run them in. Add `.dev-flow/` to that repo's `.gitignore` (or your global
   gitignore) so they don't get committed. The skills never touch `.git/` or a shared `.gitignore`

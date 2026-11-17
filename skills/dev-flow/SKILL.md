@@ -18,10 +18,11 @@ skill can honour; if the PLAN gate is unwanted, don't invoke `/dev-flow`.
   → [verify-ticket]   feature path, only if there's an external ticket/issue/brief
   → plan-brief (feature) | investigate-bug (bug)
   → plan the approach
-       → ⏸ PLAN gate: decisive forks + conflicts, plan, WAIT FOR APPROVAL
+       → ⏸ PLAN gate: decisive forks + conflicts + hand checks, plan, WAIT FOR APPROVAL
   → branch off default (if needed) · persist PLAN.md
   → author-acceptance-tests → commit (= base) → audit-tests
-       → ⏸ audit-gap checkpoint (inadequate or unsatisfiable): proceed / strengthen / rewrite-or-retire
+       → ⏸ audit-gap checkpoint (inadequate or unsatisfiable): proceed / strengthen / already met /
+                                                                  rewrite-or-retire
   → build + commit each change
   → code-review → triage → fix + commit → re-review the increment
        → ⏸ needs-decision checkpoint: take it + amend the test / keep the agreed behaviour / narrow it
