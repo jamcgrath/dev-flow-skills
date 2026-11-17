@@ -140,7 +140,8 @@ the feature.
 5. **Write the manifest** `.dev-flow/<task>/ACCEPTANCE_TESTS.md` — the **protected set**
    `/verify-build` and the builder both read. (`## Approved test amendment` stays out of your
    draft — it only ever gets written later, by `/dev-flow`, if a human approves a post-build
-   amendment at a post-build checkpoint. You are authoring the bar, not pre-authorising exceptions
+   amendment at a post-build checkpoint. `## Accepted at audit` is the same: `/dev-flow` writes it
+   when a human proceeds past an audit gap. You are authoring the bar, not pre-authorising exceptions
    to it.) Record your honest *expectation* per criterion, never
    an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
    replace; leave the verdict to it.

@@ -176,8 +176,9 @@ different safety model. Keep that split — a fast path here would be a third mo
      strengthening is a real remedy:
      > "The test audit found `<N>` criteria whose tests pass vacuously at base (inadequate — the pass
      > proves nothing): `<list>`. How do you want to proceed?"
-     > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
-     >   at verify.
+     > - **Proceed anyway** — build against the current tests, and record the criteria under
+     >   `## Accepted at audit` in `ACCEPTANCE_TESTS.md`: `/verify-build` lists them as accepted gaps
+     >   rather than stopping on them.
      > - **Strengthen the tests first** — pause here; hand the flagged criteria back to
      >   `/author-acceptance-tests` to revise those tests to assert real behaviour. It **re-commits**
      >   them and **re-records the new sha as `base`** in `ACCEPTANCE_TESTS.md` — without that, the
@@ -196,8 +197,9 @@ different safety model. Keep that split — a fast path here would be a third mo
      >   mechanic as strengthening: it **re-commits** and **re-records the new sha as `base`**, then
      >   `/audit-tests` runs again as a **new** fresh subagent. **Strengthening is the wrong move
      >   here** — it makes an already-impossible test harder, not possible.
-     > - **Proceed anyway** — build against it knowing the red is unclearable; `/verify-build` will
-     >   return `couldn't-verify` for that criterion rather than `falsified`.
+     > - **Proceed anyway** — build against it knowing the red is unclearable, and record it under
+     >   `## Accepted at audit` in `ACCEPTANCE_TESTS.md`: `/verify-build` lists it as an accepted gap
+     >   rather than failing on it.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
      bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
@@ -370,6 +372,10 @@ different safety model. Keep that split — a fast path here would be a third mo
    amendment commit folds every build commit before it *into* the base, so `git diff <base>` no longer
    contains the build: the tamper check and the falsification both go quiet while appearing to pass.
    (Step 6's pre-build strengthening *does* re-record `base`, and is safe for the opposite reason —
+   **When the verdict is `couldn't-verify` for any other reason the build is not implicated — a
+   criterion the verifier could not reach — lead with *Proceed to the gate with the gap noted*.** A
+   retry rebuilds code nothing has faulted. Name the unreached criterion and what would check it.
+
    no build exists yet.) Amending also **costs the criterion its oracle**: the feature exists now, so
    red-at-base can never be re-measured for that test and `/verify-build` ranks it with the weakest.
    An amendment is a human overriding the bar they set, so it should read like one in the manifest —
