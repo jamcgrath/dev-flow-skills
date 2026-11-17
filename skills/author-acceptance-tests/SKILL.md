@@ -187,7 +187,9 @@ the feature.
 
 ## Guards
 - **Independent of the implementation; authored once, here, before the build.** The point is a *fixed*
-  bar — never re-author or relax tests later to match what got built.
+  bar — never re-author or relax tests to match what got built. Before the build, `/dev-flow` may
+  re-invoke you to strengthen, rewrite or retire a flagged test; after it, a change to a protected
+  test is an amendment a human approves, never yours.
 - **Don't fake coverage.** A criterion you can't test executably is `unverifiable`, not a tautology.
 - **A11y is layer-scoped, tooling-gated, and never overclaimed.** It rides the UI layer's contract,
   not a task-type label, so it's silent on backend criteria and in a repo with no harness. A clean
