@@ -85,7 +85,8 @@ skill can honour; if the PLAN gate is unwanted, don't invoke `/dev-flow`.
    never in CLAUDE.md — or accepts it as a check they'll make by hand.
 
    **Present the plan summary-first:** a 2–3 line TL;DR (what changes, why, blast radius), then the
-   detail. Add a **diagram** only when the approach branches, loops, fans out across files, or has steps that
+   **acceptance criteria, numbered** — the ticket's as corrected by verify-ticket and by the forks
+   decided here, or the plan's own without a ticket — then the detail. Add a **diagram** only when the approach branches, loops, fans out across files, or has steps that
    depend on each other out of order — a
    plain-text one in a fenced block, **never mermaid** (the terminal shows mermaid as source). Add a
    **table of contents** only when the plan has 3+ sections or runs past a screen. Approval never
@@ -101,8 +102,9 @@ skill can honour; if the PLAN gate is unwanted, don't invoke `/dev-flow`.
      plan is only that (e.g. `feature/PROJ-1234-short-slug`). The key in the name is how `/pr` finds
      it. Already on a non-default branch → use it.
    - **Write `.dev-flow/<task>/PLAN.md`** — the approved plan as it was on screen: same scope, same
-     length, **no expansion**. Without a ticket this file *is* the acceptance criteria downstream, so
-     detail the human never saw silently widens the bar they agreed to.
+     length, **no expansion**. Its numbered `## Acceptance criteria` section is the one list every
+     later step reads, so write the criteria exactly as approved; detail the human never saw silently
+     widens the bar they agreed to.
 
      Record any conflict settled at the gate **under its own `## Accepted conflicts — not criteria`
      heading**. Written into the prose, it gets a test authored for it and comes back `falsified`.

@@ -13,9 +13,9 @@ fresh because the tests' author must not grade them.
 
 ## Steps
 
-1. **Gather.** The acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the
-   approved `.dev-flow/<task>/PLAN.md`, else `PLAN.md`; anything under `## Accepted conflicts — not
-   criteria` is an exemption, and one under `## Checked by hand` has no test and gets no verdict); the test paths and `base` (`.dev-flow/<task>/ACCEPTANCE_TESTS.md`); and
+1. **Gather.** The acceptance criteria — `.dev-flow/<task>/PLAN.md`'s `## Acceptance criteria`
+   (anything under `## Accepted conflicts — not criteria` is an exemption, and one under
+   `## Checked by hand` has no test and gets no verdict); the test paths and `base` (`.dev-flow/<task>/ACCEPTANCE_TESTS.md`); and
    the Test Tooling inventory (`.dev-flow/<task>/PLAN_BRIEF.md`, or `BUG_CONTEXT.md` on the bug path),
    for **how each runner reports an assertion failure vs an error** — the whole audit turns on it.
    Where the inventory doesn't say, read it from the runner's output at `base`.

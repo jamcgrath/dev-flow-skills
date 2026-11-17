@@ -17,10 +17,9 @@ inline.
    - `git diff <base>` for falsification and tampering, and `git diff -M --numstat --name-status
      <base>` for each file's reach. The authored tests are in `base`, so any edit to one shows in
      the diff.
-   - The acceptance criteria: `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
-     `.dev-flow/<task>/PLAN.md`, else `PLAN.md`. Anything under `PLAN.md`'s `## Accepted conflicts —
-     not criteria` is an exemption, not a criterion; one under `## Checked by hand` is the human's to
-     check.
+   - The acceptance criteria: `.dev-flow/<task>/PLAN.md`'s numbered `## Acceptance criteria`.
+     Anything under its `## Accepted conflicts — not criteria` is an exemption, not a criterion; one
+     under `## Checked by hand` is the human's to check.
    - The protected test paths, any approved amendment, and any `## Accepted at audit` or
      `## Already met at base` from `ACCEPTANCE_TESTS.md`.
    - `.dev-flow/<task>/TEST_AUDIT.md`: each test's adequacy, its `## Unsatisfiable tests` (a red from
