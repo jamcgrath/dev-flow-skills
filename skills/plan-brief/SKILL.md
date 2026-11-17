@@ -1,19 +1,15 @@
 ---
 name: plan-brief
-description: First-pass info-gathering for a feature — read .dev-flow/<task>/TICKET_CONTEXT.md if it exists, otherwise work straight from the task description the user gives (ticket or no ticket), reconnoitre the codebase (files likely to change, similar implementations, related tests, available test tooling, constraints), and write .dev-flow/<task>/PLAN_BRIEF.md as grounded input for /plan mode. The portable entry to the feature path — works with or without a tracker; no Jira required. Reconnaissance, not a plan — it gathers context and stops; it does not design the approach or edit code. Use when the user says "plan brief" or "gather context for the plan".
+description: Gather context for planning a feature, with or without a ticket. Reads .dev-flow/<task>/TICKET_CONTEXT.md if it exists, else the task as given, surveys the codebase (files likely to change, similar implementations, related tests, test tooling, constraints, past decisions on those files), and writes .dev-flow/<task>/PLAN_BRIEF.md for /plan mode. Gathers only; it doesn't design the approach or edit code. Use when the user says "plan brief" or "gather context for the plan".
 ---
 
 # plan-brief
 
-A **first pass that gathers context** for `/plan` mode — reconnaissance, not a plan. It finds
-what's relevant to touch so plan mode designs from a grounded base. It deliberately **stops at
-gathering**: it does not choose the approach, make decisions, or edit anything. That is `/plan`
-mode's job, behind your approval gate.
-
-Second step of the feature path **when there's a ticket** (`verify-ticket` → **`plan-brief`** →
-`/plan`); the **first** step when there isn't. Either way it's the portable funnel into plan mode
-— no tracker required. Outside `/dev-flow`, a trivial, already-clear fix can skip straight to plan
-mode; under it this step always runs, since later steps read its Test Tooling inventory.
+A first pass that gathers context for `/plan` mode — reconnaissance, not a plan. It finds what's
+relevant so plan mode designs from a grounded base, and **stops at gathering**: choosing the
+approach is plan mode's job, behind the approval gate. It follows `/verify-ticket` when there's a
+ticket and comes first when there isn't. Outside `/dev-flow` a trivial, clear fix can skip it;
+under the flow it always runs, since later steps read its Test Tooling inventory.
 
 ## Steps
 
@@ -24,13 +20,12 @@ mode; under it this step always runs, since later steps read its Test Tooling in
 
 2. **Reconnoitre the codebase** — hand the searching to `Explore` subagent(s), **fanned out in
    proportion to the surface**. A bounded, familiar area needs **one**. A **broad or unfamiliar** one
-   (the same trigger as the signature-map pass below) gets **2–3 in parallel**, each tracing a
+   gets **2–3 in parallel**, each tracing a
    **distinct facet** so they don't overlap — e.g. the closest similar feature end-to-end · the
    architecture and control-flow of the target area · the test-and-tooling landscape · the
    extension/integration points this change plugs into. Then **read the union of the files they
    surface** before writing the brief — the subagents locate code, they don't vet it, so the judgement
-   of what actually matters happens here on the main thread. Don't fan out on a small change: one pass
-   is leaner and a needless spread just burns tokens. **If you have
+   of what actually matters happens here on the main thread. **If you have
    `TICKET_CONTEXT.md`, build on it — don't restate its Codebase Notes; without it, gather the
    conventions here.** Your job is the net-new, change-specific recon:
    - the exact **files (and line anchors)** likely to change to satisfy the intent
@@ -53,21 +48,11 @@ mode; under it this step always runs, since later steps read its Test Tooling in
      change: an approach already tried and rejected, an assumption it would break, a trade-off it
      would reverse. Cite the sha. Nothing relevant → leave the section out.
 
-   **Use the best tool available — don't default to grep.** Before text-searching, take stock of
-   what this project exposes, including any **project-specific MCP servers** (a component/dependency
-   graph, a usage indexer, an LSP). When one directly answers a recon question — what imports X, what's
-   unused, a component's props/API — **prefer it**: it's faster and more accurate than grepping source.
-   Fall back to grep / repomix / reading files when nothing fits. This stays tool-agnostic — it uses
-   whatever happens to be installed and is a no-op in a project that exposes nothing extra.
-
-   When hunting the closest existing implementation in a **large or unfamiliar** module, aim to get a
-   complete **signature map in one pass** rather than grepping piecemeal (it catches a reusable thing
-   iterative grep would miss) — via whatever the project offers: an LSP/symbol search, or a repomix-style
-   packer **if one is installed**. If you use `repomix`, run it inside the subagent so the pack stays off
-   the main thread, and always `--compress` with `--include` scoped to the relevant subtree — never
-   unscoped or full-content (it floods context and adds nothing over reading the few files that matter).
-   For a bounded module, skip the whole approach — Explore reading the real files is simpler and just as
-   good.
+   **Use the best tool the project exposes, not grep by default.** A project MCP server (a component
+   or dependency graph, a usage indexer) or an LSP answers "what imports X", "what's unused" or "what
+   props does this take" faster and more accurately than grepping. In a **large or unfamiliar**
+   module, get a complete signature map in one pass with an LSP symbol search rather than grepping
+   piecemeal.
 
 3. **Bound it.** Note what's explicitly **out of scope**, and list **open questions** that need
    a human decision before building — **including any unresolved open forks flagged in
@@ -76,7 +61,7 @@ mode; under it this step always runs, since later steps read its Test Tooling in
 
 4. **Write `.dev-flow/<task>/PLAN_BRIEF.md`** (create the dir if missing) — `<task>` is the ticket
    key when there is one (reuse the subdirectory `/verify-ticket` made), else a short kebab-case slug
-   of the task, so each task keeps its own context:
+   of the task:
 
    ```
    ## Goal
@@ -111,10 +96,8 @@ mode; under it this step always runs, since later steps read its Test Tooling in
    `.dev-flow/<task>/PLAN_BRIEF.md`.
 
 ## Guards
-- **Gather, don't design.** No approach decisions, no edits — if you're tempted to pick a
-  solution, that belongs in `/plan` mode. Surface the choice as an Open Question instead.
-- **Don't duplicate `TICKET_CONTEXT`.** It already captured the intent, conventions, and flags —
-  build on them. **One deliberate exception:** carry its **unresolved open forks** into
-  Open Questions (step 3) — those must reach the PLAN gate, and this is the only channel that takes
-  them there.
+- **Gather, don't design.** No approach decisions and no edits; a choice you're tempted to make is
+  an Open Question.
+- **Don't restate `TICKET_CONTEXT`**, except its unresolved forks, which step 3 carries to the PLAN
+  gate.
 - Keep it a first pass: enough to ground plan mode, not an exhaustive audit.
