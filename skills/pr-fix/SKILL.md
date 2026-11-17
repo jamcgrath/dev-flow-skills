@@ -1,6 +1,6 @@
 ---
 name: pr-fix
-description: Work through a GitHub PR's open review comments — human and bot. Triages each as accept / push back / needs-decision, makes the accepted changes, puts those changes through built-in /code-review, then pushes and replies in every thread with the commit that addressed it or the reason it was declined. Skips resolved and already-answered threads, so it runs once per review round — or under /loop, round after round until the PR is approved, merged or needs a decision. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR 123", or hands over a PR review to clear.
+description: Work through a GitHub PR's open review comments, human and bot. Triages each as accept, push back or needs-decision, makes and code-reviews the accepted changes, pushes, and replies in every thread with the commit or the reason. One review round per run, or round after round under /loop. Use when the user says "address the PR comments", "fix the review feedback", "reply to the bot comments", "resolve PR 123", or hands over a PR review to clear.
 ---
 
 # pr-fix

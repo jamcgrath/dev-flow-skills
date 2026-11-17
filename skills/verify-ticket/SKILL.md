@@ -1,28 +1,20 @@
 ---
 name: verify-ticket
-description: Validate an externally-authored ticket, issue, or brief against the actual codebase before planning — fetch it (Jira via the Atlassian Rovo MCP, a GitHub issue via `gh`, or pasted text) plus any supplementary context files passed alongside it (handoff discovery notes, prior research), cross-reference every file/component/function/term they mention against the current repo, and write a corrected .dev-flow/<task>/TICKET_CONTEXT.md. OPTIONAL and tracker-agnostic — use it only when a description written elsewhere needs reality-checking; for an ad-hoc task you defined yourself, skip straight to /plan-brief. Use when the user says "verify ticket", "validate this ticket/issue against the code", or "check the ticket before planning". Catches the stale file refs and renamed components that AI-written tickets are full of.
+description: Check an externally written ticket, issue or brief against the actual codebase before planning. Fetches it (Jira via Rovo, a GitHub issue via gh, or pasted text) with any handoff or research notes, cross-references every file, component, function and term against the repo, and writes a corrected .dev-flow/<task>/TICKET_CONTEXT.md. Optional; skip it for a task you defined yourself. Use when the user says "verify ticket", "validate this ticket against the code", or "check the ticket before planning".
 ---
 
 # verify-ticket
 
-Externally-authored work items — a Jira ticket, a GitHub issue, an AI-written brief — drift from
-the code: they name files that were renamed, components that were deleted, behaviour that no
-longer holds. This skill reality-checks that description against the repo you're in *before* any
-planning, so plan mode starts from something true.
+Externally written work items — a Jira ticket, a GitHub issue, an AI-written brief — drift from the
+code: they name files that were renamed, components that were deleted, behaviour that no longer
+holds. This checks the description against the repo before any planning, so plan mode starts from
+something true. It answers one question — **is this description true against the code?** — and
+doesn't design the change. With no externally written item, skip it and start at `/plan-brief`.
 
-**Optional, conditional first step** of the feature path: **(`verify-ticket`) → `plan-brief` →
-`/plan` mode.** Use it only when there's a description *written elsewhere* to reconcile. If you
-defined the task yourself against the current code, there's nothing to verify — **skip straight
-to `/plan-brief`.** It answers one question — **is this description true against the code?** — and
-nothing more; it doesn't design the change (that's `plan-brief` + plan mode).
-
-**It flags and flows — it is not a gate.** Drift (a renamed file, a deleted component, an
-already-built or under-specified criterion) is recorded as a **Flag** and the flow continues; decisive
-forks are decided later at the **PLAN gate**, not here. The one thing that stops the flow is a
-**confabulation** — a ticket premised on something the repo *isn't* (step 5): *a few wrong file names
-is drift; a false premise is a wrong ticket.* It can also fold in **supplementary context files**
-handed alongside the ticket (handoff notes, prior research) — same reality-check, with the **code as
-the arbiter** (steps 1, 4–6 and Guards).
+**It flags and flows; it is not a gate.** Drift is recorded as a **Flag** and the flow continues;
+forks are decided at the PLAN gate. The one thing that stops it is a **confabulation**: a ticket
+premised on something the repo isn't (step 5). A few wrong file names is drift; a false premise is
+a wrong ticket.
 
 ## Steps
 
@@ -70,8 +62,7 @@ the arbiter** (steps 1, 4–6 and Guards).
    pick.
 
 6. **Write `.dev-flow/<task>/TICKET_CONTEXT.md`** (create the dir if missing) — `<task>` is the
-   verified ticket key, so each task's context sits in its own subdirectory and a new run never
-   overwrites the last:
+   ticket key, else a short kebab-case slug:
 
    ```
    ## Sources
@@ -102,24 +93,17 @@ the arbiter** (steps 1, 4–6 and Guards).
    (Reality: *"ticket says … / note says …"*), never silently resolved.
 
 7. **Hand off — don't wait.** Confirm `TICKET_CONTEXT.md` is written, summarise the Flags out loud,
-   then **continue without pausing for answers** into `/plan-brief`. **Don't turn a Flag into a question and stop** — open forks travel forward to
-   the **PLAN gate** (carried in `plan-brief`'s Open Questions); run standalone, with no PLAN gate,
-   they wait in `TICKET_CONTEXT.md` for you. The one exception is a **confabulation** (step 5): don't
+   then **continue without pausing for answers** into `/plan-brief`. Don't turn a Flag into a
+   question: open forks travel to the PLAN gate in `plan-brief`'s Open Questions (run standalone,
+   they wait in `TICKET_CONTEXT.md`). The one exception is a **confabulation** (step 5): don't
    hand off — surface the evidence doc and let the human override-and-proceed or kill it (Guards).
 
 ## Guards
-- **Don't invent.** If a reference is ambiguous, record it under Flags as an **open fork to raise at
-  the PLAN gate** — never guess a resolution just to make the ticket look clean, and never read
-  "open" as "ask the user now."
-- **Don't stop the flow — one exception.** Every mismatch is a **Flag** and the flow continues;
-  decisive forks are raised at the PLAN gate, not here. **Stop only on a confabulation** (step 5) — and
-  even then **write the evidence, present it, let the human override or kill**, never abort silently.
-- **Supplementary context is evidence, not truth.** Files handed alongside the ticket are reconciled
-  like it, not trusted over it: the **code is the arbiter**, a note closes a fork only when its claim
-  checks out, and a note-vs-ticket conflict is a flag — never a silent override. A design suggestion a
-  note makes is a fork for the PLAN gate, not licence to design here.
-- Used only when there's an **externally-authored** item to reconcile (Jira / GitHub / brief).
-  No such item — or a task you defined yourself against current code — → skip this skill and
-  start at `/plan-brief`.
-- `.dev-flow/` is meant to be git-ignored globally (one-time flow setup); this skill writes only
-  inside `.dev-flow/<task>/` and never touches `.git/` or a shared `.gitignore` itself.
+- **Don't invent.** An ambiguous reference is a Flag — an open fork for the PLAN gate — never a
+  guessed resolution, and never a question to ask now.
+- **On a confabulation, write the evidence, present it, and let the human override or kill it.**
+  Never abort silently.
+- **Supplementary files are evidence, not truth.** The code is the arbiter: a note closes a fork
+  only when its claim checks out, a note-vs-ticket conflict is a Flag, and a design suggestion in a
+  note is a fork for the PLAN gate.
+- Write only inside `.dev-flow/<task>/`; never touch `.git/` or a shared `.gitignore`.

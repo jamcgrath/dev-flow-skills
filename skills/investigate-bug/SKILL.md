@@ -1,17 +1,14 @@
 ---
 name: investigate-bug
-description: Turn a raw bug report into a systematic investigation — structure the symptom, then build ONE command that goes RED on this bug before forming any theory, picking the harness from the bug's LAYER (Playwright or the Chrome DevTools MCP for UI, a unit test for logic, curl for an API, a seeded query for data, a replayed payload for async work) rather than defaulting to the browser. Inspect where the red points, trace it to the likely source, and write .dev-flow/<task>/BUG_CONTEXT.md as context for the fix. Use at the start of the bug path, when the user says "investigate this bug", "debug this", or hands over something broken, throwing, failing or slow — in the browser or anywhere else.
+description: Turn a raw bug report into a systematic investigation. Builds one command that goes red on the bug before any theory, using the harness for the bug's layer rather than defaulting to the browser, traces the red to its likely source, and writes .dev-flow/<task>/BUG_CONTEXT.md as context for the fix. Use at the start of the bug path, or when the user says "investigate this bug", "debug this", or hands over something broken, throwing, failing or slow.
 ---
 
 # investigate-bug
 
-Takes "something's broken" and turns it into a grounded investigation: get it reproducing **red** at
-its own layer, look where that points, trace it to the likely source, and write up context the fix
-can build on. Start of the bug path; the output feeds `/plan` mode.
-
-**The red command is the skill.** Everything after it is mechanical — with a command that fails on
-this bug and passes when it's fixed, elimination finds the cause; without one, no amount of reading
-code will. Spend the effort there.
+Takes "something's broken" to a grounded investigation: get it reproducing **red** at its own
+layer, look where that points, trace it to the likely source, and write up context for the fix.
+**The red command is the skill:** with a command that fails on this bug and passes when it's fixed,
+elimination finds the cause; without one, reading code won't. Spend the effort there.
 
 ## Steps
 
@@ -24,9 +21,8 @@ code will. Spend the effort there.
    codebase.
 
 3. **Get it going red — at the bug's layer.** Before any theory, build **one command you can re-run**
-   that fails on *this* bug and passes once it's fixed. This is the step the whole investigation rests
-   on: with a red-capable command, the cause is findable by elimination; without one, a hypothesis is
-   a guess wearing analysis as a costume. Pick the surface from where the bug lives, not from habit:
+   that fails on *this* bug and passes once it's fixed. Pick the surface from where the bug lives —
+   never default to the browser — and read the stack from the repo:
 
    | Layer | What goes red |
    |---|---|
@@ -65,8 +61,7 @@ code will. Spend the effort there.
    stack.** Hand broad searching to an `Explore` subagent.
 
 6. **Write `.dev-flow/<task>/BUG_CONTEXT.md`** (create the dir if missing) — `<task>` is the bug's
-   ticket key if it has one, else a short kebab-case slug of the symptom, so each investigation keeps
-   its own context and a new run never overwrites the last:
+   ticket key if it has one, else a short kebab-case slug of the symptom:
 
    ```
    ## Symptom
@@ -82,12 +77,12 @@ code will. Spend the effort there.
     If none could be built, say so here and list what would unblock one.]
 
    ## Test Tooling
-   [Frameworks present + run command + the layer each covers, any property-testing library (fast-check, Hypothesis, proptest), and whether an a11y harness exists
-    (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers — the UI layer's
-    a11y baseline is gated on one); flag any layer this bug touches with NO tooling. Note how each
-    runner reports an assertion failure vs an error — on the bug path this
-    section is the inventory /author-acceptance-tests, /audit-tests and /verify-build read, since no
-    PLAN_BRIEF.md is written. Survey the repo for it even if the red command only needed one runner.]
+   [Frameworks present + run command + the layer each covers, any property-testing library
+    (fast-check, Hypothesis, proptest), and whether an a11y harness exists (`@axe-core/*`, `jest-axe`,
+    `pa11y`, Playwright's role / accessible-name matchers); flag any layer this bug touches with NO
+    tooling. Note how each runner reports an assertion failure vs an error. On the bug path this is the
+    inventory the test and verify skills read, so survey the whole repo, not just the red command's
+    runner.]
 
    ## Investigation findings
    [What each check showed — rule things out explicitly, then narrow to the cause. For a browser bug:
@@ -108,13 +103,9 @@ code will. Spend the effort there.
    mode.
 
 ## Guards
-- **Red before theory.** The repro command comes first; hypothesising before one exists is the
-  failure this skill is shaped to prevent. If you catch yourself reading code to build a theory and
-  step 3 hasn't produced a red command, you're in the failure — go back.
-- **Evidence before conclusion.** "Likely cause" must be grounded in what the tooling actually
-  showed plus the code. If the evidence is thin, say so and note what else to check.
-- **Pick the layer, don't default to the browser.** The Chrome DevTools MCP is one option among
-  several; a bug in an API, a query, a scheduled job or a pure function is reached by its own harness.
-  The stack is read from the repo, never assumed.
-- **Don't trigger browser dialogs** (alert / confirm / prompt) during inspection — they block
-  the DevTools session and stall the extension.
+- **Red before theory.** Reading code to build a theory before step 3 has a red command is the
+  failure this skill exists to prevent — go back.
+- **Evidence before conclusion.** "Likely cause" rests on what the tooling showed plus the code; if
+  the evidence is thin, say so and what else to check.
+- **Don't trigger browser dialogs** (alert, confirm, prompt) during inspection — they block the
+  DevTools session.

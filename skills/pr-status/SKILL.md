@@ -1,6 +1,6 @@
 ---
 name: pr-status
-description: One read-only view of every open PR that involves you, across all repos — your own PRs (unanswered review threads and comments, review decision, CI, conflicts) and PRs waiting on your review (never reviewed, re-review requested, new commits since your review, replies to your comments) — each with the next action and the branch to take it on. Changes nothing. Built to run under /loop in one dedicated session, sending a push notification only when something changes. Use when the user says "pr status", "what needs me", "which PRs need attention", "check my reviews", or wants to keep track of review rounds across sessions.
+description: One read-only view of every open PR that involves you, across repos, covering your own PRs and those waiting on your review, each with the next action and the branch to take it on. Built to run under /loop, notifying only when something changes. Use when the user says "pr status", "what needs me", "which PRs need attention", "check my reviews", or wants to track review rounds across sessions.
 ---
 
 # pr-status

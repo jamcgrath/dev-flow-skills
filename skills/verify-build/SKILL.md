@@ -1,116 +1,97 @@
 ---
 name: verify-build
-description: The independent build verifier. Spawned as a FRESH subagent with no builder context, it tries to FALSIFY the finished change against the acceptance criteria — through each criterion's layer harness plus the full suite — adversarially reviews the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Invoked by /dev-flow once the code-review loop has settled, on the diff that will actually ship, replacing the builder's self-check. Fail-closed: it never returns a false verified. Not /verify-ticket (validates a ticket before planning) — this is dev-flow's adversarial post-build falsifier.
+description: The independent build verifier for /dev-flow. Run as a fresh subagent with no builder context, it tries to falsify the finished change against the acceptance criteria and the full suite, checks the test diff for tampering, and writes a ranked verdict to .dev-flow/<task>/VERIFICATION.md. Fail-closed: never a false verified. Not /verify-ticket, which checks a ticket before planning.
 ---
 
 # verify-build
 
-The gate's evidence. The builder does **not** certify its own work — this skill does, from the
-outside. Its honesty *is* the safety property: a false `verified` corrupts the human's review-gate
-decision at its source, which is the one thing this flow can't allow.
-
-**Spawned fresh every pass — this is non-negotiable.** Run as an **isolated subagent with NO builder
-session state**, given only the diff, the acceptance criteria, and the acceptance-test paths.
-`/dev-flow` owns what happens with the verdict (see step 5 below) and **re-spawns a new verifier on every
-retry** — never persist this across retries, never reuse the builder's context. A verifier that
-accumulates the builder's state is just the self-grading this skill exists to replace.
+The gate's evidence. The builder doesn't certify its own work; this skill does, from outside. A
+false `verified` corrupts the human's REVIEW-gate decision at its source, so when in doubt, fail
+closed. If you built this change yourself, spawn this as a fresh subagent rather than running it
+inline.
 
 ## Steps
 
-1. **Gather the evidence (read-only).** `git diff <base>` for the falsification and tamper work, plus
-   `git diff -M --numstat --name-status <base>` for the per-file reach that ranks the criteria in step 4.
-   `base` is the acceptance-test commit sha **recorded in `.dev-flow/<task>/ACCEPTANCE_TESTS.md`** (and
-   also passed to you by the orchestrator) — you run fresh and cannot recompute it, so read it. The
-   authored tests are *in* that base, so any builder edit to one surfaces in the diff. Also read the
-   acceptance criteria (`.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
-   `.dev-flow/<task>/PLAN.md`, else `PLAN.md` / task description; anything under `PLAN.md`'s
-   `## Accepted conflicts — not criteria` is an exemption, not a criterion), the protected acceptance-test paths (same
-   manifest), and the **test-adequacy results** (`.dev-flow/<task>/TEST_AUDIT.md`) — a criterion whose
-   test was judged `inadequate` is **not** verifiable by that test, no matter what it does now. Read its
-   **`## Unsatisfiable tests`** — a test the audit proved no conforming build can pass is not
-   evidence about this build, and a red from one does not falsify the change. Read its
-   **`## Test-quality defects`** too: a named mutation survivor or false-fail guard means the oracle
-   is thinner than its verdict alone implies, so it belongs in the attention order **even on a
-   criterion that passes**.
+1. **Gather the evidence (read-only).** Your prompt gives `<task>` and `base` (also recorded in
+   `.dev-flow/<task>/ACCEPTANCE_TESTS.md`); read everything else from disk:
+   - `git diff <base>` for falsification and tampering, and `git diff -M --numstat --name-status
+     <base>` for each file's reach. The authored tests are in `base`, so any edit to one shows in
+     the diff.
+   - The acceptance criteria: `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
+     `.dev-flow/<task>/PLAN.md`, else `PLAN.md`. Anything under `PLAN.md`'s `## Accepted conflicts —
+     not criteria` is an exemption, not a criterion; one under `## Checked by hand` is the human's to
+     check.
+   - The protected test paths, any approved amendment, and any `## Accepted at audit` or
+     `## Already met at base` from `ACCEPTANCE_TESTS.md`.
+   - `.dev-flow/<task>/TEST_AUDIT.md`: each test's adequacy, its `## Unsatisfiable tests` (a red from
+     one doesn't falsify the change), and its `## Test-quality defects` (a named hole thins the oracle,
+     even on a criterion that passes).
+   - `.dev-flow/<task>/ENVIRONMENT.md`, if it exists: commands, ports, logins, a failure already at
+     `base`. A recorded failure is a lead to re-check, never a reason to discount a red unchecked.
 
-   **Read `.dev-flow/<task>/ENVIRONMENT.md` if it exists — never an earlier verdict.** It holds what a
-   previous pass needed to get running: commands, ports, logins, a failure already present at `base`.
-   A recorded pre-existing failure is a lead to re-check, never a reason to discount a red unchecked.
-   Don't open `VERIFICATION.attempt-*.md`. If a `VERIFICATION.md` is already in place, move it unread to
-   the next free `VERIFICATION.attempt-<n>.md`, then write yours. If your prompt carries an earlier verdict, finding or attempt number anyway, record it
-   under `directed:` (step 4).
+   **Never read an earlier verdict.** Don't open `VERIFICATION.attempt-*.md`. If a `VERIFICATION.md`
+   is already in place, move it unread to the next free `VERIFICATION.attempt-<n>.md`, then write
+   yours. If your prompt carries an earlier verdict, finding or attempt number anyway, record it under
+   `directed:` (step 4).
 
-2. **Falsify against the criteria — using the harness for each criterion's layer.** Run the acceptance
-   tests + the **full** project suite **using the repo's real commands** (from the Test Tooling
-   inventory in `.dev-flow/<task>/PLAN_BRIEF.md`, or in `.dev-flow/<task>/BUG_CONTEXT.md` on the bug
-   path — e.g. `pnpm test:unit` / `pnpm test:e2e`, not a guessed `npm test`).
-   Reach each criterion the way its layer demands — **Playwright**
-   for UI, the **unit runner** for logic, an **HTTP / contract client** for API/service, a **seeded DB**
-   for data — and actively try to make it **fail** (edge/error inputs, not just the happy path).
-   Playwright is one stream, **not** the default. **Never run anything the repo's CLAUDE.md or README
-   says reaches live data**; a criterion that can only be checked there is `unverifiable (no safe
-   environment)`, with the check a human would make named. The **criteria are the spec**, not the builder's
-   claims. A change with **no new observable behaviour** (a refactor) is verified by the **full suite
-   staying green** plus the uncovered-change check below — there's no new criterion, so a missing
-   acceptance test is expected, not a failure.
+2. **Falsify against the criteria, at each criterion's layer.** Run the acceptance tests and the
+   **full** suite with the repo's real commands, from the Test Tooling inventory in
+   `.dev-flow/<task>/PLAN_BRIEF.md` (or `BUG_CONTEXT.md` on the bug path) — `pnpm test:e2e`, not a
+   guessed `npm test`. Reach each criterion through its layer's harness — Playwright for UI, the unit
+   runner for logic, an HTTP client for an API, a seeded DB for data — and try to make it **fail**
+   with edge and error inputs, not just the happy path. The **criteria are the spec**, not the
+   builder's claims. **Never run anything the repo's CLAUDE.md or README says reaches live data**; a
+   criterion that can only be checked there is `unverifiable (no safe environment)`, with the check a
+   human would make named. A refactor with no new behaviour is verified by the full suite staying
+   green plus the uncovered-change check below; a missing acceptance test is expected there.
 
    **A test that flips is not a pass.** When a test fails, rerun it twice more at the same HEAD,
-   unchanged — no added waits, raised timeouts, retries or skips. The same result each time is that
-   result. Results that differ make it **flaky**, and a flaky run is evidence of nothing in either
-   direction, so trace the flip: a race or ordering fault in the change → `falsified`; the same flip
-   at `base` (in the `base` copy below) → pre-existing, recorded in `ENVIRONMENT.md` with the sha;
-   cause not found → the criterion it carries is `unverifiable`. List every flaky test under
-   `## Test integrity`. A runner that crashes before reporting any result is not a test failure:
-   rerun it, and record the crash in `ENVIRONMENT.md` so the next pass expects it.
+   unchanged — no added waits, raised timeouts, retries or skips. Results that differ make it
+   **flaky**, which is evidence of nothing either way, so trace the flip: a race or ordering fault in
+   the change → `falsified`; the same flip at `base` (in the `base` copy below) → pre-existing,
+   recorded in `ENVIRONMENT.md` with the sha; cause not found → its criterion is `unverifiable`. List
+   every flaky test under `## Test integrity`. A runner that crashes before reporting any result isn't
+   a test result: rerun it. One that keeps crashing is a failure to trace like any other; record a
+   crash in `ENVIRONMENT.md` only once you've seen it at `base` too.
 
    **Then check what no criterion covers.** Where the diff changes code no criterion is about — a
-   refactor inside the change, a helper other callers share, a config or permission shift on the side
-   — name the one fact its safety rests on ("the extractor returns the same URLs for every existing
-   caller") and take it as far up this ladder as is cheap: **asserted** → **cited** (a `file:line`) →
-   **reasoned** (the bad case walked through and shown not to reach) → **run** (a test or script that
-   calls the real code and fails loud if the fact is wrong) → **reproduced** in the running app. A
-   regression test counts as run only for the callers it actually exercises. Keep any script you write
-   outside the working tree. A proof that runs and shows the fact false is a regression → `falsified`.
+   refactor inside the change, a helper other callers share, a config or permission shift — name the
+   one fact its safety rests on ("the extractor returns the same URLs for every existing caller") and
+   take it as far up this ladder as is cheap: **asserted** → **cited** (a `file:line`) → **reasoned**
+   (the bad case walked through and shown not to reach) → **run** (a test or script that calls the
+   real code and fails loud if the fact is wrong) → **reproduced** in the running app. A regression
+   test counts as run only for the callers it exercises. Keep any script outside the working tree. A
+   proof that shows the fact false is a regression → `falsified`.
 
-   **When the fact is "behaves as before", let `base` be the oracle.** A refactor, a shared helper, a
-   migration or rewrite meant to change nothing: export `base` outside the working tree
-   (`git archive <base> | tar -x -C <dir>`, reusing the installed dependencies when the lockfile is
-   unchanged), run the old and new code on the same inputs — generated ones that reach the edge
-   cases, plus any real samples the repo already holds — and diff the outputs after normalising what
-   doesn't matter (key order, timestamps, whitespace). That is a **run**, and the strongest one for
-   this kind of fact: it checks every input you fed it, not only the ones an existing test thought
-   of. A difference that no criterion asks for is a regression → `falsified`. When `base` can't be
-   run cheaply, say so and take the fact as far as the rest of the ladder goes.
+   **When the fact is "behaves as before", let `base` be the oracle.** Export `base` outside the
+   working tree (`git archive <base> | tar -x -C <dir>`, reusing the installed dependencies when the
+   lockfile is unchanged), run the old and new code on the same inputs — generated ones that reach the
+   edge cases, plus any real samples the repo holds — and diff the outputs after normalising what
+   doesn't matter (key order, timestamps, whitespace). That is the strongest **run** for this kind of
+   fact. A difference no criterion asks for → `falsified`. If `base` can't run cheaply, say so and use
+   the rest of the ladder.
 
-3. **Adversarially review the test diff — three tamper classes:**
-   - **Weakened OLD tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
+3. **Review the test diff for tampering — three classes:**
+   - **Weakened old tests** — assertion count down; `.skip` / `.only` / `xit` / `todo` added; a test
      deleted; coverage dropped on touched lines.
-   - **Vacuous NEW tests** — tautologies (`expect(true)`, asserts-nothing) padding the count *up*.
-   - **Edited ACCEPTANCE tests** — any hunk in `git diff <base>` touching a path listed in
-     `ACCEPTANCE_TESTS.md`. The builder must *satisfy* these, not edit them. (Committing them as the
-     base is what makes this a one-line check; on the hash-fallback, compare against the recorded hash.)
-   Any of the three → a **flagged breach** (a breach makes the verdict `falsified`, step 4).
+   - **Vacuous new tests** — tautologies (`expect(true)`, asserts nothing) padding the count.
+   - **Edited acceptance tests** — any hunk in `git diff <base>` touching a path listed in
+     `ACCEPTANCE_TESTS.md` (on the hash fallback, compare against the recorded hash).
+   Any of the three is a **breach**, and a breach makes the verdict `falsified`.
 
-   **The one exception: `## Approved test amendment (post-build)`**, if the manifest carries one. A
-   human can decide at a post-build checkpoint that the *test* was wrong rather than the build, and
-   authorise an edit to a protected path. **Reconcile, don't rubber-stamp** — an approval is a
-   description to check the diff against, not a blanket pass:
-   - the edits must be confined to the **named commit(s)** and the **named paths**; anything to a
-     protected path outside them is a breach, approval or no approval;
-   - the diff must **match the `Changes ONLY:` description**. An edit the description doesn't cover
-     is a breach — that is the whole safety of the mechanism, and the reason the description has to
-     be specific enough to fail against;
-   - `base` must be **unchanged** from what the manifest recorded before the amendment. If `base`
-     moved forward to swallow the amendment, say so and treat the whole check as compromised: a
-     `base` at or after the builder's commits hides the build itself from `git diff <base>`, so
-     neither the tamper check nor the falsification is measuring what it claims to.
-   Reconciled cleanly → **not a breach**; record it under `## Test integrity` as an authorised
-   amendment naming the commit, so the verdict still shows a protected file changed and why.
-   An amended test also **loses its adequacy verdict** — it can never be re-audited, since the
-   feature now exists and red-at-base is unmeasurable — so its criterion's oracle is `none` for
-   ranking (step 4), no matter what `TEST_AUDIT.md` said about it before the amendment.
+   **The one exception: `## Approved test amendment (post-build)`.** A human can decide after the
+   build that a test, not the build, was wrong. **Reconcile it, don't rubber-stamp it:**
+   - the edits must be confined to the **named commit(s)** and **named paths**; anything else touching
+     a protected path is a breach, approval or not;
+   - the diff must **match `Changes ONLY:`**. An edit it doesn't cover is a breach;
+   - `base` must be **unchanged** from before the amendment. If it moved forward to swallow the
+     amendment, say so and treat the whole check as compromised: a `base` at or after the build hides
+     the build from `git diff <base>`.
+   Reconciled cleanly → not a breach; record it under `## Test integrity` as an authorised amendment
+   naming the commit. The amended test loses its adequacy verdict (red-at-base can't be re-measured),
+   so its criterion's oracle is `none` for ranking.
 
-4. **Write the structured verdict** to `.dev-flow/<task>/VERIFICATION.md`:
+4. **Write the verdict** to `.dev-flow/<task>/VERIFICATION.md`:
    ```
    ## Scope
    - repo: <path or name of the repository this verdict covers>  · branch: <branch> · base..HEAD: <sha>..<sha>
@@ -139,126 +120,79 @@ accumulates the builder's state is just the self-grading this skill exists to re
    - tamper breaches: <none | the specific weakened/vacuous/edited-acceptance findings>
    - flaky: <none | test — results across runs — cause: the change | pre-existing at base | unknown>
    ```
-   **Name what the verdict covers.** A verdict that doesn't state its target can't be audited later — a
-   change spanning two repositories, verified in one, reads exactly like a change verified in full.
-   **`directed:`** records anything you were *pointed at* rather than reached from the diff and the
-   criteria alone. Being told where to look is legitimate and often efficient, but this skill's claim is
-   a verdict reached **independently**, so a directed finding has to be legible as one — otherwise the
-   property erodes silently and nobody can tell afterwards. `none` is the normal answer.
+   **Scope** names what the verdict covers, so a change spanning two repos, verified in one, can't
+   read as verified in full. **`directed:`** records anything you were pointed at rather than reached
+   from the diff and criteria alone; `none` is the normal answer.
 
-   **Factor adequacy first** (from `TEST_AUDIT.md`): a criterion whose test is `inadequate` does **not**
-   count as verified even if it now passes — a vacuous pass is not a pass → `unverifiable` for that
-   criterion. A `weak` test counts as a pass but is **flagged** (red-by-absence only). Only `adequate`
-   tests give a clean pass. Then the verdict rules:
-   - **verified** — every criterion about this change's behaviour passes on an **adequate** or **weak**
-     test (a preservation criterion: the regression suite stays green) AND no tamper breach. Two kinds
-     of criterion don't block it; list each under `## Criteria` as unverifiable, with the reason: one
+   **Adequacy first.** A criterion whose test is `inadequate` is `unverifiable` even if it passes now —
+   a vacuous pass is not a pass. A `weak` test counts as a pass but is flagged. Then:
+   - **verified** — every criterion about this change's behaviour passes on an adequate or weak test
+     (a preservation criterion, or one already met at `base`: its tests stay green), and no tamper
+     breach. Two kinds of
+     criterion don't block it; list each under `## Criteria` as unverifiable, with the reason: one
      that isn't about the code's behaviour (a deployment, a release date, something a person does,
-     documentation, another repository), and one a human already accepted (`ACCEPTANCE_TESTS.md`
-     records it as `retired at audit` or under `## Accepted at audit`).
-   - **falsified** — any criterion fails, OR any tamper breach.
-   - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), a criterion about this change's behaviour is
-     unverifiable and no human accepted that (subjective, its
-     only test was `inadequate`, its only test is flaky for a reason not found, or it has no safe
-     environment), **or its only red
-     comes from an `unsatisfiable` test** (below). **Fail closed →
-     this, never a false `verified`.**
+     documentation, another repository), and one a human already accepted (under `PLAN.md`'s
+     `## Checked by hand`, or `ACCEPTANCE_TESTS.md` records it as `retired at audit` or under
+     `## Accepted at audit`).
+   - **falsified** — any criterion fails, or any tamper breach.
+   - **couldn't-verify** — the layer's harness can't run (app or dev server down, Playwright
+     unavailable, DB or a dependent service unreachable); a criterion about this change's behaviour
+     is unverifiable and no human accepted that (subjective, its only test `inadequate`, flaky for a
+     reason not found, or no safe environment); or its only red comes from an unsatisfiable test no human accepted.
+     **Fail closed → this, never a false `verified`.**
 
-   **An unsatisfiable test is not a falsification.** `falsified` is a claim about the *code*, so a
-   red that no conforming build could avoid must not produce one — that labels a sound change broken,
-   points the human at "retry the build", which cannot work, and leads the REVIEW gate with a verdict
-   about the wrong thing. Where **every** failing criterion traces to an unsatisfiable test and
-   nothing else fails and there is no tamper breach, the verdict is **`couldn't-verify`**, and the
-   one-line reason says plainly that the build is not implicated. Mix in one genuine failure or one
-   breach and it is `falsified` again — fail closed.
+   **An unsatisfiable test is not a falsification.** `falsified` is a claim about the code. Where
+   every failing criterion traces to an unsatisfiable test, nothing else fails and there's no breach,
+   the verdict is `couldn't-verify` and its reason says plainly the build is not implicated. One
+   genuine failure or breach and it's `falsified` again. The burden of proof is yours when the audit
+   didn't name it: a test is unsatisfiable only on a demonstration, in its own terms, that *no*
+   conforming build passes it — arithmetic, or evidence that the matcher itself is malformed. If it
+   fails only *this* build, it's the build; an unexplained red is `falsified`. Record which under
+   `## Criteria`, and never edit the test.
 
-   **The bar is the audit's, and it is on you when the audit did not name it.** A test is
-   unsatisfiable only on a demonstration in its own terms that *no* conforming build passes it —
-   arithmetic, or evidence like driving the live page to show the matcher itself is malformed. If it
-   fails only *this* build, it is the build. You are the skill whose honesty the gate rests on, and
-   this is the single finding that excuses a red without implicating the code, so reach for it only
-   with the proof in hand: an unexplained red is `falsified`, not unsatisfiable. Record which it is
-   under `## Criteria` either way, and **never edit the test** — the amendment is the human's call at
-   `/dev-flow`'s checkpoint, not yours.
+   **Rank the criteria — weakest oracle first, widest reach breaks the tie.**
+   - **Oracle**, from `TEST_AUDIT.md`, weakest first:
+     - **none** — `unverifiable`, an `inadequate` test, or an only oracle that is unsatisfiable,
+       flaky, or amended after the build;
+     - **weak** — red by absence only, `manufactured` before `structural` (manufactured is an author
+       slip where a real assertion was available). A preservation criterion carried by the regression
+       suite alone, or one already met at `base`, ranks here;
+     - **adequate** — last.
+     A named test-quality defect moves its criterion one band weaker; carry the defect's wording
+     across. An uncovered change ranks by its rung: asserted or cited with `none`, reasoned with
+     `weak`, run or reproduced with `adequate` — unless the proof showed the fact false, which is a
+     failure and ranks first.
+   - **Reach**, from the `--numstat` diff: the files and directories the criterion's surface touches.
+     Where the project exposes an import graph (an MCP server, usage indexer or LSP), measure the
+     changed files' fan-in; otherwise estimate, and say so.
 
-   **Then rank the criteria — weakest oracle first, widest reach breaks the tie.** The verdict says
-   whether the change holds; the rank says where a human should look *first* if they only look once.
-   Both keys are already in hand:
-   - **Oracle strength**, from `TEST_AUDIT.md`: **none** — the criterion is `unverifiable`, or its test
-     was judged `inadequate` (a vacuous pass proves nothing), so *nothing* is actually checking it. Then
-     **weak** — red-by-absence only, with `manufactured` ranked above `structural` (a manufactured weak
-     is an author slip where a real assertion *was* available; a structural one is the best any test
-     could do at `base`). A preservation criterion carried by the regression suite alone ranks with
-     `weak`. A criterion whose only oracle is **unsatisfiable** or **flaky** ranks with `none` —
-     nothing is checking it, and the red it produces says nothing about the code. A criterion whose test was
-     changed under an **approved post-build amendment** ranks with
-     `none`: its pre-amendment verdict describes a test that no longer exists. Then **adequate**,
-     last. A **named quality defect** from `TEST_AUDIT.md` ranks its
-     criterion one band weaker than its bare verdict would — an `adequate` test with a live mutation
-     survivor is not an adequate oracle — and carry the defect's own wording across, since the audit
-     already said what the hole is. An **uncovered change** ranks by the rung its fact reached:
-     asserted or cited with `none`, reasoned with `weak`, run or reproduced with `adequate` — unless
-     the proof showed the fact false. That is a failure, not an oracle strength, and it ranks first.
-   - **Reach**, from `git diff -M --numstat --name-status <base>`: the files and directories that
-     criterion's surface actually touches. Where the project exposes an import/dependency graph (an MCP
-     server, usage indexer, or LSP), **measure the changed files' fan-in** rather than eyeballing it — a
-     contained-looking file imported in twenty places has a reach its own line count doesn't show. No
-     such tool → estimate, and say that you estimated.
+   Give each ranked line **what to look at**, not just its position.
 
-   Give each ranked line **what to look at**, not just its position. This is the only place the flow
-   orders anything for a human: everything else it writes is criterion-order, which buries the riskiest
-   item wherever the ticket happened to list it — and the weakest oracles are exactly the ones that
-   *don't* stop the flow, so without a rank they arrive as the quietest item on the page.
+   **`## Rollback` — how the change comes back out.**
+   - **revert** — `clean` when reverting the whole branch, `git revert <branch point>..HEAD` with the
+     branch point `git merge-base origin/<default branch> HEAD` (the remote: a local default can be
+     stale), restores the prior behaviour with nothing else to do. Not `<base>^`, which misses the
+     first test commit once the tests have been strengthened. `not clean` otherwise, naming what
+     blocks it: a migration with no `down`, data already written, a regenerated artefact committed
+     outside its package, a consumer that has already read the new shape.
+   - **leaves behind** — what reverting doesn't undo. `ACCEPTANCE_TESTS.md`'s **Side effects** names
+     the test-side ones; the diff names the rest (a DDL drop or truncate, a deploy, an install, a
+     network-mutating call).
+   Report the route the change has; don't design a better one.
 
-   **Say how the change comes back out — `## Rollback`.** The reviewer is at the last stop before a PR
-   and you are the one agent holding the whole diff, so state the route that exists:
-   - **revert** — `clean` when reverting the whole branch, `git revert <branch point>..HEAD` where the
-     branch point is `git merge-base origin/<default branch> HEAD` (the remote: a local default can be
-     stale), restores the prior behaviour with nothing
-     else to do (not `<base>^`, which misses the first test commit once the tests have been
-     strengthened); `not clean` otherwise, naming what blocks it (a migration with no `down`, data already
-     written, a regenerated artefact committed outside its package, a consumer that has already read the
-     new shape).
-   - **leaves behind** — what reverting the commits does *not* undo. `ACCEPTANCE_TESTS.md`'s **Side
-     effects** section names the test-side ones; the diff names the rest (a DDL drop/truncate, a deploy,
-     an install, a network-mutating call).
-   **Don't design a rollback** — don't propose a flag, a down-migration, or a safer shape. The build is
-   over and you are read-only; report the route the change already has, including when that route is
-   "revert the commits, and the migration stays."
-
-   **Leave the next pass what it needs to get running, in `ENVIRONMENT.md`** — the commands, ports,
-   logins and setup steps that worked, and any failure you saw at `base`, with the sha you saw it at.
-   Facts only, and test results from `base` only: no suite result or failure seen at HEAD, nothing
-   about whether a criterion passes or how good the change is. Replace a line that
+   **Leave the next pass what it needs in `ENVIRONMENT.md`:** the commands, ports, logins and setup
+   steps that worked, and any failure you saw at `base`, with its sha. Facts only, and results from
+   `base` only — nothing seen at HEAD, nothing about whether a criterion passes. Replace a line that
    no longer holds rather than appending one that contradicts it.
 
-5. **Return the verdict; `/dev-flow` owns what happens next.** `verified` → proceed to the REVIEW gate.
-   `falsified` or `couldn't-verify` → `/dev-flow` pauses and asks the human rather than looping
-   automatically. On a human-chosen retry,
-   `base` is **not** re-captured — the builder's fix lands as new commits, and the re-spawned verifier
-   re-diffs against the same `base`. This skill never loops, never fixes code, never edits tests, and
-   owns no retry bookkeeping — that's the orchestrator's job.
+5. **Return the verdict.** Never loop, fix code or edit tests; `/dev-flow` decides what happens next.
 
 ## Guards
-- **Fresh subagent, no builder context, one pass.** (Restated because it is the entire point — if this
-  ever becomes a persistent in-loop call, the independence is gone.)
-- **Run at a strong model — this is the safety gate; never downsized for a small diff.** The caller may
-  size other subagents to the change, but not this one: a weaker verifier doesn't fail more *honestly*, it
-  misses tamper breaches and edge cases — i.e. false `verified`s, the one failure this flow can't allow.
-- **Honest over confident.** Cannot verify → `couldn't-verify`, surfaced to the human. Never dress an
-  unverified change up as `verified`.
-- **Falsify, don't confirm.** A verifier that only checks the happy path is theatre.
-- **It is LLM judgment in fresh context** — better than self-grading, *not* ground truth. Subjective
-  criteria are `unverifiable`, not a guess. Mutation testing — the strong defense against vacuous
-  tests — lives in `/audit-tests`, not here.
-- **The rank is presentation, never a second verdict.** A criterion that sorts last is not thereby
-  verified and one that sorts first is not thereby failed — `## Criteria` stays the record and every
-  criterion stays in it. Never drop, merge, or soften a criterion because it ranked low, and never
-  promote one to `fail` because it ranked high.
+- **LLM judgement in a fresh context** — better than self-grading, not ground truth. Subjective
+  criteria are `unverifiable`, not a guess.
+- **The rank is presentation, never a second verdict.** A criterion that sorts last isn't thereby
+  verified, and one that sorts first isn't thereby failed. Every criterion stays in `## Criteria`;
+  never drop, merge or soften one because it ranked low, or fail one because it ranked high.
 - **Read-only except `VERIFICATION.md`, `ENVIRONMENT.md`, and scratch scripts and the `base` export
-  outside the working tree.** Never touches the source (the builder fixes, on the human's
-  retry choice) and never edits tests.
-- **No retry budget.** Each retry is a fresh human choice at `/dev-flow`'s checkpoint, not a loop this
-  skill or its caller counts down.
-- **Non-interactive.** Never pause for input; return the verdict and let `/dev-flow` ask.
+  outside the working tree.**
+- **Non-interactive.** Never pause for input; return the verdict.

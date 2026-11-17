@@ -1,156 +1,115 @@
 ---
 name: author-acceptance-tests
-description: Author executable acceptance tests from a task's acceptance criteria, after the PLAN gate has fixed the surface but INDEPENDENT of the implementation, then commit them so they become the build's base. Invoked by /dev-flow between plan approval and the build. Picks the test type per criterion's LAYER (UI → Playwright + data-testids + an a11y baseline, logic → unit, API/service → integration, data → seeded-DB) rather than defaulting to the browser. The builder must SATISFY these tests, never edit them — committing them first is what makes any later edit visible in the diff. One half of dev-flow's test-integrity defense (the other half is /verify-build). Non-interactive, except that a commit-hook rejection for a non-test reason pauses and asks.
+description: Author executable acceptance tests from a task's acceptance criteria after the PLAN gate, independent of the implementation, and commit them so they become the build's base. Picks the test type from each criterion's layer (UI, logic, API, data, CLI) rather than defaulting to the browser. The builder must satisfy these tests, never edit them. Invoked by /dev-flow between plan approval and the build. Non-interactive, except a commit-hook rejection caused by the intentionally red tests.
 ---
 
 # author-acceptance-tests
 
-Turns acceptance criteria into **executable tests the builder must satisfy**, authored *independently
-of the implementation* so they can't be shaped to whatever the builder happens to write. Committing
-them up front is what makes "the builder satisfies a fixed bar, it doesn't edit the bar" **enforceable**
-rather than aspirational — see step 4.
-
-Runs between plan approval and the build:
-`plan-brief → /plan (approved) → **author acceptance tests** → /audit-tests → build →
-/verify-build`. It writes tests, commits them, and records a manifest; it does **not** implement
-the feature.
+Turns acceptance criteria into executable tests the builder must satisfy, written before and apart
+from the implementation so they can't be shaped to fit it. Committing them first, as the build's
+`base`, makes any later edit to them visible in the diff. You write tests, commit them and record a
+manifest; you don't implement the feature.
 
 ## Steps
 
-1. **Read the criteria + the repo's test tooling, then classify each by layer.** Acceptance criteria
-   from `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved `.dev-flow/<task>/PLAN.md`;
-   otherwise from the task description / `PLAN.md` / `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal. Anything
-   under `PLAN.md`'s `## Accepted conflicts — not criteria` is an exemption, not a criterion. Read `PLAN.md` for
-   the intended surface *and* its build steps — they can diverge, and the build steps name surfaces
-   a suggested test list may under-name. Read the **Test Tooling inventory** from
-   `.dev-flow/<task>/PLAN_BRIEF.md` — or, on the bug path, from `.dev-flow/<task>/BUG_CONTEXT.md`,
-   which carries the same section since no `PLAN_BRIEF.md` is written (the frameworks that actually
-   exist + their run commands). On the bug path, read its `## Red command` too: it already fails on
-   this bug at its layer, so build the bug's test from it. This is **general-purpose** — for *each*
-   criterion decide where the behaviour lives, because that picks the test type:
-   - **UI / user flow** → Playwright black-box (key on user-visible behaviour + stable `data-testid`s,
-     plus the a11y baseline below)
-   - **Pure logic / function** → unit test on inputs→outputs, edge cases, error paths
-   - **API / service** → integration / contract test hitting the endpoint or calling the service
-   - **Data / schema** → assertions against a seeded DB (+ migration up→down)
-   - **CLI / library** → invoke and assert on output / exit code
+1. **Read the criteria and the repo's test tooling, then classify each criterion by layer.**
+   Criteria come from `.dev-flow/<task>/TICKET_CONTEXT.md` as revised by the approved
+   `.dev-flow/<task>/PLAN.md`, else from `PLAN.md`, else `.dev-flow/<task>/PLAN_BRIEF.md`'s Goal.
+   Anything under `PLAN.md`'s `## Accepted conflicts — not criteria` is an exemption, not a criterion.
+   Read `PLAN.md`'s build steps too: they can name surfaces its test list misses. The Test Tooling
+   inventory is in `PLAN_BRIEF.md`, or `BUG_CONTEXT.md` on the bug path; there, also read its
+   `## Red command`, which already fails on this bug at its layer — build the bug's test from it.
+   Decide where each criterion's behaviour lives, because that picks the test:
+   - **UI / user flow** → Playwright, black-box: user-visible behaviour, stable `data-testid`s, and
+     the a11y baseline below
+   - **Logic** → unit test on inputs and outputs, edge cases, error paths
+   - **API / service** → integration or contract test against the endpoint or service
+   - **Data / schema** → assertions against a seeded DB (plus migration up and down)
+   - **CLI / library** → invoke and assert on output and exit code
 
-   **Decompose each criterion into every surface it names, and cover each.** A criterion spanning
-   multiple observable instances — *mobile **and** desktop*, more than one renderer / page, each variant —
-   needs a test per instance, or that instance recorded `unverifiable` with a reason; one test for a
-   two-surface criterion silently drops half of it.
+   **Cover every surface a criterion names.** *Mobile and desktop*, several renderers or pages, each
+   variant: a test per instance, or that instance recorded `unverifiable` with a reason.
 
-   `data-testid`s apply **only** to the UI layer — don't force a backend criterion through a UI mould.
-   Author each test in the framework the inventory says the repo **actually uses** (e.g. Vitest, not
-   Jest) — never introduce a new one; a criterion whose layer has **no tooling** in the repo is
-   **unverifiable (tooling gap)**, not licence to invent a harness. Never author or run a test against
-   anything the repo's CLAUDE.md or README says reaches live data. A criterion that can only be
-   checked there is **unverifiable (no safe environment)**: record the check a human would make by
-   hand. A change with **no new observable
-   behaviour** (a pure refactor) gets **no acceptance test** — record that its verification is "the full
-   suite stays green" (regression-only); don't invent a criterion.
+   `data-testid`s are for the UI layer only. Use the frameworks the inventory says the repo has
+   (Vitest, not Jest, if that's what's there) and never introduce one: a layer with **no tooling** is
+   **unverifiable (tooling gap)**. Never author or run a test against anything the repo's CLAUDE.md or
+   README says reaches live data; a criterion that can only be checked there is **unverifiable (no
+   safe environment)**, with the check a human would make by hand. A change with **no new observable
+   behaviour** (a pure refactor) gets no acceptance test: record that its verification is the full
+   suite staying green.
 
-   **The UI layer carries an a11y baseline — contract, not an invented criterion.** Any criterion
-   producing something a person **perceives or operates** — a rendered component, a server-rendered
-   template, an HTML email — also asserts the element's **role + accessible name**, that it is
-   **reachable and operable by keyboard** when interactive, and an **automated scan of the changed
-   view**. This sits at the same level as a `data-testid`: no ticket states either, and both are what
-   "works" *means* at this layer — so the fail-closed guard against inventing acceptance behaviour
-   doesn't reach it. It is **tooling-gated** — assert only what the Test Tooling inventory says the repo
-   actually has (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role / accessible-name matchers). No
-   harness → record the a11y line **unverifiable (tooling gap)** like any other missing layer; never add
-   the dependency to close it.
+   **The UI layer carries an a11y baseline.** Anything a person perceives or operates — a rendered
+   component, a server-rendered template, an HTML email — also asserts its **role and accessible
+   name**, that it's **reachable and operable by keyboard** when interactive, and an **automated scan
+   of the changed view**. Like a `data-testid`, no ticket states it, but it's what "works" means at
+   this layer, so it isn't an invented criterion. Assert only what the inventory says the repo has
+   (`@axe-core/*`, `jest-axe`, `pa11y`, Playwright's role and name matchers); no harness → record the
+   a11y line **unverifiable (tooling gap)** and never add the dependency. Route it by surface: on a
+   **new** element it fails at `base` by absence (weak); on an **existing** view it passes at `base`,
+   so author it as a **preservation** criterion ("this view stays accessible") expected green —
+   authored as new behaviour, the audit reads it as vacuous and stops the flow for nothing.
 
-   **Route that a11y line by new-vs-existing surface, or it trips the audit gap for nothing.** On a
-   **new** element it fails at `base` by absence — *weak*, which rides forward. On an **existing** view
-   it **passes** at base, so authored as new behaviour it reads *vacuous* to `/audit-tests` and stops
-   the flow over a view that was already fine. That one is a **preservation** criterion ("this view
-   stays accessible") — author it in the preservation lane of step 2 and expect green at base.
+2. **Write each test against the contract, not the implementation.** Key on what the builder must
+   honour — UI behaviour and `data-testid`s, a function's signature and return values, an endpoint's
+   request and response shape, query results — never on internal structure it might choose. Include
+   edge and error cases, not just the happy path. The tests define the contract; the builder has to
+   generalise past whatever values they happen to assert.
 
-2. **Author each test independent of the implementation, in its layer's idiom.** Key on the **contract**
-   the builder must honour, never on internal structure it happens to choose (or the test fails for the
-   wrong reason): UI → behaviour + `data-testid`s; logic → function signature + return values; API →
-   endpoint + request/response shape; data → query results. Be **falsify-minded** — include the edge and
-   error cases, not just the happy path. The tests reference contracts that don't exist yet — that's the
-   bar: **the tests define the contract, the builder implements to it** — the *contract*, note, not
-   the fixtures: the builder has to generalize past whatever values these tests happen to assert.
-
-   **State a rule as a property when the repo has the library for it.** A criterion that holds over
-   a range of inputs — a round trip (decode of encode gives back the input), an invariant (a balance
-   never goes negative), idempotency (running it twice changes nothing more than once), equivalence
-   with a simpler version — becomes a property test when the Test Tooling inventory lists fast-check,
-   Hypothesis, proptest or the like. The library picks the inputs, so the edge cases aren't chosen by
-   the same reading of the criterion the builder will work from. No library → example cases, as above.
+   **State a rule as a property when the repo has the library.** A criterion over a range of inputs
+   — a round trip, an invariant, idempotency, equivalence with a simpler version — becomes a property
+   test when the inventory lists fast-check, Hypothesis, proptest or similar, so the library picks the
+   edge cases rather than the same reading of the criterion the builder works from. No library →
+   example cases.
 
    **Mock only at the system's edges** — the network, third-party services, the clock. The repo's own
    code runs for real; where a test must stub it, the stub returns what the real signature returns,
-   and the test never asserts how often it was called — that pins internal structure, not the contract.
+   and the test never asserts how often it was called.
 
-   **Write so the red-before-green failure is a real assertion, not mere absence.** A fresh auditor
-   (`/audit-tests`) grades each test on *how* it fails at `base`: an **assertion** failure (the code
-   ran and produced a wrong value) is *adequate*; failing only because a symbol / route / `data-testid` is
-   **absent** is *weak*. A brand-new pure symbol can **only** fail by absence — its red is *structurally*
-   weak no matter what — so don't dress that absence up with a bolted-on `expect(mod).not.toBeNull()`: it
-   manufactures a fake-adequate red and, at green, swallows real import errors. Prefer a plain import (an
-   honest weak red is clearer), or anchor the assertion on a seam that **already exists** at `base` (the
-   real regenerated config, an existing component's output) so the missing behaviour trips a genuine
-   assertion. Author *for* a real red; never self-grade it — the auditor owns that verdict.
+   **Aim for a real assertion failure at `base`, not mere absence.** `/audit-tests` grades a test
+   that fails on an assertion as adequate and one that fails only because a symbol, route or
+   `data-testid` is missing as weak. A brand-new pure symbol can only fail by absence, so never dress
+   that up with a bolted-on `expect(mod).not.toBeNull()` — it fakes an adequate red and, once green,
+   swallows real import errors. Prefer a plain import, or anchor the assertion on a seam that already
+   exists at `base` (the real regenerated config, an existing component's output). Never grade your
+   own red; the auditor does.
 
-   **For a preservation criterion** ("X still works after the change"), pin the **whole** prior surface —
-   snapshot the full field set / config subtree, not one representative field — or "unaffected" is
-   asserted far more loosely than it reads.
+   **For a preservation criterion** ("X still works"), pin the **whole** prior surface — the full
+   field set or config subtree, not one representative field.
 
-3. **Mark unverifiable criteria honestly.** A subjective / aesthetic criterion that can't be expressed
-   as an executable assertion → record it as **unverifiable**. Do **not** fake a tautological test
-   (`expect(true)`) to make a number go up — honesty here feeds `/verify-build`; a fake poisons it.
+3. **Mark unverifiable criteria honestly.** A subjective or aesthetic criterion that can't be an
+   executable assertion is **unverifiable**. Never fake a tautological test (`expect(true)`). A
+   criterion under `PLAN.md`'s `## Checked by hand` gets no test: record it `unverifiable — checked
+   by hand`.
 
-4. **Before committing, check each new test is red for the right reason.** Run the new tests against
-   the current tree (what this commit will make `base`). Each should fail on an assertion about the
-   value its criterion names, or by step 2's honest absence of a net-new symbol / route / `data-testid`.
-   Any other red (a 500, a thrown error, a status or redirect the existing code returns first, an
-   assertion on some other field) means the test never reached the behaviour. So does a fixture the
-   real code path wouldn't produce, even when it fails on the right assertion. Fix the fixture or
-   request, never the criterion's assertion. Preservation tests are out of scope. This only checks that
-   a test isn't broken; adequate vs weak stays `/audit-tests`' verdict.
+4. **Check each new test is red for the right reason, then commit.** Run the new tests against the
+   current tree. Each should fail on an assertion about the value its criterion names, or by the
+   honest absence of a net-new symbol, route or `data-testid`. Any other red — a 500, a thrown error, a
+   status or redirect the existing code returns first, an assertion on some other field — means the
+   test never reached the behaviour; so does a fixture the real code path wouldn't produce. Fix the
+   fixture or request, never the criterion's assertion. Skip preservation tests here; this checks a
+   test isn't broken, not whether it's adequate.
 
-   **Then commit the tests immediately — this is the mechanism, not bookkeeping.** `git add` *only* the new
-   test files and commit `Add acceptance tests for <task>` with a Decision Log body proportional to the
-   change (the repo's commit convention — Intent: seed the build's test bar; Approach: name the
-   criteria/layers covered and note it's intentionally red). This commit becomes the **build's base**,
-   so any later builder edit to an acceptance test shows up trivially in `git diff <base>` — that one
-   fact is what turns "must not edit the tests" from an unenforceable promise into a one-line check in
-   `/verify-build`. Two things to handle:
-   - This commit is **intentionally red** — the tests reference `data-testid`s / behaviour the build
-     hasn't added yet. **Commit normally, with hooks on** — most repos' hooks only lint/format, so this
-     is a no-op for them. If a hook rejects the commit **specifically because the by-design-red suite
-     failed**, **stop and ask** the human how to proceed (bypass this once, adjust the hook, or
-     reconsider the test) — never retry with `--no-verify` on your own. A hook rejecting for a
-     *different* reason (lint, format, a type error) is a real problem — fix it, don't bypass it.
-   - **Record the commit's sha as `base` in the manifest** (step 5) — `/verify-build` runs in a
-     fresh context and cannot recompute it.
-   - **Re-invoked to strengthen, rewrite or retire flagged tests** (dev-flow's audit-gap options):
-     revise those files in place — or delete a retired one, drop it from the protected list and record
-     its criterion `unverifiable — retired at audit` — run the check above, then commit the same way
-     — `Strengthen acceptance tests for <task>` — and **overwrite `base` in the manifest with the new sha**. The
-     revision must be its own commit and the new sha must become `base`, or the strengthened tests read
-     as edits to protected paths in `git diff <base>` and `/verify-build` scores them as tampering.
-   (Unborn branch / can't commit → fall back to recording each authored file's path **and content hash**
-   in the manifest so edits are still detectable; commit-first is preferred.)
+   Then `git add` **only** the new test files and commit `Add acceptance tests for <task>`, with a
+   proportional Decision Log (Intent: seed the build's test bar; Approach: the criteria and layers
+   covered, and that the commit is intentionally red).
+   - **Hooks stay on.** Most only lint or format. If one rejects the commit **because the
+     intentionally red suite failed**, stop and ask the human — bypass once, adjust the hook, or
+     reconsider the test; never retry with `--no-verify` yourself. A rejection for any other reason
+     (lint, format, types) is a real problem: fix it.
+   - **Record the commit's sha as `base`** in the manifest; `/verify-build` can't recompute it.
+   - **Re-invoked to strengthen, rewrite or retire flagged tests:** revise those files in place, or
+     delete a retired one, drop it from the protected list and record its criterion
+     `unverifiable — retired at audit`. Run the check above, commit as
+     `Strengthen acceptance tests for <task>`, and **overwrite `base` with the new sha** — otherwise
+     the revised tests read as tampering in `git diff <base>`.
+   - Unborn branch or can't commit → record each file's path and content hash in the manifest
+     instead.
 
-5. **Write the manifest** `.dev-flow/<task>/ACCEPTANCE_TESTS.md` — the **protected set**
-   `/verify-build` and the builder both read. (`## Approved test amendment` stays out of your
-   draft — it only ever gets written later, by `/dev-flow`, if a human approves a post-build
-   amendment at a post-build checkpoint. `## Accepted at audit` is the same: `/dev-flow` writes it
-   when a human proceeds past an audit gap. You are authoring the bar, not pre-authorising exceptions
-   to it.) Record your honest *expectation* per criterion, never
-   an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
-   replace; leave the verdict to it.
-
-   `Criterion → test` is criterion-keyed; the **`Test catalog` is test-keyed** — **one line per test
-   function**, so a criterion decomposed across surfaces (mobile *and* desktop, several renderers, each
-   variant) gets a line for *each* of its tests instead of collapsing back to one. It exists so a human
-   can skim what is actually being checked without opening every spec file. Say what each test asserts
-   and nothing more — adequacy is `/audit-tests`' verdict, not a column here.
+5. **Write the manifest `.dev-flow/<task>/ACCEPTANCE_TESTS.md`** — the protected set the builder and
+   `/verify-build` read. Record your *expectation* per criterion, never an adequacy verdict. The
+   `Test catalog` has one line per test function, so a criterion split across surfaces shows each test.
+   `## Approved test amendment (post-build)`, `## Accepted at audit` and `## Already met at base`
+   stay out of your draft: `/dev-flow` writes them when a human decides one.
    ```
    ## Base commit
    <sha of the "Add acceptance tests" commit — /verify-build diffs against this>
@@ -168,8 +127,7 @@ the feature.
 
    ## Criterion → test
    - <criterion> → <test name / file>  ·  expected red-at-base: adequate | weak (<why>)  ·  or: preservation — expected green at base  ·  or: unverifiable — <why>
-     (expected-* is a *hypothesis* for /audit-tests to confirm — never a verdict; it classifies
-     new/changed vs preservation itself and will not take this line's word for it)
+     (expected-* is a hypothesis for /audit-tests to confirm, never a verdict)
 
    ## Test catalog (one line per test function — what each actually asserts)
    - `<test name>` (<file>) — asserts <the single behaviour it checks>
@@ -186,24 +144,11 @@ the feature.
    ```
 
 ## Guards
-- **Independent of the implementation; authored once, here, before the build.** The point is a *fixed*
-  bar — never re-author or relax tests to match what got built. Before the build, `/dev-flow` may
-  re-invoke you to strengthen, rewrite or retire a flagged test; after it, a change to a protected
-  test is an amendment a human approves, never yours.
-- **Don't fake coverage.** A criterion you can't test executably is `unverifiable`, not a tautology.
-- **A11y is layer-scoped, tooling-gated, and never overclaimed.** It rides the UI layer's contract,
-  not a task-type label, so it's silent on backend criteria and in a repo with no harness. A clean
-  automated scan covers a fraction of WCAG — say what it still doesn't prove in Residual gaps rather
-  than letting green read as "accessible".
-- **Don't manufacture an adequate-looking red, and don't grade your own.** A bolted-on existence assertion
-  on a missing symbol is still red-by-absence; a net-new pure symbol is *structurally* weak. Author for a
-  genuine assertion — the fresh auditor decides adequacy, never you. Checking a red isn't *broken*
-  (step 4) is yours; grading it is not.
-- **Commit-first is the integrity mechanism.** Skipping the commit (without the hash fallback) silently
-  disables the acceptance-test tamper check downstream.
-- **Fail closed.** If the criteria are too thin to derive any test, record them all as `unverifiable`
-  and say so — never invent acceptance behaviour the ticket didn't state.
-- **Hooks stay on.** Never bypass a commit hook silently. A rejection caused by the by-design-red suite
-  pauses and asks the human; a rejection for any other reason is fixed, not skipped.
-- **Otherwise non-interactive.** dev-flow owns the human checkpoints around this skill (the audit-gap
-  and verify-build-failure pauses) — this skill itself only pauses on the one narrow hook case above.
+- **A fixed bar.** Never re-author or relax tests to match what got built. Before the build,
+  `/dev-flow` may re-invoke you to strengthen, rewrite or retire a flagged test; after it, a change to
+  a protected test is an amendment a human approves, never yours.
+- **Never overclaim a11y.** A clean automated scan covers a fraction of WCAG; say what it doesn't
+  prove under Residual gaps.
+- **Fail closed.** Criteria too thin to derive any test → record them all `unverifiable` and say so;
+  never invent behaviour the ticket didn't state.
+- **Otherwise non-interactive.** The only pause is the hook rejection in step 4.
