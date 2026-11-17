@@ -26,6 +26,16 @@ test('a well-formed skill produces no findings', () => {
   assert.deepEqual(r.warnings, []);
 });
 
+test('an unquoted ` #` in the description is an error', () => {
+  const r = lintSkillContent('dev-flow', skill('dev-flow', 'Use when the user says "review PR #N".'));
+  assert.match(r.errors.join(' '), /comment/);
+});
+
+test('a quoted description may contain ` #`', () => {
+  const r = lintSkillContent('dev-flow', skill('dev-flow', `'Use when the user says "review PR #N".'`));
+  assert.deepEqual(r.errors, []);
+});
+
 test('missing frontmatter is an error', () => {
   const r = lintSkillContent('dev-flow', '# dev-flow\n\nNo frontmatter here.\n');
   assert.equal(r.errors.length, 1);
