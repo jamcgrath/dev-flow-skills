@@ -15,8 +15,8 @@ fresh because the tests' author must not grade them.
 
 1. **Gather.** The acceptance criteria — `.dev-flow/<task>/PLAN.md`'s `## Acceptance criteria`
    (anything under `## Accepted conflicts — not criteria` is an exemption, and one under
-   `## Checked by hand` has no test and gets no verdict); the test paths and `base` (`.dev-flow/<task>/ACCEPTANCE_TESTS.md`); and
-   the Test Tooling inventory (`.dev-flow/<task>/PLAN_BRIEF.md`, or `BUG_CONTEXT.md` on the bug path),
+   `## Checked by hand` has no test and gets no verdict); the test paths and `base`
+   (`.dev-flow/<task>/ACCEPTANCE_TESTS.md`); and the Test Tooling inventory (`.dev-flow/<task>/PLAN_BRIEF.md`, or `BUG_CONTEXT.md` on the bug path),
    for **how each runner reports an assertion failure vs an error** — the whole audit turns on it.
    Where the inventory doesn't say, read it from the runner's output at `base`.
    **Never run anything the repo's CLAUDE.md or README says reaches live data.** A test that would
@@ -50,9 +50,11 @@ fresh because the tests' author must not grade them.
    unsatisfiable: a red you can't explain is recorded as unexplained in its evidence.
 
 4. **Note test-quality defects — a second axis, not a fourth verdict.** Red-at-base says a test
-   depends on the new behaviour, not that its assertion would catch a wrong implementation. Where it's
-   cheap, mutate what the test covers and see whether it goes red; keep scratch outside the working
-   tree and leave the tree as you found it. What survives is a **test-quality defect**, and so is a
+   depends on the new behaviour, not that its assertion would catch a wrong implementation. Mutate
+   only code that exists at `base` — under a preservation test, or a changed-behaviour test whose
+   code is already there — and see whether the test goes red, where it's cheap; keep scratch outside
+   the working tree and leave the tree as you found it. A test of net-new behaviour has nothing to
+   mutate yet: list it as not mutated, and `/verify-build` mutates it after the build. What survives is a **test-quality defect**, and so is a
    guard that would reject a correct build (false-fail) or a path the test wires up but never
    exercises. A defect never changes the verdict — an `adequate` test with a survivor is still
    `adequate`. Name each one, and name what you did **not** mutate: a partial sweep reported as clean
