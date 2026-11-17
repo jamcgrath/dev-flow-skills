@@ -73,7 +73,7 @@ a wrong ticket.
 
    ## Acceptance Criteria
    [One criterion per line, each prefixed with a verdict and a code citation where it applies:
-    [verified] … · [contradicted → revise] … · [unverifiable] …]
+    [holds] … · [contradicted → revise] … · [untestable] …]
 
    ## Relevant Files
    [Files to modify or reference, with current, confirmed paths]
