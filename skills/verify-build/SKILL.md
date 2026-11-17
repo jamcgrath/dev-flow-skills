@@ -150,11 +150,16 @@ accumulates the builder's state is just the self-grading this skill exists to re
    count as verified even if it now passes — a vacuous pass is not a pass → `unverifiable` for that
    criterion. A `weak` test counts as a pass but is **flagged** (red-by-absence only). Only `adequate`
    tests give a clean pass. Then the verdict rules:
-   - **verified** — every *testable* criterion passes on an **adequate** or **weak** test AND no tamper
-     breach.
+   - **verified** — every criterion about this change's behaviour passes on an **adequate** or **weak**
+     test (a preservation criterion: the regression suite stays green) AND no tamper breach. Two kinds
+     of criterion don't block it; list each under `## Criteria` as unverifiable, with the reason: one
+     that isn't about the code's behaviour (a deployment, a release date, something a person does,
+     documentation, another repository), and one a human already accepted (`ACCEPTANCE_TESTS.md`
+     records it as `retired at audit` or under `## Accepted at audit`).
    - **falsified** — any criterion fails, OR any tamper breach.
    - **couldn't-verify** — the **layer's harness can't run** (app / dev-server down, Playwright
-     unavailable, DB or dependent service unreachable), a criterion is unverifiable (subjective, its
+     unavailable, DB or dependent service unreachable), a criterion about this change's behaviour is
+     unverifiable and no human accepted that (subjective, its
      only test was `inadequate`, its only test is flaky for a reason not found, or it has no safe
      environment), **or its only red
      comes from an `unsatisfiable` test** (below). **Fail closed →

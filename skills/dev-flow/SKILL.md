@@ -176,8 +176,9 @@ different safety model. Keep that split — a fast path here would be a third mo
      strengthening is a real remedy:
      > "The test audit found `<N>` criteria whose tests pass vacuously at base (inadequate — the pass
      > proves nothing): `<list>`. How do you want to proceed?"
-     > - **Proceed anyway** — build against the current tests; the gap rides forward and can resurface
-     >   at verify.
+     > - **Proceed anyway** — build against the current tests, and record the criteria under
+     >   `## Accepted at audit` in `ACCEPTANCE_TESTS.md`: `/verify-build` lists them as accepted gaps
+     >   rather than stopping on them.
      > - **Strengthen the tests first** — pause here; hand the flagged criteria back to
      >   `/author-acceptance-tests` to revise those tests to assert real behaviour. It **re-commits**
      >   them and **re-records the new sha as `base`** in `ACCEPTANCE_TESTS.md` — without that, the
@@ -196,8 +197,9 @@ different safety model. Keep that split — a fast path here would be a third mo
      >   mechanic as strengthening: it **re-commits** and **re-records the new sha as `base`**, then
      >   `/audit-tests` runs again as a **new** fresh subagent. **Strengthening is the wrong move
      >   here** — it makes an already-impossible test harder, not possible.
-     > - **Proceed anyway** — build against it knowing the red is unclearable; `/verify-build` will
-     >   return `couldn't-verify` for that criterion rather than `falsified`.
+     > - **Proceed anyway** — build against it knowing the red is unclearable, and record it under
+     >   `## Accepted at audit` in `ACCEPTANCE_TESTS.md`: `/verify-build` lists it as an accepted gap
+     >   rather than failing on it.
    - **`weak`** (red-by-absence only — `structural` for a net-new symbol, `manufactured` for a
      bolted-on existence guard) → **do not pause.** For a net-new pure symbol *no* test can be
      assertion-adequate at `base` (the import fails before any assertion runs), so a pause offers no
@@ -233,8 +235,8 @@ different safety model. Keep that split — a fast path here would be a third mo
    Then build per the plan in **logical increments**, and **minimally** — the smallest change that
    satisfies each item, no drive-by refactors, extra flags or redundant deriveds.
    The build must **satisfy** `.dev-flow/<task>/ACCEPTANCE_TESTS.md`'s tests and contracts, and must
-   **never edit** a protected acceptance-test file (an edit is what `/verify-build` flags as a tamper
-   breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
+   **never edit** a protected acceptance-test file outside an amendment a human approved at step 8 or
+   9 (any other edit is what `/verify-build` flags as a tamper breach): as each self-contained change is done, run the repo's **lint + typecheck** — the commands
    it actually declares, in its manifest scripts or task runner — plus a cheap smoke check (nothing
    the repo's CLAUDE.md or README says reaches live data), then `/commit` it **right away** — one logical change per commit, Decision Log proportional (per
    convention), while the reasoning is fresh. That bar is deliberately shallow: step 9's
@@ -252,7 +254,7 @@ different safety model. Keep that split — a fast path here would be a third mo
    of those goes green *and* clears `/verify-build`'s tamper check (nothing was tampered with) while
    shipping no feature — which is why it lands on you here rather than on a later gate. If a test
    looks wrong, or a criterion turns out infeasible, **stop and say so**; the one move that isn't
-   available is editing the test to fit.
+   available is editing the test to fit. Changing a test is the human's call, made as an amendment.
 
 8. **Review the change — triage, fix, re-review.** The diff gets read by something other than what
    wrote it, and its findings get **acted on here** rather than filed for the gate. Review runs
@@ -292,8 +294,11 @@ different safety model. Keep that split — a fast path here would be a third mo
    that, so ask via `AskUserQuestion`, naming the finding, what its fix would break, and the options
    that actually exist:
    > - **Take the fix and amend the test** — the acceptance test encodes a bar this fix invalidates.
-   >   Commit the fix and the test change, then record `## Approved test amendment (post-build)` in
-   >   `ACCEPTANCE_TESTS.md` — sha, paths, approver, `Changes ONLY:` — with `base` **unchanged**.
+   >   You make both edits, as **two commits**: the fix, then the test change on its own, touching
+   >   only the protected paths it names. Record `## Approved test amendment (post-build)` in
+   >   `ACCEPTANCE_TESTS.md` — the test commit's sha, paths, approver, `Changes ONLY:` — with `base`
+   >   **unchanged**. The approval and its `Changes ONLY:` fix what may change, and step 9 reconciles
+   >   the diff against them.
    >   Step 9 reconciles it on its single pass; nothing needs re-verifying, because verification has
    >   not run yet.
    > - **Keep the agreed behaviour** — drop the fix. The finding rides to the REVIEW gate as a
@@ -341,7 +346,8 @@ different safety model. Keep that split — a fast path here would be a third mo
    > - **Amend the test** — *only* when the defect is in the **test**, not the build: a bad regex, an
    >   assertion pinned to a value this task legitimately changes, a prior task's protected test that
    >   this change contradicts. No amount of building satisfies a test that is wrong, and the builder
-   >   is barred from touching it, so the call is yours. Commit the fix, then record
+   >   is barred from touching it, so the call is yours. Commit the test change on its own, as at
+   >   step 8, then record
    >   `## Approved test amendment (post-build)` in `ACCEPTANCE_TESTS.md` — sha, paths, who approved,
    >   and `Changes ONLY:` enumerating each edit precisely enough that `/verify-build` can fail the
    >   diff *against* it. Then re-run `/verify-build` fresh.
@@ -365,6 +371,10 @@ different safety model. Keep that split — a fast path here would be a third mo
    task first sends it to rebuild something that already works, and the red survives the round. Put
    the finding in the question — the test, and the demonstration that no conforming build passes it —
    so the choice is about the test rather than about the change.
+
+   **When the verdict is `couldn't-verify` for any other reason the build is not implicated — a
+   criterion the verifier could not reach — lead with *Proceed to the gate with the gap noted*.** A
+   retry rebuilds code nothing has faulted. Name the unreached criterion and what would check it.
 
    **On an amendment, `base` does not move — this is the one that bites.** Re-recording `base` to the
    amendment commit folds every build commit before it *into* the base, so `git diff <base>` no longer

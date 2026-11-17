@@ -140,7 +140,8 @@ the feature.
 5. **Write the manifest** `.dev-flow/<task>/ACCEPTANCE_TESTS.md` — the **protected set**
    `/verify-build` and the builder both read. (`## Approved test amendment` stays out of your
    draft — it only ever gets written later, by `/dev-flow`, if a human approves a post-build
-   amendment at a post-build checkpoint. You are authoring the bar, not pre-authorising exceptions
+   amendment at a post-build checkpoint. `## Accepted at audit` is the same: `/dev-flow` writes it
+   when a human proceeds past an audit gap. You are authoring the bar, not pre-authorising exceptions
    to it.) Record your honest *expectation* per criterion, never
    an adequacy **verdict** — grading your own red is the self-grading `/audit-tests` exists to
    replace; leave the verdict to it.
@@ -186,7 +187,9 @@ the feature.
 
 ## Guards
 - **Independent of the implementation; authored once, here, before the build.** The point is a *fixed*
-  bar — never re-author or relax tests later to match what got built.
+  bar — never re-author or relax tests to match what got built. Before the build, `/dev-flow` may
+  re-invoke you to strengthen, rewrite or retire a flagged test; after it, a change to a protected
+  test is an amendment a human approves, never yours.
 - **Don't fake coverage.** A criterion you can't test executably is `unverifiable`, not a tautology.
 - **A11y is layer-scoped, tooling-gated, and never overclaimed.** It rides the UI layer's contract,
   not a task-type label, so it's silent on backend criteria and in a repo with no harness. A clean
