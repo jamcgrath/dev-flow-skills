@@ -4,8 +4,7 @@ A project-agnostic, AI-assisted **dev flow** for [Claude Code](https://claude.co
 packaged as one installable plugin. It sequences skills you'd otherwise run by hand into a
 structured flow with two human gates — fire it off, approve the plan, review before the PR.
 
-The flow adds **almost no behaviour of its own** (the short list is under Guards, "Thin orchestration",
-in `skills/dev-flow/SKILL.md`) — `/dev-flow <task>` is a thin orchestrator that routes feature
+The flow adds **little behaviour of its own** — `/dev-flow <task>` is a thin orchestrator that routes feature
 vs bug and runs the chain below. Outside it, work stays conversational — nothing fires unless you
 invoke it. There's no fast path: a change small enough to want one doesn't need the orchestrator, so
 just ask for it conversationally instead.
