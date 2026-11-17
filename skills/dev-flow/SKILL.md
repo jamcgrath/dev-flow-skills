@@ -405,7 +405,12 @@ different safety model. Keep that split — a fast path here would be a third mo
       ones cannot tell whether a finding was answered or ignored.
    4. **The rollback route** — `VERIFICATION.md`'s `## Rollback`: a clean revert, or what blocks one
       and what a revert would leave behind.
-   5. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
+   5. **Repo facts worth keeping** — lines in `.dev-flow/<task>/ENVIRONMENT.md` that would hold for
+      any task in this repo, not just this one (a command that reaches live data, a test already
+      failing on the default branch, a setup step the docs leave out), and that the repo's CLAUDE.md
+      doesn't already say. Give each as the line you'd add. Omit when there are none. Adding them is
+      the human's call: don't edit CLAUDE.md.
+   6. **The complete diff** — last. It stays available and stays the record; it just isn't the lead.
 
    **A change asked for at the gate goes back through review and verification.** Commit it, review the
    increment (`<last-reviewed sha>..HEAD`, step 8's later-round rule), spawn `/verify-build` the way
