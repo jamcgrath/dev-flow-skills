@@ -53,6 +53,9 @@ rolls them up (see global CLAUDE.md).
    **Revert:** clean | not clean — <the range, or what blocks it>
    **Leaves behind:** none | <irreversible side effects a revert does not undo>
 
+   <details>
+   <summary><model that wrote this, e.g. Claude Opus 5.5> — Decision Log and commits</summary>
+
    ### Decision Log
    **Intent:** <combined goal across the commits>
    **Approach:** <what was done overall>
@@ -63,7 +66,12 @@ rolls them up (see global CLAUDE.md).
 
    ### Commits
    - <short-sha> <subject>
+
+   </details>
    ```
+   Keep the blank lines after `</summary>` and before `</details>`: GitHub renders the Markdown inside
+   only with them.
+
    Omit any Decision Log section that's empty, and both the **Verification** and **Rollback** blocks on
    a standalone PR with no `VERIFICATION.md` — never reconstruct either from the diff here, since a
    rollback claim this skill invented carries none of the fresh-context verifier's independence. Merge
